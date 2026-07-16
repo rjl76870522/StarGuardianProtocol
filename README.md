@@ -7,7 +7,8 @@
 
 - Milestone 1: complete
 - Milestone 2: complete
-- Milestones 3-9: pending
+- Milestone 3: complete
+- Milestones 4-9: pending
 
 The current vertical slice includes a menu, one-minute industrial arena,
 top-down movement and mouse aim, rapid fire, dash, one chasing enemy type,
@@ -56,4 +57,4 @@ platform's executable and `WastelandProtocol.pck` together when distributing.
 All visuals and sounds are generated from project-owned geometry, SVG, shaders,
 and synthesized waveforms. No third-party art assets are included.
 
-See `docs/milestone_01_02_report.md` for the verified scope and next risks.
+See `docs/milestone_03_report.md` for the current verified scope and next risks.

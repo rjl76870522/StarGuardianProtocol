@@ -142,6 +142,32 @@ text = "DASH  READY"
 theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 14
 
+[node name="UpgradeStatus" type="Label" parent="Margin/BottomBar"]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+text = "NO MODULES"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.52, 0.68, 0.65, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="Spacer" type="Control" parent="Margin/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WeaponIcon" type="TextureRect" parent="Margin/BottomBar"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WeaponStatus" type="Label" parent="Margin/BottomBar"]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+text = "1  VX-9 AUTO RIFLE"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
+theme_override_font_sizes/font_size = 14
+
 [node name="CenterMessage" type="PanelContainer" parent="."]
 anchors_preset = 8
 anchor_left = 0.5
@@ -171,4 +197,3 @@ layout_mode = 2
 text = "Hold the line"
 horizontal_alignment = 1
 label_settings = SubResource("SmallSettings")
-

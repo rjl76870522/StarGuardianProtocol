@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/data/weapon_data.gd" id="1_weapon"]
+[ext_resource type="Script" path="res://src/data/weapon_vfx_data.gd" id="2_vfx"]
+[ext_resource type="Script" path="res://src/data/weapon_audio_data.gd" id="3_sfx"]
+[ext_resource type="Texture2D" path="res://assets/generated/weapon_icons/rail_lance.svg" id="4_icon"]
+[ext_resource type="Resource" path="res://assets/data/status/freeze.tres" id="5_freeze"]
+
+[sub_resource type="Resource" id="VFX"]
+script = ExtResource("2_vfx")
+projectile_color = Color(0.25, 0.7, 1, 1)
+projectile_scale = 1.45
+hit_color = Color(0.65, 0.9, 1, 1)
+
+[sub_resource type="Resource" id="SFX"]
+script = ExtResource("3_sfx")
+frequency = 880.0
+duration = 0.16
+amplitude = 0.24
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_id = &"rail_lance"
+display_name = "ARC RAIL LANCE"
+description = "High-energy penetrator with freeze chance"
+icon = ExtResource("4_icon")
+damage = 54.0
+fire_interval = 1.15
+projectile_count = 1
+spread_degrees = 0.0
+projectile_speed = 55.0
+projectile_range = 45.0
+recoil = 0.28
+critical_chance = 0.18
+critical_multiplier = 2.2
+base_penetration = 2
+status_effects = [ExtResource("5_freeze")]
+vfx = SubResource("VFX")
+sfx = SubResource("SFX")

@@ -10,8 +10,9 @@ Performance claims must include measured Godot monitor output; none are inferred
 ## Verified baseline
 
 - Godot 4.6.3 project import and script/resource parsing
-- 47 logic and scene checks, including projectile sweep collision, physical
-  debris blocking, level weapon aim, and all result transitions
+- 99 logic and scene checks, including projectile sweep collision, physical
+  debris blocking, weapon resources, critical hits, fire-rate limits,
+  penetration, status duration, skill stacking, upgrades, and result transitions
 - Three consecutive game-scene create/free cycles
 - Main scene headless boot
 - Linux release export and exported-binary boot

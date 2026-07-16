@@ -26,7 +26,13 @@ func _check(condition: bool, message: String) -> void:
 
 func _run() -> void:
 	_test_damage_rules()
+	_test_combat_data_resources()
+	_test_critical_hits()
+	_test_skill_stacking_and_choices()
 	await _test_scene_smoke()
+	await _test_fire_rate_limit()
+	await _test_penetration()
+	await _test_status_duration_and_ticks()
 	await _test_player_damage_and_invulnerability()
 	await _test_player_aim_stays_level()
 	await _test_enemy_damage_once()
@@ -35,6 +41,7 @@ func _run() -> void:
 	await _test_debris_has_collision()
 	_test_generated_audio()
 	await _test_repeated_game_cleanup()
+	await _test_upgrade_offer_flow()
 	await _test_round_results()
 
 	if _failures.is_empty():
@@ -54,6 +61,55 @@ func _test_damage_rules() -> void:
 	_check(is_zero_approx(DamageRules.calculate(-1.0)), "invalid damage is zero")
 
 
+func _test_combat_data_resources() -> void:
+	var weapon_paths := [
+		"res://assets/data/weapons/auto_rifle.tres",
+		"res://assets/data/weapons/scatter_cannon.tres",
+		"res://assets/data/weapons/rail_lance.tres",
+	]
+	for path in weapon_paths:
+		var weapon := load(path) as WeaponData
+		_check(weapon != null and weapon.is_valid(), "valid weapon resource: %s" % path)
+		_check(weapon.icon != null, "weapon has an icon: %s" % path)
+	var invalid_weapon := WeaponData.new()
+	_check(not invalid_weapon.is_valid(), "invalid weapon configuration is rejected")
+	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone"]:
+		var skill := load("res://assets/data/skills/%s.tres" % skill_id) as SkillData
+		_check(skill != null and skill.is_valid(), "valid skill resource: %s" % skill_id)
+
+
+func _test_critical_hits() -> void:
+	var critical := DamageRules.calculate_hit(10.0, 1.0, 0.0, 0.5, 2.0, 0.1)
+	_check(bool(critical["critical"]), "critical roll is detected")
+	_check(is_equal_approx(float(critical["damage"]), 20.0), "critical multiplier applies once")
+	var normal := DamageRules.calculate_hit(10.0, 1.0, 0.0, 0.5, 2.0, 0.9)
+	_check(not bool(normal["critical"]), "normal roll is not critical")
+	_check(is_equal_approx(float(normal["damage"]), 10.0), "normal hit keeps base damage")
+
+
+func _test_skill_stacking_and_choices() -> void:
+	var system := SkillSystem.new()
+	var rapid := load("res://assets/data/skills/rapid_fire.tres") as SkillData
+	_check(system.apply_upgrade(rapid), "skill accepts first level")
+	_check(system.apply_upgrade(rapid), "skill accepts second level")
+	_check(system.apply_upgrade(rapid), "skill accepts third level")
+	_check(system.get_level(&"rapid_fire") == 3, "skill levels stack to maximum")
+	_check(is_equal_approx(system.get_value(&"rapid_fire"), 1.5), "stacked skill exposes final value")
+	_check(not system.apply_upgrade(rapid), "skill rejects upgrades above maximum")
+	var catalog: Array[SkillData] = []
+	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone"]:
+		catalog.append(load("res://assets/data/skills/%s.tres" % skill_id) as SkillData)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 77
+	var choices := system.available_choices(catalog, 3, rng)
+	_check(choices.size() == 3, "upgrade offer returns three choices")
+	var ids: Dictionary = {}
+	for skill in choices:
+		ids[skill.skill_id] = true
+	_check(ids.size() == 3, "upgrade offer has no duplicate skills")
+	_check(not ids.has(&"rapid_fire"), "maxed skill is excluded from offers")
+
+
 func _test_scene_smoke() -> void:
 	for path in [
 		"res://scenes/main_menu.tscn",
@@ -61,6 +117,8 @@ func _test_scene_smoke() -> void:
 		"res://scenes/chaser.tscn",
 		"res://scenes/projectile.tscn",
 		"res://scenes/hud.tscn",
+		"res://scenes/orbit_drone.tscn",
+		"res://scenes/upgrade_panel.tscn",
 		"res://scenes/game.tscn",
 	]:
 		var packed := load(path) as PackedScene
@@ -188,6 +246,76 @@ func _test_debris_has_collision() -> void:
 	await process_frame
 
 
+func _test_fire_rate_limit() -> void:
+	var player := (load("res://scenes/player.tscn") as PackedScene).instantiate() as WastelandPlayer
+	root.add_child(player)
+	await process_frame
+	_check(player._try_fire(), "weapon fires when cooldown is ready")
+	_check(not player._try_fire(), "weapon fire rate blocks immediate second shot")
+	player._fire_cooldown = 0.0
+	_check(player.equip_weapon(1), "shotgun can be equipped")
+	_check(player._try_fire(), "shotgun fires through data-driven weapon path")
+	_check(not player.equip_weapon(99), "invalid weapon index is rejected")
+	player.queue_free()
+	for projectile in get_nodes_in_group("projectiles"):
+		projectile.queue_free()
+	await process_frame
+
+
+func _test_penetration() -> void:
+	var enemy_scene := load("res://scenes/chaser.tscn") as PackedScene
+	var projectile_scene := load("res://scenes/projectile.tscn") as PackedScene
+	var first := enemy_scene.instantiate() as ScrapChaser
+	var second := enemy_scene.instantiate() as ScrapChaser
+	var projectile := projectile_scene.instantiate()
+	first.position = Vector3(3.0, 0.65, 0.0)
+	second.position = Vector3(6.0, 0.65, 0.0)
+	root.add_child(first)
+	root.add_child(second)
+	root.add_child(projectile)
+	await physics_frame
+	var rail := load("res://assets/data/weapons/rail_lance.tres") as WeaponData
+	_check(projectile.configure(rail), "rail projectile accepts valid configuration")
+	projectile.launch(Vector3(0.0, 0.88, 0.0), Vector3.RIGHT)
+	for frame in 20:
+		await physics_frame
+		if first.health < first.max_health and second.health < second.max_health:
+			break
+	_check(first.health < first.max_health, "penetrating projectile damages first enemy")
+	_check(second.health < second.max_health, "penetrating projectile continues into second enemy")
+	if is_instance_valid(projectile):
+		projectile.queue_free()
+	if is_instance_valid(first):
+		first.queue_free()
+	if is_instance_valid(second):
+		second.queue_free()
+	await process_frame
+
+
+func _test_status_duration_and_ticks() -> void:
+	var target := DamageTarget.new()
+	var controller := StatusEffectController.new()
+	target.add_child(controller)
+	root.add_child(target)
+	await process_frame
+	var slow := (load("res://assets/data/status/slow.tres") as StatusEffectData).duplicate(true) as StatusEffectData
+	slow.proc_chance = 1.0
+	_check(controller.apply_effect(slow), "slow status applies")
+	_check(controller.movement_multiplier() < 1.0, "slow status changes movement multiplier")
+	controller.advance(slow.duration + 0.01)
+	_check(not controller.has_effect(slow.effect_id), "slow status expires after configured duration")
+	_check(is_equal_approx(controller.movement_multiplier(), 1.0), "expired slow restores movement multiplier")
+	var burn := (load("res://assets/data/status/burn.tres") as StatusEffectData).duplicate(true) as StatusEffectData
+	burn.proc_chance = 1.0
+	_check(controller.apply_effect(burn), "burn status applies")
+	controller.advance(burn.tick_interval + 0.01)
+	_check(target.received > 0.0, "burn status uses shared damage entry point")
+	var invalid := StatusEffectData.new()
+	_check(not controller.apply_effect(invalid), "invalid status configuration is rejected")
+	target.queue_free()
+	await process_frame
+
+
 func _test_generated_audio() -> void:
 	var stream := SoundSynth.tone(440.0, 0.05)
 	_check(stream != null, "synthesized audio stream exists")
@@ -205,6 +333,31 @@ func _test_repeated_game_cleanup() -> void:
 		game.queue_free()
 		await process_frame
 	_check(root.get_child_count() == baseline, "repeated game scenes release root nodes")
+
+
+func _test_upgrade_offer_flow() -> void:
+	var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	game.initial_spawn_interval = 99.0
+	root.add_child(game)
+	await process_frame
+	var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+	game.get_node("Enemies").add_child(enemy)
+	await process_frame
+	game._on_enemy_died(enemy)
+	await process_frame
+	_check(not game.upgrade_panel.overlay.visible, "first kill does not trigger upgrade")
+	game._on_enemy_died(enemy)
+	await process_frame
+	_check(game.upgrade_panel.overlay.visible, "second kill opens upgrade offer")
+	_check(paused, "upgrade offer pauses combat")
+	_check(game.upgrade_panel._choices.size() == 3, "upgrade panel displays three choices")
+	game.upgrade_panel._choose(0)
+	await process_frame
+	_check(not paused, "choosing an upgrade resumes combat")
+	_check(not game.upgrade_panel.overlay.visible, "upgrade panel closes after selection")
+	_check(game.player.skill_system._levels.size() == 1, "selected skill is applied to player")
+	game.queue_free()
+	await process_frame
 
 
 func _test_round_results() -> void:

@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://src/data/weapon_data.gd" id="1_weapon"]
+[ext_resource type="Script" path="res://src/data/weapon_vfx_data.gd" id="2_vfx"]
+[ext_resource type="Script" path="res://src/data/weapon_audio_data.gd" id="3_sfx"]
+[ext_resource type="Texture2D" path="res://assets/generated/weapon_icons/scatter_cannon.svg" id="4_icon"]
+[ext_resource type="Resource" path="res://assets/data/status/slow.tres" id="5_slow"]
+[ext_resource type="Resource" path="res://assets/data/status/knockback.tres" id="6_knock"]
+
+[sub_resource type="Resource" id="VFX"]
+script = ExtResource("2_vfx")
+projectile_color = Color(1, 0.701961, 0.25098, 1)
+projectile_scale = 1.15
+hit_color = Color(1, 0.45, 0.12, 1)
+
+[sub_resource type="Resource" id="SFX"]
+script = ExtResource("3_sfx")
+frequency = 145.0
+duration = 0.12
+amplitude = 0.28
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_id = &"scatter_cannon"
+display_name = "M-12 SCATTER CANNON"
+description = "Six-pellet close-range disruption"
+icon = ExtResource("4_icon")
+damage = 8.0
+fire_interval = 0.68
+projectile_count = 6
+spread_degrees = 18.0
+projectile_speed = 28.0
+projectile_range = 17.0
+recoil = 0.16
+critical_chance = 0.06
+critical_multiplier = 1.6
+status_effects = [ExtResource("5_slow"), ExtResource("6_knock")]
+vfx = SubResource("VFX")
+sfx = SubResource("SFX")

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/skill_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+skill_id = &"orbit_drone"
+display_name = "SENTRY ORBIT"
+description = "Deploy an autonomous attack drone"
+max_level = 3
+level_values = PackedFloat32Array(1, 2, 3)
+accent_color = Color(1, 0.35, 0.18, 1)

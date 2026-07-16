@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/data/weapon_data.gd" id="1_weapon"]
+[ext_resource type="Script" path="res://src/data/weapon_vfx_data.gd" id="2_vfx"]
+[ext_resource type="Script" path="res://src/data/weapon_audio_data.gd" id="3_sfx"]
+[ext_resource type="Texture2D" path="res://assets/generated/weapon_icons/auto_rifle.svg" id="4_icon"]
+[ext_resource type="Resource" path="res://assets/data/status/burn.tres" id="5_burn"]
+
+[sub_resource type="Resource" id="VFX"]
+script = ExtResource("2_vfx")
+projectile_color = Color(0.207843, 0.901961, 0.698039, 1)
+projectile_scale = 0.9
+hit_color = Color(0.207843, 0.901961, 0.698039, 1)
+
+[sub_resource type="Resource" id="SFX"]
+script = ExtResource("3_sfx")
+frequency = 520.0
+duration = 0.055
+amplitude = 0.18
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_id = &"auto_rifle"
+display_name = "VX-9 AUTO RIFLE"
+description = "Reliable automatic kinetic fire"
+icon = ExtResource("4_icon")
+damage = 14.0
+fire_interval = 0.12
+projectile_count = 1
+spread_degrees = 1.8
+projectile_speed = 34.0
+projectile_range = 34.0
+recoil = 0.035
+critical_chance = 0.1
+critical_multiplier = 1.8
+status_effects = [ExtResource("5_burn")]
+vfx = SubResource("VFX")
+sfx = SubResource("SFX")

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/skill_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+skill_id = &"kill_heal"
+display_name = "SALVAGE REPAIR"
+description = "Recover armor after every kill"
+max_level = 3
+level_values = PackedFloat32Array(4, 7, 10)
+accent_color = Color(0.35, 1, 0.5, 1)

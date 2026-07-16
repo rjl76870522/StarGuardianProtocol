@@ -25,6 +25,17 @@ func set_dash_ready(ready: bool) -> void:
 	$Margin/BottomBar/DashStatus.modulate = Color("35e6b2") if ready else Color("7b8c88")
 
 
+func set_weapon(weapon: WeaponData, index: int) -> void:
+	if weapon == null:
+		return
+	$Margin/BottomBar/WeaponIcon.texture = weapon.icon
+	$Margin/BottomBar/WeaponStatus.text = "%d  %s" % [index + 1, weapon.display_name]
+
+
+func set_skill(skill: SkillData, level: int) -> void:
+	$Margin/BottomBar/UpgradeStatus.text = "%s  LV.%d" % [skill.display_name, level]
+
+
 func show_message(title: String, subtitle: String) -> void:
 	$CenterMessage/Content/Title.text = title
 	$CenterMessage/Content/Subtitle.text = subtitle

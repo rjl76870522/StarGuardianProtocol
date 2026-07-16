@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StatusEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/data/status_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+effect_id = &"freeze"
+display_name = "Freeze"
+effect_type = 1
+duration = 0.7
+speed_multiplier = 0.0
+proc_chance = 0.25
+tint = Color(0.35, 0.75, 1, 1)

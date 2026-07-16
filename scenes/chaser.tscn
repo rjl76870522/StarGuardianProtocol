@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource path="res://src/enemies/chaser.gd" type="Script" id="1"]
+[ext_resource path="res://src/status/status_effect_controller.gd" type="Script" id="2"]
 
 [sub_resource type="CapsuleShape3D" id="Collision"]
 radius = 0.48
@@ -72,3 +73,5 @@ material_override = SubResource("BladeMaterial")
 unit_size = 8.0
 max_distance = 28.0
 
+[node name="StatusEffects" type="Node" parent="."]
+script = ExtResource("2")

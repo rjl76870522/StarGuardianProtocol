@@ -2,12 +2,21 @@ extends Node3D
 
 const ENEMY_SCENE := preload("res://scenes/chaser.tscn")
 const IMPACT_SCENE := preload("res://scenes/impact_flash.tscn")
+const SKILL_CATALOG: Array[SkillData] = [
+	preload("res://assets/data/skills/rapid_fire.tres"),
+	preload("res://assets/data/skills/move_speed.tres"),
+	preload("res://assets/data/skills/ricochet.tres"),
+	preload("res://assets/data/skills/penetration.tres"),
+	preload("res://assets/data/skills/kill_heal.tres"),
+	preload("res://assets/data/skills/orbit_drone.tres"),
+]
 
 @export var round_duration: float = 60.0
 @export var initial_spawn_interval: float = 2.4
 @export var minimum_spawn_interval: float = 1.2
 @export var max_active_enemies: int = 16
 @export var required_kills: int = 8
+@export var upgrade_kill_interval: int = 2
 
 var time_left: float
 var kills: int = 0
@@ -17,12 +26,14 @@ var _paused: bool = false
 var _rng := RandomNumberGenerator.new()
 var _camera_shake: float = 0.0
 var _camera_base_position: Vector3
+var _next_upgrade_kills: int
 
 @onready var player: WastelandPlayer = $Player
 @onready var hud: WastelandHUD = $HUD
 @onready var pause_panel: Control = $PauseLayer/PausePanel
 @onready var result_panel: Control = $PauseLayer/ResultPanel
 @onready var camera: Camera3D = $Player/CameraRig/Camera3D
+@onready var upgrade_panel: UpgradePanel = $UpgradePanel
 
 
 func _ready() -> void:
@@ -30,13 +41,18 @@ func _ready() -> void:
 	time_left = round_duration
 	_rng.randomize()
 	_camera_base_position = camera.position
+	_next_upgrade_kills = upgrade_kill_interval
 	player.health_changed.connect(hud.set_health)
 	player.died.connect(_on_player_died)
 	player.fired.connect(_on_player_fired)
 	player.dash_started.connect(_on_dash_started)
+	player.weapon_changed.connect(_on_weapon_changed)
+	player.skill_upgraded.connect(_on_skill_upgraded)
+	upgrade_panel.skill_selected.connect(_on_skill_selected)
 	hud.set_health(player.health, player.max_health)
 	hud.set_time(time_left)
 	hud.set_kills(kills, required_kills)
+	hud.set_weapon(player.current_weapon, player.weapon_index)
 	hud.show_message("ENGAGE", "Destroy %d hostiles and hold for sixty seconds" % required_kills)
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/ResumeButton.pressed.connect(_toggle_pause)
@@ -86,18 +102,47 @@ func _spawn_enemy() -> void:
 
 func _on_enemy_died(enemy: ScrapChaser) -> void:
 	kills += 1
+	player.on_kill()
 	hud.set_kills(kills, required_kills)
 	_spawn_impact(enemy.global_position, Color("ffb340"))
 	_camera_shake = maxf(_camera_shake, 0.12)
+	if kills >= _next_upgrade_kills and not _round_finished:
+		call_deferred("_offer_upgrade")
 
 
 func _on_player_hit() -> void:
 	_camera_shake = maxf(_camera_shake, 0.22)
 
 
-func _on_player_fired() -> void:
+func _on_player_fired(recoil: float) -> void:
 	_spawn_impact(player.muzzle.global_position, Color("35e6b2"), 0.11)
-	_camera_shake = maxf(_camera_shake, 0.035)
+	_camera_shake = maxf(_camera_shake, recoil * 0.06)
+
+
+func _offer_upgrade() -> void:
+	if _round_finished or upgrade_panel.overlay.visible:
+		return
+	var choices := player.skill_system.available_choices(SKILL_CATALOG, 3, _rng)
+	if choices.is_empty():
+		return
+	_paused = true
+	get_tree().paused = true
+	upgrade_panel.show_choices(choices, player.skill_system)
+
+
+func _on_skill_selected(skill: SkillData) -> void:
+	player.apply_skill(skill)
+	_next_upgrade_kills += upgrade_kill_interval
+	_paused = false
+	get_tree().paused = false
+
+
+func _on_weapon_changed(weapon: WeaponData, index: int) -> void:
+	hud.set_weapon(weapon, index)
+
+
+func _on_skill_upgraded(skill: SkillData, level: int) -> void:
+	hud.set_skill(skill, level)
 
 
 func _on_dash_started() -> void:
