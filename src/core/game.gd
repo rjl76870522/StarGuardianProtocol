@@ -2,6 +2,16 @@ extends Node3D
 
 const ENEMY_SCENE := preload("res://scenes/chaser.tscn")
 const IMPACT_SCENE := preload("res://scenes/impact_flash.tscn")
+const BOSS_SCENE := preload("res://scenes/boss.tscn")
+const ENEMY_CATALOG: Array[EnemyData] = [
+	preload("res://assets/data/enemies/chaser.tres"),
+	preload("res://assets/data/enemies/shooter.tres"),
+	preload("res://assets/data/enemies/bomber.tres"),
+	preload("res://assets/data/enemies/heavy.tres"),
+	preload("res://assets/data/enemies/repair.tres"),
+	preload("res://assets/data/enemies/elite_blink.tres"),
+	preload("res://assets/data/enemies/elite_hazard.tres"),
+]
 const SKILL_CATALOG: Array[SkillData] = [
 	preload("res://assets/data/skills/rapid_fire.tres"),
 	preload("res://assets/data/skills/move_speed.tres"),
@@ -12,11 +22,12 @@ const SKILL_CATALOG: Array[SkillData] = [
 ]
 
 @export var round_duration: float = 60.0
-@export var initial_spawn_interval: float = 2.4
-@export var minimum_spawn_interval: float = 1.2
+@export var initial_spawn_interval: float = 2.8
+@export var minimum_spawn_interval: float = 1.5
 @export var max_active_enemies: int = 16
 @export var required_kills: int = 8
 @export var upgrade_kill_interval: int = 2
+@export var boss_spawn_elapsed: float = 30.0
 
 var time_left: float
 var kills: int = 0
@@ -27,6 +38,8 @@ var _rng := RandomNumberGenerator.new()
 var _camera_shake: float = 0.0
 var _camera_base_position: Vector3
 var _next_upgrade_kills: int
+var _boss_spawned: bool = false
+var _boss_defeated: bool = false
 
 @onready var player: WastelandPlayer = $Player
 @onready var hud: WastelandHUD = $HUD
@@ -34,6 +47,7 @@ var _next_upgrade_kills: int
 @onready var result_panel: Control = $PauseLayer/ResultPanel
 @onready var camera: Camera3D = $Player/CameraRig/Camera3D
 @onready var upgrade_panel: UpgradePanel = $UpgradePanel
+@onready var boss_debug_panel: BossDebugPanel = $BossDebugPanel
 
 
 func _ready() -> void:
@@ -65,6 +79,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("pause") and not _round_finished:
 		_toggle_pause()
+	if Input.is_action_just_pressed("boss_spawn_debug") and not _round_finished and not _boss_spawned:
+		_spawn_boss()
 	if _paused or _round_finished:
 		return
 	time_left = maxf(time_left - delta, 0.0)
@@ -74,8 +90,10 @@ func _process(delta: float) -> void:
 		_spawn_enemy()
 		var pressure := 1.0 - time_left / round_duration
 		_spawn_cooldown = lerpf(initial_spawn_interval, minimum_spawn_interval, pressure)
+	if not _boss_spawned and round_duration - time_left >= boss_spawn_elapsed:
+		_spawn_boss()
 	if time_left <= 0.0:
-		if kills >= required_kills:
+		if kills >= required_kills and (not _boss_spawned or _boss_defeated):
 			_finish_round(true)
 		else:
 			_finish_round(false, "区域失守")
@@ -86,6 +104,7 @@ func _spawn_enemy() -> void:
 	if get_tree().get_nodes_in_group("enemies").size() >= max_active_enemies:
 		return
 	var enemy: ScrapChaser = ENEMY_SCENE.instantiate()
+	enemy.enemy_data = _choose_enemy_data()
 	enemy.target = player
 	enemy.add_to_group("enemies")
 	var side := _rng.randi_range(0, 3)
@@ -98,6 +117,48 @@ func _spawn_enemy() -> void:
 	$Enemies.add_child(enemy)
 	enemy.died.connect(_on_enemy_died)
 	enemy.hit_player.connect(_on_player_hit)
+
+
+func _choose_enemy_data() -> EnemyData:
+	var elapsed := round_duration - time_left
+	var maximum_index := 0
+	if elapsed >= 10.0:
+		maximum_index = 2
+	if elapsed >= 20.0:
+		maximum_index = 4
+	if elapsed >= 38.0:
+		maximum_index = 6
+	return ENEMY_CATALOG[_rng.randi_range(0, maximum_index)]
+
+
+func _spawn_boss() -> void:
+	_boss_spawned = true
+	var boss := BOSS_SCENE.instantiate() as WastelandBoss
+	boss.target = player
+	boss.position = Vector3(0.0, 0.0, -7.5)
+	$Enemies.add_child(boss)
+	boss.health_changed.connect(func(current: float, maximum: float) -> void: hud.show_boss(current, maximum))
+	boss.phase_changed.connect(func(_index: int, phase: BossPhaseData) -> void: hud.show_boss(boss.health, boss.max_health, phase.display_name))
+	boss.summon_requested.connect(_summon_enemies)
+	boss.died.connect(_on_boss_died)
+	boss_debug_panel.bind_boss(boss)
+	hud.show_boss(boss.health, boss.max_health, WastelandBoss.PHASES[0].display_name)
+	hud.show_message("警告", "废土监管者已进入战场")
+	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
+
+
+func _summon_enemies(count: int) -> void:
+	for index in count:
+		_spawn_enemy()
+
+
+func _on_boss_died() -> void:
+	_boss_defeated = true
+	kills += 3
+	hud.set_kills(kills, required_kills)
+	hud.hide_boss()
+	hud.show_message("核心摧毁", "废土监管者已停止运行")
+	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 
 
 func _on_enemy_died(enemy: ScrapChaser) -> void:

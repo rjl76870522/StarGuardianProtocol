@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+enemy_id = &"elite_hazard"
+display_name = "精英 熔蚀重装"
+archetype = 3
+max_health = 130.0
+move_speed = 1.45
+contact_damage = 18.0
+attack_range = 2.0
+attack_interval = 1.35
+body_color = Color(0.27, 0.06, 0.02, 1)
+core_color = Color(1, 0.48, 0.02, 1)
+scale_multiplier = 1.55
+elite = true
+leaves_hazard = true

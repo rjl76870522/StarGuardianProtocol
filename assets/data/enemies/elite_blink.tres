@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+enemy_id = &"elite_blink"
+display_name = "精英 相位猎手"
+max_health = 55.0
+move_speed = 3.2
+contact_damage = 12.0
+attack_range = 1.6
+attack_interval = 0.75
+body_color = Color(0.22, 0.04, 0.28, 1)
+core_color = Color(0.9, 0.18, 1, 1)
+scale_multiplier = 1.2
+elite = true
+teleport_on_hit = true

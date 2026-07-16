@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BossPhaseData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/boss_phase_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+health_threshold = 0.66
+display_name = "第二阶段 熔炉过载"
+move_speed = 2.8
+attack_interval = 1.1
+projectile_count = 12
+projectile_damage = 9.0
+abilities = Array[StringName]([&"radial", &"hazard", &"aimed"])
+accent_color = Color(1, 0.72, 0.04, 1)

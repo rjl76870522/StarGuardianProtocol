@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+enemy_id = &"bomber"
+display_name = "快速自爆单位"
+archetype = 2
+max_health = 14.0
+move_speed = 4.5
+contact_damage = 30.0
+attack_range = 1.8
+attack_interval = 2.0
+body_color = Color(0.38, 0.24, 0.02, 1)
+core_color = Color(1, 0.82, 0.05, 1)
+scale_multiplier = 0.78

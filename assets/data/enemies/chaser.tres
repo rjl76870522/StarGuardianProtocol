@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+enemy_id = &"chaser"
+display_name = "近战追击者"
+max_health = 24.0
+move_speed = 2.7
+contact_damage = 8.0
+attack_range = 1.55
+attack_interval = 0.95
+body_color = Color(0.34, 0.11, 0.06, 1)
+core_color = Color(1, 0.29, 0.08, 1)

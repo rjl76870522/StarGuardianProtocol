@@ -3,68 +3,223 @@ extends CharacterBody3D
 
 signal died(enemy: ScrapChaser)
 signal hit_player
+signal state_changed(state_name: String)
 
+enum State { SPAWN, IDLE, SEARCH, CHASE, ATTACK, CONTROLLED, HURT, DEAD }
+
+const ENEMY_PROJECTILE := preload("res://scenes/enemy_projectile.tscn")
+
+@export var enemy_data: EnemyData
 @export var move_speed: float = 2.4
 @export var max_health: float = 24.0
 @export var contact_damage: float = 8.0
 @export var attack_interval: float = 0.95
 @export var attack_range: float = 1.55
+@export var decision_interval: float = 0.18
 
 var target: WastelandPlayer
 var health: float
+var state: State = State.SPAWN
 var _attack_cooldown: float = 0.0
+var _decision_cooldown: float = 0.0
+var _spawn_remaining: float = 0.22
+var _hurt_remaining: float = 0.0
 var _dead: bool = false
-var _knockback_velocity: Vector3 = Vector3.ZERO
+var _knockback_velocity := Vector3.ZERO
+var _desired_direction := Vector3.ZERO
+var _hazard_cooldown: float = 1.0
+var _last_position := Vector3.ZERO
+var _stuck_time: float = 0.0
 
 @onready var hit_audio: AudioStreamPlayer3D = $HitAudio
 @onready var status_effects: StatusEffectController = $StatusEffects
 
 
 func _ready() -> void:
+	_apply_data()
 	health = max_health
 	hit_audio.stream = SoundSynth.tone(105.0, 0.075, 0.18)
+	_decision_cooldown = fmod(float(get_instance_id()) * 0.037, decision_interval)
+	_last_position = global_position
+	_set_state(State.SPAWN)
+
+
+func _apply_data() -> void:
+	if enemy_data == null or not enemy_data.is_valid():
+		return
+	move_speed = enemy_data.move_speed
+	max_health = enemy_data.max_health
+	contact_damage = enemy_data.contact_damage
+	attack_interval = enemy_data.attack_interval
+	attack_range = enemy_data.attack_range
+	scale = Vector3.ONE * enemy_data.scale_multiplier
+	var body_material := StandardMaterial3D.new()
+	body_material.albedo_color = enemy_data.body_color
+	$Body.material_override = body_material
+	var core_material := StandardMaterial3D.new()
+	core_material.albedo_color = enemy_data.core_color
+	core_material.emission_enabled = true
+	core_material.emission = enemy_data.core_color
+	core_material.emission_energy_multiplier = 3.5 if enemy_data.elite else 2.2
+	$Core.material_override = core_material
 
 
 func _physics_process(delta: float) -> void:
-	if _dead or not is_instance_valid(target) or target.is_dead:
+	if _dead:
+		return
+	_attack_cooldown = maxf(_attack_cooldown - delta, 0.0)
+	_hazard_cooldown = maxf(_hazard_cooldown - delta, 0.0)
+	if _spawn_remaining > 0.0:
+		_spawn_remaining -= delta
+		velocity = Vector3.ZERO
+		if _spawn_remaining <= 0.0:
+			_set_state(State.SEARCH)
+		return
+	if _hurt_remaining > 0.0:
+		_hurt_remaining -= delta
+		if _hurt_remaining <= 0.0:
+			_set_state(State.SEARCH)
+	if status_effects.movement_multiplier() <= 0.0:
+		_set_state(State.CONTROLLED)
 		velocity = Vector3.ZERO
 		return
+	elif state == State.CONTROLLED:
+		_set_state(State.SEARCH)
 	if _knockback_velocity.length_squared() > 0.05:
 		velocity = _knockback_velocity
 		move_and_slide()
 		_knockback_velocity = _knockback_velocity.move_toward(Vector3.ZERO, 24.0 * delta)
 		return
-	_attack_cooldown = maxf(_attack_cooldown - delta, 0.0)
+	if not is_instance_valid(target) or target.is_dead:
+		_set_state(State.IDLE)
+		velocity = Vector3.ZERO
+		return
+	_decision_cooldown -= delta
+	if _decision_cooldown <= 0.0:
+		_decision_cooldown = decision_interval
+		_update_decision()
+	_execute_behavior(delta)
+
+
+func _update_decision() -> void:
 	var offset := target.global_position - global_position
 	offset.y = 0.0
 	var distance := offset.length()
-	if distance > attack_range:
-		velocity = offset.normalized() * move_speed * status_effects.movement_multiplier()
-		look_at(global_position + offset.normalized(), Vector3.UP)
+	if distance > (enemy_data.detection_range if enemy_data != null else 24.0):
+		_set_state(State.SEARCH)
+		_desired_direction = offset.normalized()
+	elif distance <= attack_range:
+		_set_state(State.ATTACK)
+	else:
+		_set_state(State.CHASE)
+		_desired_direction = offset.normalized()
+	if global_position.distance_to(_last_position) < 0.08 and state == State.CHASE:
+		_stuck_time += decision_interval
+	else:
+		_stuck_time = 0.0
+	_last_position = global_position
+	if _stuck_time > 0.7:
+		_desired_direction = _desired_direction.rotated(Vector3.UP, PI * 0.45)
+		_stuck_time = 0.0
+
+
+func _execute_behavior(delta: float) -> void:
+	if state == State.CHASE or state == State.SEARCH:
+		velocity = _desired_direction * move_speed * status_effects.movement_multiplier()
+		if _desired_direction.length_squared() > 0.01:
+			look_at(global_position + _desired_direction, Vector3.UP)
 		move_and_slide()
-	elif _attack_cooldown <= 0.0:
-		_attack_cooldown = attack_interval
+		return
+	velocity = Vector3.ZERO
+	if state != State.ATTACK or _attack_cooldown > 0.0:
+		return
+	_attack_cooldown = attack_interval
+	var archetype := enemy_data.archetype if enemy_data != null else EnemyData.Archetype.CHASER
+	match archetype:
+		EnemyData.Archetype.SHOOTER:
+			_fire_at_player()
+		EnemyData.Archetype.BOMBER:
+			_explode()
+		EnemyData.Archetype.REPAIR:
+			_repair_nearest_ally()
+		_:
+			target.take_damage(contact_damage)
+			hit_player.emit()
+	if enemy_data != null and enemy_data.leaves_hazard and _hazard_cooldown <= 0.0:
+		_hazard_cooldown = 1.2
+		_fire_radial(6, contact_damage * 0.45)
+
+
+func _fire_at_player() -> void:
+	var projectile = ENEMY_PROJECTILE.instantiate()
+	get_tree().current_scene.add_child(projectile)
+	projectile.launch(global_position + Vector3.UP * 0.4, target.global_position - global_position, contact_damage, enemy_data.projectile_speed)
+
+
+func _fire_radial(count: int, projectile_damage: float) -> void:
+	for index in count:
+		var projectile = ENEMY_PROJECTILE.instantiate()
+		get_tree().current_scene.add_child(projectile)
+		var direction := Vector3.FORWARD.rotated(Vector3.UP, TAU * float(index) / float(count))
+		projectile.launch(global_position + Vector3.UP * 0.4, direction, projectile_damage, 9.0)
+
+
+func _explode() -> void:
+	if is_instance_valid(target) and global_position.distance_to(target.global_position) <= attack_range + 0.5:
 		target.take_damage(contact_damage)
 		hit_player.emit()
+	take_damage(health + 1.0)
+
+
+func _repair_nearest_ally() -> void:
+	var best: ScrapChaser
+	var best_distance := attack_range
+	for candidate in get_tree().get_nodes_in_group("enemies"):
+		if candidate == self or not candidate is ScrapChaser:
+			continue
+		var ally := candidate as ScrapChaser
+		var distance := global_position.distance_to(ally.global_position)
+		if distance < best_distance and ally.health < ally.max_health:
+			best = ally
+			best_distance = distance
+	if best != null:
+		best.heal(enemy_data.repair_amount)
+	else:
+		_fire_at_player()
+
+
+func heal(amount: float) -> void:
+	if not _dead:
+		health = minf(health + maxf(amount, 0.0), max_health)
 
 
 func take_damage(amount: float) -> void:
 	if _dead or amount <= 0.0:
 		return
 	health -= amount
+	_set_state(State.HURT)
+	_hurt_remaining = 0.08
 	hit_audio.play()
 	$Core.scale = Vector3.ONE * 1.7
 	create_tween().tween_property($Core, "scale", Vector3.ONE, 0.1)
+	if enemy_data != null and enemy_data.teleport_on_hit and health > 0.0:
+		var angle := fmod(float(get_instance_id() + Time.get_ticks_msec()), 628.0) * 0.01
+		global_position += Vector3(cos(angle), 0.0, sin(angle)) * 2.6
 	if health <= 0.0:
-		_dead = true
-		collision_layer = 0
-		collision_mask = 0
-		died.emit(self)
-		var tween := create_tween()
-		tween.set_parallel(true)
-		tween.tween_property(self, "scale", Vector3(1.5, 0.05, 1.5), 0.18)
-		tween.tween_property(self, "rotation:y", rotation.y + PI, 0.18)
-		tween.chain().tween_callback(queue_free)
+		_die()
+
+
+func _die() -> void:
+	_dead = true
+	_set_state(State.DEAD)
+	collision_layer = 0
+	collision_mask = 0
+	died.emit(self)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "scale", Vector3(1.5, 0.05, 1.5), 0.18)
+	tween.tween_property(self, "rotation:y", rotation.y + PI, 0.18)
+	tween.chain().tween_callback(queue_free)
 
 
 func apply_status_effect(effect: StatusEffectData, source_direction: Vector3 = Vector3.ZERO) -> bool:
@@ -73,3 +228,14 @@ func apply_status_effect(effect: StatusEffectData, source_direction: Vector3 = V
 
 func apply_knockback(force: Vector3) -> void:
 	_knockback_velocity += Vector3(force.x, 0.0, force.z)
+
+
+func get_state_name() -> String:
+	return State.keys()[state]
+
+
+func _set_state(next_state: State) -> void:
+	if state == next_state:
+		return
+	state = next_state
+	state_changed.emit(get_state_name())

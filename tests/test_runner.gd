@@ -29,7 +29,11 @@ func _run() -> void:
 	_test_combat_data_resources()
 	_test_critical_hits()
 	_test_skill_stacking_and_choices()
+	_test_enemy_data_catalog()
 	await _test_scene_smoke()
+	await _test_enemy_state_machine()
+	await _test_repair_enemy()
+	await _test_boss_phases_and_debug()
 	await _test_fire_rate_limit()
 	await _test_penetration()
 	await _test_status_duration_and_ticks()
@@ -110,6 +114,27 @@ func _test_skill_stacking_and_choices() -> void:
 	_check(not ids.has(&"rapid_fire"), "maxed skill is excluded from offers")
 
 
+func _test_enemy_data_catalog() -> void:
+	var ids: Dictionary = {}
+	var archetypes: Dictionary = {}
+	var elite_count := 0
+	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "elite_blink", "elite_hazard"]:
+		var data := load("res://assets/data/enemies/%s.tres" % enemy_id) as EnemyData
+		_check(data != null and data.is_valid(), "valid enemy data: %s" % enemy_id)
+		ids[data.enemy_id] = true
+		archetypes[data.archetype] = true
+		if data.elite:
+			elite_count += 1
+	_check(ids.size() == 7, "enemy catalog has seven unique definitions")
+	_check(archetypes.size() == 5, "enemy catalog covers five normal archetypes")
+	_check(elite_count == 2, "enemy catalog contains two elite variants")
+	var blink := load("res://assets/data/enemies/elite_blink.tres") as EnemyData
+	var hazard := load("res://assets/data/enemies/elite_hazard.tres") as EnemyData
+	_check(blink.teleport_on_hit, "phase elite changes position when hit")
+	_check(hazard.leaves_hazard, "corrosion elite creates a projectile hazard pattern")
+	_check(not EnemyData.new().is_valid(), "invalid enemy configuration is rejected")
+
+
 func _test_scene_smoke() -> void:
 	for path in [
 		"res://scenes/main_menu.tscn",
@@ -119,6 +144,10 @@ func _test_scene_smoke() -> void:
 		"res://scenes/hud.tscn",
 		"res://scenes/orbit_drone.tscn",
 		"res://scenes/upgrade_panel.tscn",
+		"res://scenes/enemy_projectile.tscn",
+		"res://scenes/ground_hazard.tscn",
+		"res://scenes/boss.tscn",
+		"res://scenes/boss_debug_panel.tscn",
 		"res://scenes/game.tscn",
 	]:
 		var packed := load(path) as PackedScene
@@ -259,6 +288,81 @@ func _test_fire_rate_limit() -> void:
 	player.queue_free()
 	for projectile in get_nodes_in_group("projectiles"):
 		projectile.queue_free()
+	await process_frame
+
+
+func _test_enemy_state_machine() -> void:
+	var player := (load("res://scenes/player.tscn") as PackedScene).instantiate() as WastelandPlayer
+	var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+	enemy.enemy_data = load("res://assets/data/enemies/chaser.tres") as EnemyData
+	enemy.target = player
+	root.add_child(player)
+	root.add_child(enemy)
+	await process_frame
+	_check(enemy.state == ScrapChaser.State.SPAWN, "enemy begins in spawn state")
+	enemy._spawn_remaining = 0.0
+	player.global_position = Vector3(7.0, 0.0, 0.0)
+	enemy._update_decision()
+	_check(enemy.state == ScrapChaser.State.CHASE, "enemy state machine enters chase")
+	player.global_position = enemy.global_position + Vector3(0.5, 0.0, 0.0)
+	enemy._update_decision()
+	_check(enemy.state == ScrapChaser.State.ATTACK, "enemy state machine enters attack")
+	var freeze := (load("res://assets/data/status/freeze.tres") as StatusEffectData).duplicate(true) as StatusEffectData
+	freeze.proc_chance = 1.0
+	enemy.apply_status_effect(freeze)
+	enemy._physics_process(0.01)
+	_check(enemy.state == ScrapChaser.State.CONTROLLED, "freeze enters controlled state")
+	enemy.take_damage(enemy.health + 1.0)
+	_check(enemy.state == ScrapChaser.State.DEAD, "fatal damage enters death state")
+	player.queue_free()
+	if is_instance_valid(enemy):
+		enemy.queue_free()
+	await process_frame
+
+
+func _test_repair_enemy() -> void:
+	var repair := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+	var ally := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+	repair.enemy_data = load("res://assets/data/enemies/repair.tres") as EnemyData
+	ally.enemy_data = load("res://assets/data/enemies/heavy.tres") as EnemyData
+	root.add_child(repair)
+	root.add_child(ally)
+	repair.add_to_group("enemies")
+	ally.add_to_group("enemies")
+	await process_frame
+	ally.take_damage(20.0)
+	var damaged_health := ally.health
+	repair._repair_nearest_ally()
+	_check(ally.health > damaged_health, "repair enemy restores nearby ally health")
+	_check(ally.health <= ally.max_health, "repair does not exceed maximum health")
+	repair.queue_free()
+	ally.queue_free()
+	await process_frame
+
+
+func _test_boss_phases_and_debug() -> void:
+	var player := (load("res://scenes/player.tscn") as PackedScene).instantiate() as WastelandPlayer
+	var boss := (load("res://scenes/boss.tscn") as PackedScene).instantiate() as WastelandBoss
+	boss.target = player
+	root.add_child(player)
+	root.add_child(boss)
+	await process_frame
+	_check(WastelandBoss.PHASES.size() == 3, "boss has three data-driven phases")
+	for phase in WastelandBoss.PHASES:
+		_check(phase.is_valid(), "boss phase resource is valid: %s" % phase.display_name)
+	_check(boss.phase_index == 0, "boss begins in phase one")
+	boss.take_damage(boss.max_health * 0.4)
+	_check(boss.phase_index == 1, "boss health threshold enters phase two")
+	boss.take_damage(boss.max_health * 0.35)
+	_check(boss.phase_index == 2, "boss health threshold enters phase three")
+	boss.debug_set_phase(0)
+	_check(boss.phase_index == 0, "debug control directly switches boss phase")
+	boss.debug_set_health_ratio(0.5)
+	_check(is_equal_approx(boss.health, boss.max_health * 0.5), "debug control sets boss health")
+	boss.reset_battle()
+	_check(boss.phase_index == 0 and is_equal_approx(boss.health, boss.max_health), "debug reset restores boss battle")
+	player.queue_free()
+	boss.queue_free()
 	await process_frame
 
 

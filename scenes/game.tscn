@@ -1,10 +1,11 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource path="res://src/core/game.gd" type="Script" id="1"]
 [ext_resource path="res://src/world/arena.gd" type="Script" id="2"]
 [ext_resource path="res://scenes/player.tscn" type="PackedScene" id="3"]
 [ext_resource path="res://scenes/hud.tscn" type="PackedScene" id="4"]
 [ext_resource path="res://scenes/upgrade_panel.tscn" type="PackedScene" id="5"]
+[ext_resource path="res://scenes/boss_debug_panel.tscn" type="PackedScene" id="6"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -67,6 +68,8 @@ script = ExtResource("2")
 [node name="HUD" parent="." instance=ExtResource("4")]
 
 [node name="UpgradePanel" parent="." instance=ExtResource("5")]
+
+[node name="BossDebugPanel" parent="." instance=ExtResource("6")]
 
 [node name="PauseLayer" type="CanvasLayer" parent="."]
 layer = 20

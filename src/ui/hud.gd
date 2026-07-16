@@ -36,6 +36,18 @@ func set_skill(skill: SkillData, level: int) -> void:
 	$Margin/BottomBar/UpgradeStatus.text = "%s  等级 %d" % [skill.display_name, level]
 
 
+func show_boss(current: float, maximum: float, phase_name: String = "") -> void:
+	$Margin/BossBar.visible = true
+	$Margin/BossBar/Health.max_value = maximum
+	$Margin/BossBar/Health.value = current
+	if not phase_name.is_empty():
+		$Margin/BossBar/BossName.text = "废土监管者  |  %s" % phase_name
+
+
+func hide_boss() -> void:
+	$Margin/BossBar.visible = false
+
+
 func show_message(title: String, subtitle: String) -> void:
 	$CenterMessage/Content/Title.text = title
 	$CenterMessage/Content/Subtitle.text = subtitle

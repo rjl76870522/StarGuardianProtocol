@@ -8,12 +8,12 @@
 - Milestone 1: complete
 - Milestone 2: complete
 - Milestone 3: complete
-- Milestones 4-9: pending
+- Milestone 4: complete
+- Milestones 5-9: pending
 
-The current vertical slice includes a menu, one-minute industrial arena,
-top-down movement and mouse aim, rapid fire, dash, one chasing enemy type,
-health, spawning pressure, pause/restart, victory/defeat results, synthesized
-sound, impact feedback, and camera shake.
+The current vertical slice includes a Chinese interface, one-minute industrial
+arena, three weapons, six upgrade paths, five normal enemy archetypes, two elite
+variants, and a three-phase mechanical boss.
 
 Victory requires both surviving the full minute and destroying at least eight
 hostiles. Avoiding combat until the timer expires results in `SECTOR OVERRUN`.
@@ -53,8 +53,11 @@ platform's executable and `WastelandProtocol.pck` together when distributing.
 - Left mouse: fire
 - `Space`: dash
 - `Esc`: pause
+- `1`, `2`, `3`: switch weapon
+- `F3`: toggle Boss debug panel
+- `F4`: spawn Boss immediately in debug runs
 
 All visuals and sounds are generated from project-owned geometry, SVG, shaders,
 and synthesized waveforms. No third-party art assets are included.
 
-See `docs/milestone_03_report.md` for the current verified scope and next risks.
+See `docs/milestone_04_report.md` for the current verified scope and next risks.

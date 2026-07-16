@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+enemy_id = &"heavy"
+display_name = "重型装甲单位"
+archetype = 3
+max_health = 90.0
+move_speed = 1.25
+contact_damage = 16.0
+attack_range = 1.9
+attack_interval = 1.6
+body_color = Color(0.19, 0.2, 0.18, 1)
+core_color = Color(0.88, 0.22, 0.08, 1)
+scale_multiplier = 1.45
