@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource path="res://src/player/player.gd" type="Script" id="1"]
 
@@ -40,6 +40,34 @@ albedo_color = Color(0.025, 0.035, 0.038, 1)
 metallic = 0.9
 roughness = 0.28
 
+[sub_resource type="BoxMesh" id="ArmorMesh"]
+size = Vector3(1.18, 0.2, 0.72)
+
+[sub_resource type="StandardMaterial3D" id="ArmorMaterial"]
+albedo_color = Color(0.12, 0.35, 0.38, 1)
+metallic = 0.88
+roughness = 0.24
+
+[sub_resource type="CapsuleMesh" id="CanopyMesh"]
+radius = 0.28
+height = 0.65
+radial_segments = 16
+rings = 8
+
+[sub_resource type="StandardMaterial3D" id="CanopyMaterial"]
+albedo_color = Color(0.08, 0.32, 0.38, 1)
+metallic = 0.45
+roughness = 0.12
+emission_enabled = true
+emission = Color(0.02, 0.18, 0.2, 1)
+emission_energy_multiplier = 1.2
+
+[sub_resource type="CylinderMesh" id="AntennaMesh"]
+top_radius = 0.035
+bottom_radius = 0.05
+height = 0.62
+radial_segments = 8
+
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
 collision_mask = 5
@@ -56,18 +84,30 @@ position = Vector3(0, 0.76, 0)
 mesh = SubResource("BodyMesh")
 material_override = SubResource("BodyMaterial")
 
+[node name="UpperArmor" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.4, 0.06)
+mesh = SubResource("ArmorMesh")
+material_override = SubResource("ArmorMaterial")
+
+[node name="Canopy" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.58, 0.12)
+rotation = Vector3(1.5708, 0, 0)
+scale = Vector3(1, 1, 0.72)
+mesh = SubResource("CanopyMesh")
+material_override = SubResource("CanopyMaterial")
+
 [node name="Core" type="MeshInstance3D" parent="Body"]
 position = Vector3(0, 0.03, -0.58)
 mesh = SubResource("CoreMesh")
 material_override = SubResource("CoreMaterial")
 
 [node name="Gun" type="MeshInstance3D" parent="Body"]
-position = Vector3(0, 0.12, -0.9)
+position = Vector3(0, 0.28, -0.94)
 mesh = SubResource("GunMesh")
 material_override = SubResource("DarkMaterial")
 
 [node name="Muzzle" type="Marker3D" parent="Body"]
-position = Vector3(0, 0.12, -1.5)
+position = Vector3(0, 0.28, -1.52)
 
 [node name="LeftWheel" type="MeshInstance3D" parent="Body"]
 position = Vector3(-0.52, -0.14, 0)
@@ -80,6 +120,37 @@ position = Vector3(0.52, -0.14, 0)
 rotation = Vector3(0, 0, 1.5708)
 mesh = SubResource("WheelMesh")
 material_override = SubResource("DarkMaterial")
+
+[node name="LeftTrackGuard" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.53, 0.06, 0)
+scale = Vector3(0.28, 0.75, 1.55)
+mesh = SubResource("ArmorMesh")
+material_override = SubResource("DarkMaterial")
+
+[node name="RightTrackGuard" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.53, 0.06, 0)
+scale = Vector3(0.28, 0.75, 1.55)
+mesh = SubResource("ArmorMesh")
+material_override = SubResource("DarkMaterial")
+
+[node name="LeftFin" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.69, 0.28, 0.28)
+rotation = Vector3(0, 0.25, -0.18)
+scale = Vector3(0.38, 0.55, 0.78)
+mesh = SubResource("ArmorMesh")
+material_override = SubResource("ArmorMaterial")
+
+[node name="RightFin" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.69, 0.28, 0.28)
+rotation = Vector3(0, -0.25, 0.18)
+scale = Vector3(0.38, 0.55, 0.78)
+mesh = SubResource("ArmorMesh")
+material_override = SubResource("ArmorMaterial")
+
+[node name="Antenna" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.36, 0.92, 0.18)
+mesh = SubResource("AntennaMesh")
+material_override = SubResource("CoreMaterial")
 
 [node name="CoreLight" type="OmniLight3D" parent="Body"]
 position = Vector3(0, 0.05, -0.6)
@@ -101,4 +172,3 @@ volume_db = -8.0
 
 [node name="DashAudio" type="AudioStreamPlayer" parent="."]
 volume_db = -7.0
-

@@ -39,6 +39,7 @@ func _run() -> void:
 	await _test_upgrade_card_and_campaign_progression()
 	await _test_weapon_reward_panel()
 	_test_enemy_data_catalog()
+	await _test_enemy_visual_profiles()
 	await _test_scene_smoke()
 	await _test_enemy_state_machine()
 	await _test_repair_enemy()
@@ -52,6 +53,7 @@ func _run() -> void:
 	await _test_projectile_does_not_hit_twice()
 	await _test_projectile_physics_hit()
 	await _test_debris_has_collision()
+	await _test_obstacle_blocks_actors_and_projectiles()
 	await _test_seeded_arena_variants()
 	_test_generated_audio()
 	await _test_repeated_game_cleanup()
@@ -102,9 +104,13 @@ func _test_save_round_trip_and_corruption() -> void:
 	file.close()
 	_check(manager.load_campaign().is_empty(), "corrupted campaign save is rejected")
 	file = FileAccess.open(manager.save_path, FileAccess.WRITE)
-	file.store_string(JSON.stringify({"version": 1, "stage": -5, "skills": {}, "weapons": {}}))
+	file.store_string(JSON.stringify({"version": 2, "stage": -5, "skills": {}, "weapons": {}}))
 	file.close()
 	_check(manager.load_campaign().is_empty(), "invalid campaign values are rejected")
+	file = FileAccess.open(manager.save_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"version": 1, "stage": 3, "skills": {}, "weapons": {}}))
+	file.close()
+	_check(manager.load_campaign().is_empty(), "campaign saves from the previous version are discarded")
 	state.start_campaign()
 
 
@@ -236,6 +242,22 @@ func _test_enemy_data_catalog() -> void:
 	_check(blink.teleport_on_hit, "phase elite changes position when hit")
 	_check(hazard.leaves_hazard, "corrosion elite creates a projectile hazard pattern")
 	_check(not EnemyData.new().is_valid(), "invalid enemy configuration is rejected")
+
+
+func _test_enemy_visual_profiles() -> void:
+	var profiles: Dictionary = {}
+	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "elite_blink", "elite_hazard"]:
+		var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+		enemy.enemy_data = load("res://assets/data/enemies/%s.tres" % enemy_id) as EnemyData
+		root.add_child(enemy)
+		await process_frame
+		var details := enemy.get_node_or_null("ArchetypeDetails")
+		_check(details != null and details.get_child_count() > 0, "enemy has an archetype silhouette: %s" % enemy_id)
+		profiles[enemy_id] = str(details.get_meta("profile", "")) if details != null else ""
+		enemy.queue_free()
+		await process_frame
+	_check(profiles["shooter"] != profiles["heavy"], "shooter and heavy use separate visual profiles")
+	_check(profiles["bomber"] != profiles["repair"], "bomber and repair use separate visual profiles")
 
 
 func _test_scene_smoke() -> void:
@@ -411,6 +433,56 @@ func _test_seeded_arena_variants() -> void:
 	later.queue_free()
 	await process_frame
 	state.start_campaign()
+
+
+func _test_obstacle_blocks_actors_and_projectiles() -> void:
+	var wall := StaticBody3D.new()
+	wall.collision_layer = 1
+	wall.position = Vector3(3.0, 0.7, 0.0)
+	var wall_collision := CollisionShape3D.new()
+	var wall_shape := BoxShape3D.new()
+	wall_shape.size = Vector3(0.8, 1.4, 3.0)
+	wall_collision.shape = wall_shape
+	wall.add_child(wall_collision)
+	root.add_child(wall)
+	await physics_frame
+
+	var player := (load("res://scenes/player.tscn") as PackedScene).instantiate() as WastelandPlayer
+	player.position = Vector3.ZERO
+	root.add_child(player)
+	await physics_frame
+	var player_collision := player.move_and_collide(Vector3(6.0, 0.0, 0.0), true)
+	_check(player_collision != null and player_collision.get_collider() == wall, "player cannot pass through world obstacles")
+	player.queue_free()
+
+	var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+	enemy.position = Vector3.ZERO
+	root.add_child(enemy)
+	await physics_frame
+	var enemy_collision := enemy.move_and_collide(Vector3(6.0, 0.0, 0.0), true)
+	_check(enemy_collision != null and enemy_collision.get_collider() == wall, "enemy cannot pass through world obstacles")
+	enemy.queue_free()
+
+	var projectile := (load("res://scenes/projectile.tscn") as PackedScene).instantiate()
+	root.add_child(projectile)
+	projectile.launch(Vector3(0.0, 0.7, 0.0), Vector3.RIGHT)
+	for frame in 12:
+		await physics_frame
+		if not is_instance_valid(projectile) or projectile.is_queued_for_deletion():
+			break
+	_check(not is_instance_valid(projectile) or projectile.is_queued_for_deletion(), "player projectile is destroyed by world obstacles")
+
+	var enemy_projectile := (load("res://scenes/enemy_projectile.tscn") as PackedScene).instantiate()
+	root.add_child(enemy_projectile)
+	enemy_projectile.launch(Vector3(0.0, 0.7, 0.0), Vector3.RIGHT, 10.0, 80.0)
+	for frame in 12:
+		await physics_frame
+		if not is_instance_valid(enemy_projectile) or enemy_projectile.is_queued_for_deletion():
+			break
+	_check(not is_instance_valid(enemy_projectile) or enemy_projectile.is_queued_for_deletion(), "enemy projectile is destroyed by world obstacles at high speed")
+
+	wall.queue_free()
+	await process_frame
 
 
 func _test_fire_rate_limit() -> void:

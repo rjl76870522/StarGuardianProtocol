@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 var save_path := "user://campaign_save.json"
 var temp_path := "user://campaign_save.tmp"
 var backup_path := "user://campaign_save.backup.json"

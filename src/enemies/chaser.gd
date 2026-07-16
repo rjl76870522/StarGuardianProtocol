@@ -37,6 +37,7 @@ var _stuck_time: float = 0.0
 
 func _ready() -> void:
 	_apply_data()
+	_build_archetype_visual()
 	health = max_health
 	hit_audio.stream = SoundSynth.tone(105.0, 0.075, 0.18)
 	_decision_cooldown = fmod(float(get_instance_id()) * 0.037, decision_interval)
@@ -211,7 +212,7 @@ func take_damage(amount: float) -> void:
 	create_tween().tween_property($Core, "scale", Vector3.ONE, 0.1)
 	if enemy_data != null and enemy_data.teleport_on_hit and health > 0.0:
 		var angle := fmod(float(get_instance_id() + Time.get_ticks_msec()), 628.0) * 0.01
-		global_position += Vector3(cos(angle), 0.0, sin(angle)) * 2.6
+		_try_teleport(Vector3(cos(angle), 0.0, sin(angle)) * 2.6)
 	if health <= 0.0:
 		_die()
 
@@ -246,3 +247,82 @@ func _set_state(next_state: State) -> void:
 		return
 	state = next_state
 	state_changed.emit(get_state_name())
+
+
+func _try_teleport(offset: Vector3) -> bool:
+	var motion := Vector3(offset.x, 0.0, offset.z)
+	if motion.is_zero_approx():
+		return false
+	var collision := move_and_collide(motion, true)
+	if collision != null:
+		return false
+	global_position += motion
+	return true
+
+
+func _build_archetype_visual() -> void:
+	if enemy_data == null:
+		return
+	var details := Node3D.new()
+	details.name = "ArchetypeDetails"
+	details.set_meta("profile", enemy_data.enemy_id)
+	add_child(details)
+	var accent := enemy_data.core_color
+	match enemy_data.archetype:
+		EnemyData.Archetype.SHOOTER:
+			_add_box(details, Vector3(-0.3, 0.82, -0.55), Vector3(0.13, 0.13, 0.95), accent)
+			_add_box(details, Vector3(0.3, 0.82, -0.55), Vector3(0.13, 0.13, 0.95), accent)
+			_add_box(details, Vector3(0.0, 0.9, 0.2), Vector3(0.9, 0.12, 0.35), enemy_data.body_color.lightened(0.2))
+		EnemyData.Archetype.BOMBER:
+			for index in 6:
+				var angle := TAU * float(index) / 6.0
+				_add_box(details, Vector3(cos(angle) * 0.58, 0.7, sin(angle) * 0.58), Vector3(0.13, 0.55, 0.13), accent, angle)
+		EnemyData.Archetype.HEAVY:
+			_add_box(details, Vector3(-0.48, 0.72, 0.0), Vector3(0.32, 0.72, 1.0), enemy_data.body_color.lightened(0.16))
+			_add_box(details, Vector3(0.48, 0.72, 0.0), Vector3(0.32, 0.72, 1.0), enemy_data.body_color.lightened(0.16))
+			_add_box(details, Vector3(0.0, 1.02, 0.18), Vector3(0.72, 0.24, 0.62), accent.darkened(0.25))
+		EnemyData.Archetype.REPAIR:
+			_add_cylinder(details, Vector3(0.0, 1.03, 0.0), 0.48, 0.12, accent)
+			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.12, 0.42, 0.12), accent)
+			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.42, 0.12, 0.12), accent)
+		_:
+			_add_box(details, Vector3(-0.32, 0.96, 0.05), Vector3(0.18, 0.48, 0.28), accent.darkened(0.35), -0.3)
+			_add_box(details, Vector3(0.32, 0.96, 0.05), Vector3(0.18, 0.48, 0.28), accent.darkened(0.35), 0.3)
+	if enemy_data.elite:
+		_add_cylinder(details, Vector3(0.0, 1.2, 0.0), 0.68, 0.08, accent)
+
+
+func _add_box(parent: Node3D, at: Vector3, size: Vector3, color: Color, yaw: float = 0.0) -> void:
+	var visual := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.position = at
+	visual.rotation.y = yaw
+	visual.material_override = _detail_material(color)
+	parent.add_child(visual)
+
+
+func _add_cylinder(parent: Node3D, at: Vector3, radius: float, height: float, color: Color) -> void:
+	var visual := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius
+	mesh.height = height
+	mesh.radial_segments = 12
+	visual.mesh = mesh
+	visual.position = at
+	visual.material_override = _detail_material(color, true)
+	parent.add_child(visual)
+
+
+func _detail_material(color: Color, emissive: bool = false) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.metallic = 0.82
+	material.roughness = 0.32
+	if emissive:
+		material.emission_enabled = true
+		material.emission = color
+		material.emission_energy_multiplier = 1.8
+	return material
