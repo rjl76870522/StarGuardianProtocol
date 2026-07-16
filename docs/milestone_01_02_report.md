@@ -6,7 +6,7 @@ Date: 2026-07-16
 
 - Standalone Godot 4.6.3 project with GL Compatibility rendering
 - Original low-poly industrial-wasteland arena and generated application icon
-- Main menu and one-minute playable survival loop
+- Main menu and one-minute combat loop requiring eight kills and survival
 - Keyboard movement, mouse aim/fire, dash, health, contact damage, enemy spawning,
   victory, defeat, pause, restart, and return-to-menu flow
 - Procedural gun, dash, and hit audio plus impact flashes and camera shake
@@ -22,13 +22,14 @@ godot4 --headless --path . --export-release Windows
 ./builds/linux/WastelandProtocol.x86_64 --headless --quit-after 120
 ```
 
-The validation suite passes 28 checks. The Linux release starts successfully.
+The validation suite passes 47 checks. The Linux release starts successfully.
 The Windows release is generated as a PE32+ x86-64 GUI executable; execution on
 Windows remains a target-machine check.
 
-A windowed automated-input run completed the real 60-second timer and displayed
-`SECTOR SECURED` with `Survived 01:00`. Separate windowed runs also verified the
-death result and keyboard-focused restart action.
+Windowed verification confirmed actual projectile kills (`SCRAP 003`), physical
+debris collision, the death result, and keyboard-focused restart. Victory now
+requires surviving 60 seconds with at least eight kills; timer-only avoidance is
+explicitly rejected as `SECTOR OVERRUN`.
 
 ## Generated files
 

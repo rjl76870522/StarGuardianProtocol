@@ -21,13 +21,36 @@ func launch(origin: Vector3, aim_direction: Vector3) -> void:
 
 func _physics_process(delta: float) -> void:
 	var step := speed * delta
-	global_position += direction * step
+	var start := global_position
+	var destination := start + direction * step
+	var query := PhysicsRayQueryParameters3D.create(
+		start,
+		destination,
+		collision_mask,
+		[get_rid()]
+	)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		global_position = hit["position"] as Vector3
+		var collider := hit["collider"] as Node3D
+		if collider != null:
+			_apply_hit(collider)
+		else:
+			queue_free()
+		return
+	global_position = destination
 	traveled += step
 	if traveled >= max_distance:
 		queue_free()
 
 
 func _on_body_entered(body: Node3D) -> void:
+	_apply_hit(body)
+
+
+func _apply_hit(body: Node3D) -> void:
 	var body_id := body.get_instance_id()
 	if _hit_ids.has(body_id):
 		return
@@ -35,4 +58,3 @@ func _on_body_entered(body: Node3D) -> void:
 	if body.has_method("take_damage"):
 		body.take_damage(DamageRules.calculate(damage))
 	queue_free()
-

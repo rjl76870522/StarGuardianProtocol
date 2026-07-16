@@ -13,8 +13,11 @@ func set_time(seconds_left: float) -> void:
 	$Margin/TopBar/TimerPanel/Timer.text = "%02d:%02d" % [total / 60, total % 60]
 
 
-func set_kills(value: int) -> void:
-	$Margin/TopBar/KillPanel/Kills.text = "SCRAP  %03d" % value
+func set_kills(value: int, target: int = 0) -> void:
+	if target > 0:
+		$Margin/TopBar/KillPanel/Kills.text = "SCRAP  %03d / %03d" % [value, target]
+	else:
+		$Margin/TopBar/KillPanel/Kills.text = "SCRAP  %03d" % value
 
 
 func set_dash_ready(ready: bool) -> void:

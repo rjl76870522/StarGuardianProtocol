@@ -6,7 +6,7 @@ signal hit_player
 
 @export var move_speed: float = 2.4
 @export var max_health: float = 24.0
-@export var contact_damage: float = 3.0
+@export var contact_damage: float = 8.0
 @export var attack_interval: float = 0.95
 @export var attack_range: float = 1.55
 

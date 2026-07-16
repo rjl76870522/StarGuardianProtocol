@@ -89,16 +89,30 @@ func _create_debris() -> void:
 		Vector3(-13.5, 0.22, 6.8), Vector3(13.0, 0.3, -7.1),
 	]
 	for index in positions.size():
-		var debris := MeshInstance3D.new()
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(1.4 + index * 0.12, 0.45, 0.75)
-		debris.mesh = mesh
+		var size := Vector3(1.4 + index * 0.12, 0.45, 0.75)
+		var debris := StaticBody3D.new()
+		debris.name = "Debris%d" % index
+		debris.collision_layer = 1
 		debris.position = positions[index]
 		debris.rotation.y = 0.35 + index * 0.7
+		debris.add_to_group("obstacles")
+
+		var visual := MeshInstance3D.new()
+		visual.name = "Visual"
+		var mesh := BoxMesh.new()
+		mesh.size = size
+		visual.mesh = mesh
 		var material := StandardMaterial3D.new()
 		material.albedo_color = Color("5b4631")
 		material.metallic = 0.55
 		material.roughness = 0.9
-		debris.material_override = material
-		add_child(debris)
+		visual.material_override = material
+		debris.add_child(visual)
 
+		var collision := CollisionShape3D.new()
+		collision.name = "CollisionShape3D"
+		var shape := BoxShape3D.new()
+		shape.size = size
+		collision.shape = shape
+		debris.add_child(collision)
+		add_child(debris)

@@ -7,6 +7,7 @@ const IMPACT_SCENE := preload("res://scenes/impact_flash.tscn")
 @export var initial_spawn_interval: float = 2.4
 @export var minimum_spawn_interval: float = 1.2
 @export var max_active_enemies: int = 16
+@export var required_kills: int = 8
 
 var time_left: float
 var kills: int = 0
@@ -35,8 +36,8 @@ func _ready() -> void:
 	player.dash_started.connect(_on_dash_started)
 	hud.set_health(player.health, player.max_health)
 	hud.set_time(time_left)
-	hud.set_kills(kills)
-	hud.show_message("SURVIVE", "Hold the line for sixty seconds")
+	hud.set_kills(kills, required_kills)
+	hud.show_message("ENGAGE", "Destroy %d hostiles and hold for sixty seconds" % required_kills)
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/ResumeButton.pressed.connect(_toggle_pause)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/RestartButton.pressed.connect(_restart)
@@ -58,7 +59,10 @@ func _process(delta: float) -> void:
 		var pressure := 1.0 - time_left / round_duration
 		_spawn_cooldown = lerpf(initial_spawn_interval, minimum_spawn_interval, pressure)
 	if time_left <= 0.0:
-		_finish_round(true)
+		if kills >= required_kills:
+			_finish_round(true)
+		else:
+			_finish_round(false, "SECTOR OVERRUN")
 	_update_camera_shake(delta)
 
 
@@ -82,7 +86,7 @@ func _spawn_enemy() -> void:
 
 func _on_enemy_died(enemy: ScrapChaser) -> void:
 	kills += 1
-	hud.set_kills(kills)
+	hud.set_kills(kills, required_kills)
 	_spawn_impact(enemy.global_position, Color("ffb340"))
 	_camera_shake = maxf(_camera_shake, 0.12)
 
@@ -130,14 +134,14 @@ func _on_player_died() -> void:
 	_finish_round(false)
 
 
-func _finish_round(victory: bool) -> void:
+func _finish_round(victory: bool, failure_title: String = "UNIT DESTROYED") -> void:
 	if _round_finished:
 		return
 	_round_finished = true
 	GameState.finish_run(round_duration - time_left, kills)
 	result_panel.visible = true
 	result_panel.process_mode = Node.PROCESS_MODE_ALWAYS
-	var title := "SECTOR SECURED" if victory else "UNIT DESTROYED"
+	var title := "SECTOR SECURED" if victory else failure_title
 	var detail := "Survived %02d:%02d   |   Scrap recovered %d" % [
 		int(GameState.last_survival_time) / 60,
 		int(GameState.last_survival_time) % 60,

@@ -28,8 +28,11 @@ func _run() -> void:
 	_test_damage_rules()
 	await _test_scene_smoke()
 	await _test_player_damage_and_invulnerability()
+	await _test_player_aim_stays_level()
 	await _test_enemy_damage_once()
 	await _test_projectile_does_not_hit_twice()
+	await _test_projectile_physics_hit()
+	await _test_debris_has_collision()
 	_test_generated_audio()
 	await _test_repeated_game_cleanup()
 	await _test_round_results()
@@ -87,6 +90,19 @@ func _test_player_damage_and_invulnerability() -> void:
 	await process_frame
 
 
+func _test_player_aim_stays_level() -> void:
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var player := player_scene.instantiate() as WastelandPlayer
+	root.add_child(player)
+	await process_frame
+	player.aim_at_world_point(Vector3(8.0, 0.0, 3.0))
+	var forward: Vector3 = -player.get_node("Body").global_transform.basis.z
+	_check(absf(forward.y) < 0.001, "player aim keeps the weapon level")
+	_check(player.muzzle.global_position.y > 0.75, "aimed muzzle remains above the floor")
+	player.queue_free()
+	await process_frame
+
+
 func _test_enemy_damage_once() -> void:
 	var enemy_scene := load("res://scenes/chaser.tscn") as PackedScene
 	var enemy := enemy_scene.instantiate() as ScrapChaser
@@ -115,6 +131,63 @@ func _test_projectile_does_not_hit_twice() -> void:
 	await process_frame
 
 
+func _test_projectile_physics_hit() -> void:
+	var enemy_scene := load("res://scenes/chaser.tscn") as PackedScene
+	var projectile_scene := load("res://scenes/projectile.tscn") as PackedScene
+	var enemy := enemy_scene.instantiate() as ScrapChaser
+	var projectile := projectile_scene.instantiate()
+	enemy.position = Vector3(3.0, 0.65, 0.0)
+	root.add_child(enemy)
+	root.add_child(projectile)
+	projectile.launch(Vector3(0.0, 0.88, 0.0), Vector3.RIGHT)
+	var initial := enemy.health
+	for frame in 12:
+		await physics_frame
+		if enemy.health < initial:
+			break
+	_check(enemy.health < initial, "moving projectile physically damages an enemy")
+	_check(is_equal_approx(enemy.health, initial - projectile.damage), "projectile sweep applies damage once")
+	if is_instance_valid(projectile):
+		projectile.queue_free()
+	enemy.queue_free()
+	await process_frame
+
+
+func _test_debris_has_collision() -> void:
+	var arena := Node3D.new()
+	arena.set_script(load("res://src/world/arena.gd"))
+	root.add_child(arena)
+	await physics_frame
+	var obstacles := get_nodes_in_group("obstacles")
+	_check(obstacles.size() == 4, "arena creates four physical debris obstacles")
+	for obstacle in obstacles:
+		_check(obstacle is StaticBody3D, "debris obstacle is a static body")
+		_check(obstacle.get_node_or_null("CollisionShape3D") != null, "debris obstacle has a collision shape")
+	if not obstacles.is_empty():
+		var obstacle := obstacles[0] as StaticBody3D
+		var start := obstacle.global_position + Vector3(-3.0, 0.0, 0.0)
+		var finish := obstacle.global_position + Vector3(3.0, 0.0, 0.0)
+		var query := PhysicsRayQueryParameters3D.create(start, finish, 1)
+		var hit := arena.get_world_3d().direct_space_state.intersect_ray(query)
+		_check(not hit.is_empty(), "physics ray cannot pass through debris")
+		if not hit.is_empty():
+			_check(hit["collider"] == obstacle, "physics ray hits the expected debris body")
+		var player_scene := load("res://scenes/player.tscn") as PackedScene
+		var player := player_scene.instantiate() as WastelandPlayer
+		var approach := obstacle.global_transform.basis.x.normalized()
+		var start_position := obstacle.global_position - approach * 3.0
+		player.position = Vector3(start_position.x, 0.0, start_position.z)
+		root.add_child(player)
+		await physics_frame
+		var collision := player.move_and_collide(approach * 6.0, true)
+		_check(collision != null, "player cannot move through debris")
+		if collision != null:
+			_check(collision.get_collider() == obstacle, "player collides with the expected debris")
+		player.queue_free()
+	arena.queue_free()
+	await process_frame
+
+
 func _test_generated_audio() -> void:
 	var stream := SoundSynth.tone(440.0, 0.05)
 	_check(stream != null, "synthesized audio stream exists")
@@ -140,6 +213,7 @@ func _test_round_results() -> void:
 	var victory_game := game_scene.instantiate()
 	victory_game.round_duration = 1.0
 	victory_game.initial_spawn_interval = 99.0
+	victory_game.required_kills = 0
 	root.add_child(victory_game)
 	await process_frame
 	victory_game._process(1.1)
@@ -150,6 +224,22 @@ func _test_round_results() -> void:
 	)
 	paused = false
 	victory_game.queue_free()
+	await process_frame
+
+	var quota_game := game_scene.instantiate()
+	quota_game.round_duration = 1.0
+	quota_game.initial_spawn_interval = 99.0
+	quota_game.required_kills = 2
+	root.add_child(quota_game)
+	await process_frame
+	quota_game._process(1.1)
+	_check(quota_game._round_finished, "timer expiry finishes an unmet objective")
+	_check(
+		quota_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "SECTOR OVERRUN",
+		"surviving without enough kills does not win"
+	)
+	paused = false
+	quota_game.queue_free()
 	await process_frame
 
 	var defeat_game := game_scene.instantiate()

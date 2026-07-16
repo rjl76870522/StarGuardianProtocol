@@ -14,6 +14,9 @@ top-down movement and mouse aim, rapid fire, dash, one chasing enemy type,
 health, spawning pressure, pause/restart, victory/defeat results, synthesized
 sound, impact feedback, and camera shake.
 
+Victory requires both surviving the full minute and destroying at least eight
+hostiles. Avoiding combat until the timer expires results in `SECTOR OVERRUN`.
+
 ## Requirements
 
 - Godot 4.6.3 stable

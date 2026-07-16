@@ -10,13 +10,14 @@ Performance claims must include measured Godot monitor output; none are inferred
 ## Verified baseline
 
 - Godot 4.6.3 project import and script/resource parsing
-- 28 logic and scene checks, including victory and defeat transitions
+- 47 logic and scene checks, including projectile sweep collision, physical
+  debris blocking, level weapon aim, and all result transitions
 - Three consecutive game-scene create/free cycles
 - Main scene headless boot
 - Linux release export and exported-binary boot
 - Windows x86-64 release export and executable format inspection
-- Windowed menu, combat HUD, pause/result layout, movement, firing, dash, damage,
-  enemy death, player death, keyboard restart, and a full 60-second victory run
+- Windowed menu, combat HUD, objective layout, movement, firing, dash, damage,
+  enemy death with increasing `SCRAP`, player death, and keyboard restart
 
 Windows execution is not claimed on Ubuntu; only cross-platform export is
 verified here. Long-session performance measurements remain a later milestone.

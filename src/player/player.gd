@@ -10,13 +10,13 @@ const PROJECTILE_SCENE := preload("res://scenes/projectile.tscn")
 
 @export var move_speed: float = 8.0
 @export var acceleration: float = 34.0
-@export var max_health: float = 300.0
+@export var max_health: float = 160.0
 @export var fire_interval: float = 0.13
 @export var dash_speed: float = 22.0
 @export var dash_duration: float = 0.16
 @export var dash_cooldown: float = 0.85
 @export var invulnerability_duration: float = 0.24
-@export var hit_invulnerability_duration: float = 0.85
+@export var hit_invulnerability_duration: float = 0.65
 
 var health: float
 var is_dead: bool = false
@@ -70,11 +70,16 @@ func _update_aim() -> void:
 	var floor_plane := Plane(Vector3.UP, 0.0)
 	var hit: Variant = floor_plane.intersects_ray(ray_origin, ray_direction)
 	if hit is Vector3:
-		var target: Vector3 = hit
-		var flat := target - global_position
-		flat.y = 0.0
-		if flat.length_squared() > 0.05:
-			$Body.look_at(global_position + flat.normalized(), Vector3.UP)
+		aim_at_world_point(hit as Vector3)
+
+
+func aim_at_world_point(target: Vector3) -> void:
+	var flat := target - global_position
+	flat.y = 0.0
+	if flat.length_squared() <= 0.05:
+		return
+	var body_origin: Vector3 = $Body.global_position
+	$Body.look_at(Vector3(target.x, body_origin.y, target.z), Vector3.UP)
 
 
 func _try_fire() -> void:
