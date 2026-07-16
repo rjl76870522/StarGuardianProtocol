@@ -112,7 +112,7 @@ alignment = 1
 
 [node name="Title" type="Label" parent="PauseLayer/PausePanel/Panel/Content"]
 layout_mode = 2
-text = "SYSTEM PAUSED"
+text = "战斗已暂停"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
 theme_override_font_sizes/font_size = 28
@@ -124,7 +124,7 @@ theme_override_constants/separation = 14
 [node name="ResumeButton" type="Button" parent="PauseLayer/PausePanel/Panel/Content/Buttons"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
-text = "RESUME"
+text = "继续战斗"
 theme_override_styles/normal = SubResource("Button")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
@@ -132,7 +132,7 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [node name="RestartButton" type="Button" parent="PauseLayer/PausePanel/Panel/Content/Buttons"]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "RESTART"
+text = "重新开始"
 theme_override_styles/normal = SubResource("Button")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
@@ -140,7 +140,7 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [node name="MenuButton" type="Button" parent="PauseLayer/PausePanel/Panel/Content/Buttons"]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "RETURN TO COMMAND"
+text = "返回主菜单"
 theme_override_styles/normal = SubResource("Button")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
@@ -186,14 +186,14 @@ alignment = 1
 
 [node name="Title" type="Label" parent="PauseLayer/ResultPanel/Panel/Content"]
 layout_mode = 2
-text = "SECTOR SECURED"
+text = "区域已肃清"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 30
 
 [node name="Detail" type="Label" parent="PauseLayer/ResultPanel/Panel/Content"]
 layout_mode = 2
-text = "Survived 01:00   |   Scrap recovered 0"
+text = "存活 01:00   |   击毁敌人 0"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.65, 0.76, 0.73, 1)
 theme_override_font_sizes/font_size = 16
@@ -206,7 +206,7 @@ alignment = 1
 [node name="RestartButton" type="Button" parent="PauseLayer/ResultPanel/Panel/Content/Buttons"]
 custom_minimum_size = Vector2(235, 56)
 layout_mode = 2
-text = "RUN AGAIN"
+text = "再次出击"
 theme_override_styles/normal = SubResource("Button")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
@@ -214,7 +214,7 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [node name="MenuButton" type="Button" parent="PauseLayer/ResultPanel/Panel/Content/Buttons"]
 custom_minimum_size = Vector2(235, 56)
 layout_mode = 2
-text = "COMMAND"
+text = "主菜单"
 theme_override_styles/normal = SubResource("Button")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")

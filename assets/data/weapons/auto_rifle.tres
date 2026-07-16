@@ -21,8 +21,8 @@ amplitude = 0.18
 [resource]
 script = ExtResource("1_weapon")
 weapon_id = &"auto_rifle"
-display_name = "VX-9 AUTO RIFLE"
-description = "Reliable automatic kinetic fire"
+display_name = "VX-9 自动步枪"
+description = "稳定可靠的全自动动能武器"
 icon = ExtResource("4_icon")
 damage = 14.0
 fire_interval = 0.12

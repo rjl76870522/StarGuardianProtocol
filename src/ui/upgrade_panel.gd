@@ -41,7 +41,7 @@ func show_choices(choices: Array[SkillData], skill_system: SkillSystem) -> void:
 			continue
 		var skill := _choices[index]
 		var next_level := _skill_system.get_level(skill.skill_id) + 1
-		button.text = "%d   %s\nLEVEL %d / %d\n%s\nNEXT  %.2f" % [
+		button.text = "%d   %s\n等级 %d / %d\n%s\n下一级  %.2f" % [
 			index + 1,
 			skill.display_name,
 			next_level,
@@ -65,4 +65,3 @@ func _choose(index: int) -> void:
 	var skill := _choices[index]
 	close()
 	skill_selected.emit(skill)
-

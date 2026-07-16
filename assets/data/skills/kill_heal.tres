@@ -3,8 +3,8 @@
 [resource]
 script = ExtResource("1")
 skill_id = &"kill_heal"
-display_name = "SALVAGE REPAIR"
-description = "Recover armor after every kill"
+display_name = "战场修复"
+description = "每次击毁敌人后恢复装甲"
 max_level = 3
 level_values = PackedFloat32Array(4, 7, 10)
 accent_color = Color(0.35, 1, 0.5, 1)

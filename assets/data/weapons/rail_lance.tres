@@ -21,8 +21,8 @@ amplitude = 0.24
 [resource]
 script = ExtResource("1_weapon")
 weapon_id = &"rail_lance"
-display_name = "ARC RAIL LANCE"
-description = "High-energy penetrator with freeze chance"
+display_name = "电弧轨道枪"
+description = "能够穿透目标并有概率冻结敌人的高能武器"
 icon = ExtResource("4_icon")
 damage = 54.0
 fire_interval = 1.15

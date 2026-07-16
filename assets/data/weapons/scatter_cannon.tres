@@ -22,8 +22,8 @@ amplitude = 0.28
 [resource]
 script = ExtResource("1_weapon")
 weapon_id = &"scatter_cannon"
-display_name = "M-12 SCATTER CANNON"
-description = "Six-pellet close-range disruption"
+display_name = "M-12 霰弹炮"
+description = "一次发射六枚弹丸的近距离压制武器"
 icon = ExtResource("4_icon")
 damage = 8.0
 fire_interval = 0.68

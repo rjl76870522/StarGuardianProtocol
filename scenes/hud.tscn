@@ -118,7 +118,7 @@ theme_override_styles/panel = SubResource("PanelStyle")
 
 [node name="Kills" type="Label" parent="Margin/TopBar/KillPanel"]
 layout_mode = 2
-text = "SCRAP  000"
+text = "击毁  000"
 horizontal_alignment = 1
 vertical_alignment = 1
 label_settings = SubResource("SmallSettings")
@@ -138,14 +138,14 @@ grow_vertical = 0
 
 [node name="DashStatus" type="Label" parent="Margin/BottomBar"]
 layout_mode = 2
-text = "DASH  READY"
+text = "闪避  就绪"
 theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="UpgradeStatus" type="Label" parent="Margin/BottomBar"]
 custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
-text = "NO MODULES"
+text = "暂无强化模块"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.52, 0.68, 0.65, 1)
 theme_override_font_sizes/font_size = 13
@@ -163,7 +163,7 @@ stretch_mode = 5
 [node name="WeaponStatus" type="Label" parent="Margin/BottomBar"]
 custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
-text = "1  VX-9 AUTO RIFLE"
+text = "1  VX-9 自动步枪"
 vertical_alignment = 1
 theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
 theme_override_font_sizes/font_size = 14
@@ -188,12 +188,12 @@ alignment = 1
 
 [node name="Title" type="Label" parent="CenterMessage/Content"]
 layout_mode = 2
-text = "SURVIVE"
+text = "坚守阵地"
 horizontal_alignment = 1
 label_settings = SubResource("TitleSettings")
 
 [node name="Subtitle" type="Label" parent="CenterMessage/Content"]
 layout_mode = 2
-text = "Hold the line"
+text = "消灭敌人并存活六十秒"
 horizontal_alignment = 1
 label_settings = SubResource("SmallSettings")

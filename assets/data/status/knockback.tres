@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 effect_id = &"knockback"
-display_name = "Knockback"
+display_name = "击退"
 effect_type = 3
 duration = 0.15
 knockback_strength = 8.0

@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 effect_id = &"freeze"
-display_name = "Freeze"
+display_name = "冻结"
 effect_type = 1
 duration = 0.7
 speed_multiplier = 0.0

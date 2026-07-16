@@ -15,13 +15,13 @@ func set_time(seconds_left: float) -> void:
 
 func set_kills(value: int, target: int = 0) -> void:
 	if target > 0:
-		$Margin/TopBar/KillPanel/Kills.text = "SCRAP  %03d / %03d" % [value, target]
+		$Margin/TopBar/KillPanel/Kills.text = "击毁  %03d / %03d" % [value, target]
 	else:
-		$Margin/TopBar/KillPanel/Kills.text = "SCRAP  %03d" % value
+		$Margin/TopBar/KillPanel/Kills.text = "击毁  %03d" % value
 
 
 func set_dash_ready(ready: bool) -> void:
-	$Margin/BottomBar/DashStatus.text = "DASH  READY" if ready else "DASH  RECHARGING"
+	$Margin/BottomBar/DashStatus.text = "闪避  就绪" if ready else "闪避  充能中"
 	$Margin/BottomBar/DashStatus.modulate = Color("35e6b2") if ready else Color("7b8c88")
 
 
@@ -33,7 +33,7 @@ func set_weapon(weapon: WeaponData, index: int) -> void:
 
 
 func set_skill(skill: SkillData, level: int) -> void:
-	$Margin/BottomBar/UpgradeStatus.text = "%s  LV.%d" % [skill.display_name, level]
+	$Margin/BottomBar/UpgradeStatus.text = "%s  等级 %d" % [skill.display_name, level]
 
 
 func show_message(title: String, subtitle: String) -> void:

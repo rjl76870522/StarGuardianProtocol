@@ -90,13 +90,13 @@ alignment = 1
 
 [node name="Protocol" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "WASTELAND // PROTOCOL"
+text = "机械废土 // 作战协议"
 theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 16
 
 [node name="Title" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "LAST\nDEFENSE"
+text = "最后\n防线"
 theme_override_colors/font_color = Color(0.86, 0.96, 0.92, 1)
 theme_override_font_sizes/font_size = 66
 
@@ -107,7 +107,7 @@ color = Color(0.25, 0.42, 0.4, 1)
 
 [node name="Subtitle" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "机械废土：最后防线\nSURVIVAL DIRECTIVE  //  01"
+text = "机械废土：最后防线\n生存指令  //  01"
 theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
 theme_override_font_sizes/font_size = 18
 
@@ -129,7 +129,7 @@ stretch_mode = 5
 
 [node name="Status" type="Label" parent="Layout/Panel/Buttons"]
 layout_mode = 2
-text = "UNIT ONLINE\nSECTOR 07  //  THREAT ACTIVE"
+text = "作战单元在线\n第 07 区  //  威胁活跃"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
 theme_override_font_sizes/font_size = 13
@@ -137,7 +137,7 @@ theme_override_font_sizes/font_size = 13
 [node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
-text = "DEPLOY"
+text = "投入战斗"
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
@@ -146,11 +146,10 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [node name="QuitButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "SHUT DOWN"
+text = "退出游戏"
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [connection signal="pressed" from="Layout/Panel/Buttons/StartButton" to="." method="_on_start_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/QuitButton" to="." method="_on_quit_pressed"]
-

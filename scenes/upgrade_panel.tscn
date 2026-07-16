@@ -83,14 +83,14 @@ alignment = 1
 
 [node name="Title" type="Label" parent="Overlay/Panel/Content"]
 layout_mode = 2
-text = "SYSTEM EVOLUTION"
+text = "战斗模块升级"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 30
 
 [node name="Subtitle" type="Label" parent="Overlay/Panel/Content"]
 layout_mode = 2
-text = "Select one combat module"
+text = "选择一项强化"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.6, 0.74, 0.7, 1)
 theme_override_font_sizes/font_size = 15
@@ -103,7 +103,7 @@ alignment = 1
 [node name="Choice1" type="Button" parent="Overlay/Panel/Content/Choices"]
 custom_minimum_size = Vector2(340, 270)
 layout_mode = 2
-text = "1   OVERCLOCK"
+text = "1   武器超频"
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Choice")
 theme_override_styles/hover = SubResource("ChoiceFocus")
@@ -112,7 +112,7 @@ theme_override_styles/focus = SubResource("ChoiceFocus")
 [node name="Choice2" type="Button" parent="Overlay/Panel/Content/Choices"]
 custom_minimum_size = Vector2(340, 270)
 layout_mode = 2
-text = "2   PHASE CORE"
+text = "2   相位核心"
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Choice")
 theme_override_styles/hover = SubResource("ChoiceFocus")
@@ -121,7 +121,7 @@ theme_override_styles/focus = SubResource("ChoiceFocus")
 [node name="Choice3" type="Button" parent="Overlay/Panel/Content/Choices"]
 custom_minimum_size = Vector2(340, 270)
 layout_mode = 2
-text = "3   SENTRY ORBIT"
+text = "3   环绕哨兵"
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Choice")
 theme_override_styles/hover = SubResource("ChoiceFocus")

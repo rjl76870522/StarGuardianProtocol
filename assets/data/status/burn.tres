@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 effect_id = &"burn"
-display_name = "Burn"
+display_name = "燃烧"
 effect_type = 0
 duration = 3.0
 tick_interval = 0.5

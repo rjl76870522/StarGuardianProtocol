@@ -372,7 +372,7 @@ func _test_round_results() -> void:
 	victory_game._process(1.1)
 	_check(victory_game._round_finished, "timer expiry finishes the round")
 	_check(
-		victory_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "SECTOR SECURED",
+		victory_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "区域已肃清",
 		"timer expiry shows victory result"
 	)
 	paused = false
@@ -388,7 +388,7 @@ func _test_round_results() -> void:
 	quota_game._process(1.1)
 	_check(quota_game._round_finished, "timer expiry finishes an unmet objective")
 	_check(
-		quota_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "SECTOR OVERRUN",
+		quota_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "区域失守",
 		"surviving without enough kills does not win"
 	)
 	paused = false
@@ -402,7 +402,7 @@ func _test_round_results() -> void:
 	defeat_game.player.take_damage(defeat_game.player.max_health)
 	_check(defeat_game._round_finished, "player death finishes the round")
 	_check(
-		defeat_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "UNIT DESTROYED",
+		defeat_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "作战单元已损毁",
 		"player death shows defeat result"
 	)
 	paused = false

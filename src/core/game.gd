@@ -53,7 +53,7 @@ func _ready() -> void:
 	hud.set_time(time_left)
 	hud.set_kills(kills, required_kills)
 	hud.set_weapon(player.current_weapon, player.weapon_index)
-	hud.show_message("ENGAGE", "Destroy %d hostiles and hold for sixty seconds" % required_kills)
+	hud.show_message("进入战斗", "击毁 %d 个敌人并坚守六十秒" % required_kills)
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/ResumeButton.pressed.connect(_toggle_pause)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/RestartButton.pressed.connect(_restart)
@@ -78,7 +78,7 @@ func _process(delta: float) -> void:
 		if kills >= required_kills:
 			_finish_round(true)
 		else:
-			_finish_round(false, "SECTOR OVERRUN")
+			_finish_round(false, "区域失守")
 	_update_camera_shake(delta)
 
 
@@ -179,15 +179,15 @@ func _on_player_died() -> void:
 	_finish_round(false)
 
 
-func _finish_round(victory: bool, failure_title: String = "UNIT DESTROYED") -> void:
+func _finish_round(victory: bool, failure_title: String = "作战单元已损毁") -> void:
 	if _round_finished:
 		return
 	_round_finished = true
 	GameState.finish_run(round_duration - time_left, kills)
 	result_panel.visible = true
 	result_panel.process_mode = Node.PROCESS_MODE_ALWAYS
-	var title := "SECTOR SECURED" if victory else failure_title
-	var detail := "Survived %02d:%02d   |   Scrap recovered %d" % [
+	var title := "区域已肃清" if victory else failure_title
+	var detail := "存活 %02d:%02d   |   击毁敌人 %d" % [
 		int(GameState.last_survival_time) / 60,
 		int(GameState.last_survival_time) % 60,
 		kills,
