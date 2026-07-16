@@ -18,6 +18,7 @@ config/icon="res://assets/generated/app_icon.svg"
 [autoload]
 
 GameState="*res://src/core/game_state.gd"
+SaveManager="*res://src/core/save_manager.gd"
 
 [display]
 

@@ -82,6 +82,12 @@ func _format_value(skill: SkillData, level: int) -> String:
 	match skill.skill_id:
 		&"rapid_fire", &"move_speed":
 			return "+%d%%" % int(round((value - 1.0) * 100.0))
+		&"combat_core":
+			return "+%d%% 伤害" % int(round((value - 1.0) * 100.0))
+		&"critical_matrix":
+			return "+%d%% 暴击" % int(round(value * 100.0))
+		&"armor_plating":
+			return "+%d 最大生命" % int(value)
 		&"ricochet":
 			return "弹射 %d 次" % int(value)
 		&"penetration":

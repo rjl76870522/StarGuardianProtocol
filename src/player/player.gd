@@ -7,6 +7,7 @@ signal fired(recoil: float)
 signal dash_started
 signal weapon_changed(weapon: WeaponData, index: int)
 signal skill_upgraded(skill: SkillData, level: int)
+signal action_message(message: String)
 
 const PROJECTILE_SCENE := preload("res://scenes/projectile.tscn")
 const DRONE_SCENE := preload("res://scenes/orbit_drone.tscn")
@@ -65,12 +66,18 @@ func _restore_campaign_skills() -> void:
 		preload("res://assets/data/skills/penetration.tres"),
 		preload("res://assets/data/skills/kill_heal.tres"),
 		preload("res://assets/data/skills/orbit_drone.tres"),
+		preload("res://assets/data/skills/combat_core.tres"),
+		preload("res://assets/data/skills/critical_matrix.tres"),
+		preload("res://assets/data/skills/armor_plating.tres"),
 	]:
 		var target_level := int(game_state.carried_skill_levels.get(skill.skill_id, 0))
 		for level in target_level:
 			skill_system.apply_upgrade(skill)
 		if skill.skill_id == &"orbit_drone" and target_level > 0:
 			_sync_drones(int(skill.value_for_level(target_level)))
+		elif skill.skill_id == &"armor_plating" and target_level > 0:
+			max_health = 160.0 + skill.value_for_level(target_level)
+			health = max_health
 
 
 func _physics_process(delta: float) -> void:
@@ -133,6 +140,10 @@ func equip_weapon(index: int) -> bool:
 	if candidate == null or not candidate.is_valid():
 		push_warning("Rejected invalid weapon configuration at index %d" % index)
 		return false
+	var game_state := get_node_or_null("/root/GameState")
+	if game_state != null and not game_state.is_weapon_unlocked(candidate.weapon_id):
+		action_message.emit("%s 尚未解锁，请通过关卡奖励获得" % candidate.display_name)
+		return false
 	weapon_index = index
 	current_weapon = candidate
 	fire_interval = current_weapon.fire_interval
@@ -171,11 +182,19 @@ func _try_fire() -> bool:
 				-current_weapon.spread_degrees * 0.5,
 				current_weapon.spread_degrees * 0.5
 			))
+		var weapon_level := _weapon_level(current_weapon.weapon_id)
+		var weapon_multiplier := 1.0 + float(maxi(weapon_level - 1, 0)) * 0.18
+		var skill_damage_multiplier := skill_system.get_value(&"combat_core", 1.0)
 		projectile.configure(
 			current_weapon,
-			1.0,
+			weapon_multiplier * skill_damage_multiplier,
 			int(skill_system.get_value(&"penetration", 0.0)),
 			int(skill_system.get_value(&"ricochet", 0.0))
+		)
+		projectile.critical_chance = clampf(
+			projectile.critical_chance + skill_system.get_value(&"critical_matrix", 0.0),
+			0.0,
+			0.95
 		)
 		projectile.launch(muzzle.global_position, base_direction.rotated(Vector3.UP, spread_angle))
 	weapon_audio.play()
@@ -192,8 +211,20 @@ func apply_skill(skill: SkillData) -> bool:
 		game_state.record_skill(skill.skill_id, level)
 	if skill.skill_id == &"orbit_drone":
 		_sync_drones(int(skill.value_for_level(level)))
+	elif skill.skill_id == &"combat_core":
+		_sync_drones(int(skill_system.get_value(&"orbit_drone", 0.0)))
+	elif skill.skill_id == &"armor_plating":
+		var previous_max := max_health
+		max_health = 160.0 + skill.value_for_level(level)
+		health = minf(health + max_health - previous_max, max_health)
+		health_changed.emit(health, max_health)
 	skill_upgraded.emit(skill, level)
 	return true
+
+
+func _weapon_level(weapon_id: StringName) -> int:
+	var game_state := get_node_or_null("/root/GameState")
+	return int(game_state.weapon_level(weapon_id)) if game_state != null else 1
 
 
 func on_kill() -> void:
@@ -212,7 +243,7 @@ func _sync_drones(target_count: int) -> void:
 		drone.add_to_group("player_drones")
 		existing.append(drone)
 	for index in existing.size():
-		existing[index].configure(index, existing.size())
+		existing[index].configure(index, existing.size(), skill_system.get_value(&"combat_core", 1.0))
 
 
 func _start_dash(direction: Vector3) -> void:

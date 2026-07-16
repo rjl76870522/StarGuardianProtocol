@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/skill_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+skill_id = &"critical_matrix"
+display_name = "暴击矩阵"
+description = "额外提高所有武器的暴击概率"
+max_level = 5
+level_values = PackedFloat32Array(0.05, 0.1, 0.15, 0.2, 0.25)
+accent_color = Color(1, 0.75, 0.12, 1)

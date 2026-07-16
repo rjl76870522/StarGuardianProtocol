@@ -19,6 +19,9 @@ const SKILL_CATALOG: Array[SkillData] = [
 	preload("res://assets/data/skills/penetration.tres"),
 	preload("res://assets/data/skills/kill_heal.tres"),
 	preload("res://assets/data/skills/orbit_drone.tres"),
+	preload("res://assets/data/skills/combat_core.tres"),
+	preload("res://assets/data/skills/critical_matrix.tres"),
+	preload("res://assets/data/skills/armor_plating.tres"),
 ]
 
 @export var round_duration: float = 60.0
@@ -48,6 +51,7 @@ var _boss_defeated: bool = false
 @onready var camera: Camera3D = $Player/CameraRig/Camera3D
 @onready var upgrade_panel: UpgradePanel = $UpgradePanel
 @onready var boss_debug_panel: BossDebugPanel = $BossDebugPanel
+@onready var weapon_reward_panel: WeaponRewardPanel = $WeaponRewardPanel
 
 
 func _ready() -> void:
@@ -63,7 +67,9 @@ func _ready() -> void:
 	player.dash_started.connect(_on_dash_started)
 	player.weapon_changed.connect(_on_weapon_changed)
 	player.skill_upgraded.connect(_on_skill_upgraded)
+	player.action_message.connect(_on_action_message)
 	upgrade_panel.skill_selected.connect(_on_skill_selected)
+	weapon_reward_panel.weapon_selected.connect(_on_weapon_reward_selected)
 	hud.set_health(player.health, player.max_health)
 	hud.set_time(time_left)
 	hud.set_kills(kills, required_kills)
@@ -220,6 +226,11 @@ func _on_skill_upgraded(skill: SkillData, level: int) -> void:
 	hud.set_skill(skill, level)
 
 
+func _on_action_message(message: String) -> void:
+	hud.show_message("武器未解锁", message)
+	get_tree().create_timer(1.8).timeout.connect(hud.hide_message)
+
+
 func _on_dash_started() -> void:
 	hud.set_dash_ready(false)
 	get_tree().create_timer(player.dash_cooldown).timeout.connect(func() -> void: hud.set_dash_ready(true))
@@ -294,6 +305,15 @@ func _restart() -> void:
 
 
 func _next_stage() -> void:
+	result_panel.visible = false
+	var rewards: Array[WeaponData] = []
+	for weapon in WastelandPlayer.WEAPON_CATALOG:
+		rewards.append(weapon as WeaponData)
+	weapon_reward_panel.show_rewards(rewards)
+
+
+func _on_weapon_reward_selected(weapon: WeaponData) -> void:
+	GameState.upgrade_weapon(weapon.weapon_id)
 	GameState.advance_stage()
 	get_tree().paused = false
 	get_tree().reload_current_scene()

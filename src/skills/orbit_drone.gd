@@ -13,10 +13,11 @@ var _total: int = 1
 var _attack_cooldown: float = 0.2
 
 
-func configure(slot: int, total: int) -> void:
+func configure(slot: int, total: int, damage_multiplier: float = 1.0) -> void:
 	_slot = maxi(slot, 0)
 	_total = maxi(total, 1)
 	_angle = TAU * float(_slot) / float(_total)
+	damage = 7.0 * maxf(damage_multiplier, 1.0)
 
 
 func _process(delta: float) -> void:
@@ -47,4 +48,3 @@ func _attack_nearest() -> void:
 	var tween := create_tween()
 	tween.tween_property($Core, "scale", Vector3.ONE * 1.8, 0.06)
 	tween.tween_property($Core, "scale", Vector3.ONE, 0.12)
-

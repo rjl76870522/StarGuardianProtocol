@@ -137,8 +137,17 @@ theme_override_font_sizes/font_size = 13
 [node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
-text = "投入战斗"
+text = "新战役"
 theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="ContinueButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+text = "继续战役"
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
@@ -152,4 +161,5 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [connection signal="pressed" from="Layout/Panel/Buttons/StartButton" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/QuitButton" to="." method="_on_quit_pressed"]

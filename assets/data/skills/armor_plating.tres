@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://src/data/skill_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+skill_id = &"armor_plating"
+display_name = "复合装甲"
+description = "提高最大生命并立即恢复相同数值"
+max_level = 5
+level_values = PackedFloat32Array(20, 40, 65, 95, 130)
+accent_color = Color(0.3, 0.72, 1, 1)

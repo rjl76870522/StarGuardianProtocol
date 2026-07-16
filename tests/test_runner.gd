@@ -25,12 +25,19 @@ func _check(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
+	var save_manager := root.get_node("SaveManager")
+	save_manager.save_path = "user://campaign_save_test.json"
+	save_manager.temp_path = "user://campaign_save_test.tmp"
+	save_manager.backup_path = "user://campaign_save_test.backup.json"
+	save_manager.delete_campaign()
 	root.get_node("GameState").start_campaign()
+	_test_save_round_trip_and_corruption()
 	_test_damage_rules()
 	_test_combat_data_resources()
 	_test_critical_hits()
 	_test_skill_stacking_and_choices()
 	await _test_upgrade_card_and_campaign_progression()
+	await _test_weapon_reward_panel()
 	_test_enemy_data_catalog()
 	await _test_scene_smoke()
 	await _test_enemy_state_machine()
@@ -45,6 +52,7 @@ func _run() -> void:
 	await _test_projectile_does_not_hit_twice()
 	await _test_projectile_physics_hit()
 	await _test_debris_has_collision()
+	await _test_seeded_arena_variants()
 	_test_generated_audio()
 	await _test_repeated_game_cleanup()
 	await _test_upgrade_offer_flow()
@@ -52,10 +60,12 @@ func _run() -> void:
 
 	if _failures.is_empty():
 		print("TEST_RESULT: PASS (%d checks)" % _checks)
+		save_manager.delete_campaign()
 		await process_frame
 		quit(0)
 	else:
 		printerr("TEST_RESULT: FAIL (%d failures, %d checks)" % [_failures.size(), _checks])
+		save_manager.delete_campaign()
 		await process_frame
 		quit(1)
 
@@ -65,6 +75,37 @@ func _test_damage_rules() -> void:
 	_check(is_equal_approx(DamageRules.calculate(10.0, 2.0, 3.0), 17.0), "multiplier and armor")
 	_check(is_equal_approx(DamageRules.calculate(2.0, 1.0, 99.0), 1.0), "minimum positive damage")
 	_check(is_zero_approx(DamageRules.calculate(-1.0)), "invalid damage is zero")
+
+
+func _test_save_round_trip_and_corruption() -> void:
+	var manager := root.get_node("SaveManager")
+	var state := root.get_node("GameState")
+	state.start_campaign()
+	state.current_stage = 4
+	state.campaign_seed = 24680
+	state.carried_skill_levels = {&"rapid_fire": 3, &"armor_plating": 2}
+	state.weapon_levels = {&"auto_rifle": 2, &"scatter_cannon": 1}
+	state.unlocked_weapons = {&"auto_rifle": true, &"scatter_cannon": true}
+	_check(manager.save_campaign(state), "campaign save is written")
+	state.current_stage = 1
+	state.campaign_seed = 1
+	state.carried_skill_levels.clear()
+	state.weapon_levels = {&"auto_rifle": 1}
+	state.unlocked_weapons = {&"auto_rifle": true}
+	_check(manager.apply_campaign(state), "campaign save can be restored")
+	_check(state.current_stage == 4 and state.campaign_seed == 24680, "campaign restores stage and map seed")
+	_check(state.carried_skill_levels.get(&"rapid_fire", 0) == 3, "campaign restores skill levels")
+	_check(state.weapon_levels.get(&"scatter_cannon", 0) == 1, "campaign restores weapon rewards")
+
+	var file := FileAccess.open(manager.save_path, FileAccess.WRITE)
+	file.store_string("{broken json")
+	file.close()
+	_check(manager.load_campaign().is_empty(), "corrupted campaign save is rejected")
+	file = FileAccess.open(manager.save_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"version": 1, "stage": -5, "skills": {}, "weapons": {}}))
+	file.close()
+	_check(manager.load_campaign().is_empty(), "invalid campaign values are rejected")
+	state.start_campaign()
 
 
 func _test_combat_data_resources() -> void:
@@ -79,7 +120,7 @@ func _test_combat_data_resources() -> void:
 		_check(weapon.icon != null, "weapon has an icon: %s" % path)
 	var invalid_weapon := WeaponData.new()
 	_check(not invalid_weapon.is_valid(), "invalid weapon configuration is rejected")
-	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone"]:
+	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone", "combat_core", "critical_matrix", "armor_plating"]:
 		var skill := load("res://assets/data/skills/%s.tres" % skill_id) as SkillData
 		_check(skill != null and skill.is_valid(), "valid skill resource: %s" % skill_id)
 
@@ -99,11 +140,13 @@ func _test_skill_stacking_and_choices() -> void:
 	_check(system.apply_upgrade(rapid), "skill accepts first level")
 	_check(system.apply_upgrade(rapid), "skill accepts second level")
 	_check(system.apply_upgrade(rapid), "skill accepts third level")
-	_check(system.get_level(&"rapid_fire") == 3, "skill levels stack to maximum")
-	_check(is_equal_approx(system.get_value(&"rapid_fire"), 1.5), "stacked skill exposes final value")
+	_check(system.apply_upgrade(rapid), "skill accepts fourth level")
+	_check(system.apply_upgrade(rapid), "skill accepts fifth level")
+	_check(system.get_level(&"rapid_fire") == 5, "skill levels stack to maximum")
+	_check(is_equal_approx(system.get_value(&"rapid_fire"), 1.95), "stacked skill exposes final value")
 	_check(not system.apply_upgrade(rapid), "skill rejects upgrades above maximum")
 	var catalog: Array[SkillData] = []
-	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone"]:
+	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone", "combat_core", "critical_matrix", "armor_plating"]:
 		catalog.append(load("res://assets/data/skills/%s.tres" % skill_id) as SkillData)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 77
@@ -120,20 +163,20 @@ func _test_upgrade_card_and_campaign_progression() -> void:
 	var game_state := root.get_node("GameState")
 	game_state.start_campaign()
 	game_state.advance_stage()
-	game_state.record_skill(&"rapid_fire", 2)
+	game_state.record_skill(&"rapid_fire", 4)
 	_check(game_state.current_stage == 2, "campaign advances to the next stage")
 	var player := (load("res://scenes/player.tscn") as PackedScene).instantiate() as WastelandPlayer
 	root.add_child(player)
 	await process_frame
-	_check(player.skill_system.get_level(&"rapid_fire") == 2, "next stage restores carried skill levels")
+	_check(player.skill_system.get_level(&"rapid_fire") == 4, "next stage restores carried skill levels")
 	var panel := (load("res://scenes/upgrade_panel.tscn") as PackedScene).instantiate() as UpgradePanel
 	root.add_child(panel)
 	await process_frame
 	var rapid := load("res://assets/data/skills/rapid_fire.tres") as SkillData
 	panel.show_choices([rapid], player.skill_system)
 	var card_text: String = panel.buttons[0].text
-	_check(card_text.contains("3 / 3"), "upgrade card clearly shows the target maximum level")
-	_check(card_text.contains("+50%"), "upgrade card explains the resulting effect")
+	_check(card_text.contains("5 / 5"), "upgrade card clearly shows the target maximum level")
+	_check(card_text.contains("+95%"), "upgrade card explains the resulting effect")
 	player.apply_skill(rapid)
 	_check(not player.skill_system.can_upgrade(rapid), "restored skill stops at maximum level")
 	var rng := RandomNumberGenerator.new()
@@ -145,6 +188,33 @@ func _test_upgrade_card_and_campaign_progression() -> void:
 	await process_frame
 	game_state.start_campaign()
 	_check(game_state.current_stage == 1 and game_state.carried_skill_levels.is_empty(), "new campaign clears stage and upgrades")
+
+
+func _test_weapon_reward_panel() -> void:
+	var game_state := root.get_node("GameState")
+	game_state.start_campaign()
+	var panel := (load("res://scenes/weapon_reward_panel.tscn") as PackedScene).instantiate()
+	root.add_child(panel)
+	await process_frame
+	var rewards: Array[WeaponData] = []
+	rewards.assign(WastelandPlayer.WEAPON_CATALOG)
+	panel.show_rewards(rewards)
+	_check(panel.visible, "weapon reward panel opens after a cleared stage")
+	_check(panel.buttons[0].text.contains("强化"), "owned weapon reward is shown as an upgrade")
+	_check(panel.buttons[1].text.contains("解锁"), "locked weapon reward is shown as an unlock")
+	var selected: Array[WeaponData] = []
+	panel.weapon_selected.connect(func(weapon: WeaponData) -> void: selected.append(weapon))
+	panel._choose(1)
+	_check(selected.size() == 1 and selected[0].weapon_id == &"scatter_cannon", "weapon reward emits the selected weapon")
+	var selected_id := selected[0].weapon_id if not selected.is_empty() else &""
+	_check(game_state.upgrade_weapon(selected_id), "selected weapon reward is applied")
+	_check(game_state.is_weapon_unlocked(&"scatter_cannon"), "weapon reward unlocks a new weapon")
+	_check(game_state.weapon_level(&"scatter_cannon") == 1, "new weapon begins at level one")
+	_check(game_state.upgrade_weapon(&"scatter_cannon"), "unlocked weapon can be upgraded again")
+	_check(game_state.weapon_level(&"scatter_cannon") == 2, "weapon level increases with later rewards")
+	panel.queue_free()
+	await process_frame
+	game_state.start_campaign()
 
 
 func _test_enemy_data_catalog() -> void:
@@ -177,6 +247,7 @@ func _test_scene_smoke() -> void:
 		"res://scenes/hud.tscn",
 		"res://scenes/orbit_drone.tscn",
 		"res://scenes/upgrade_panel.tscn",
+		"res://scenes/weapon_reward_panel.tscn",
 		"res://scenes/enemy_projectile.tscn",
 		"res://scenes/ground_hazard.tscn",
 		"res://scenes/boss.tscn",
@@ -308,7 +379,42 @@ func _test_debris_has_collision() -> void:
 	await process_frame
 
 
+func _test_seeded_arena_variants() -> void:
+	var state := root.get_node("GameState")
+	state.campaign_seed = 13579
+	state.current_stage = 1
+	var first := Node3D.new()
+	first.set_script(load("res://src/world/arena.gd"))
+	root.add_child(first)
+	await process_frame
+	var first_signature: String = first.layout_signature
+	var first_variant: int = first.variant
+	first.queue_free()
+	await process_frame
+
+	var repeated := Node3D.new()
+	repeated.set_script(load("res://src/world/arena.gd"))
+	root.add_child(repeated)
+	await process_frame
+	_check(repeated.layout_signature == first_signature, "same campaign seed and stage reproduce the arena")
+	_check(repeated.variant == first_variant, "same campaign seed reproduces the arena palette")
+	repeated.queue_free()
+	await process_frame
+
+	state.current_stage = 3
+	var later := Node3D.new()
+	later.set_script(load("res://src/world/arena.gd"))
+	root.add_child(later)
+	await process_frame
+	_check(later.layout_signature != first_signature, "later stages generate a different obstacle layout")
+	_check(get_nodes_in_group("obstacles").size() == 5, "later stages add another physical obstacle")
+	later.queue_free()
+	await process_frame
+	state.start_campaign()
+
+
 func _test_fire_rate_limit() -> void:
+	root.get_node("GameState").upgrade_weapon(&"scatter_cannon")
 	var player := (load("res://scenes/player.tscn") as PackedScene).instantiate() as WastelandPlayer
 	root.add_child(player)
 	await process_frame

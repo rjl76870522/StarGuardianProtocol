@@ -33,7 +33,9 @@ func set_weapon(weapon: WeaponData, index: int) -> void:
 	if weapon == null:
 		return
 	$Margin/BottomBar/WeaponIcon.texture = weapon.icon
-	$Margin/BottomBar/WeaponStatus.text = "%d  %s" % [index + 1, weapon.display_name]
+	var state := get_node_or_null("/root/GameState")
+	var level := int(state.weapon_level(weapon.weapon_id)) if state != null else 1
+	$Margin/BottomBar/WeaponStatus.text = "%d  %s  ·  %d级" % [index + 1, weapon.display_name, level]
 
 
 func set_skill(skill: SkillData, level: int) -> void:
