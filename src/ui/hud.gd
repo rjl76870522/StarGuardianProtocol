@@ -13,6 +13,10 @@ func set_time(seconds_left: float) -> void:
 	$Margin/TopBar/TimerPanel/Timer.text = "%02d:%02d" % [total / 60, total % 60]
 
 
+func set_stage(stage: int) -> void:
+	$Margin/TopBar/StagePanel/Stage.text = "第 %d 关" % stage
+
+
 func set_kills(value: int, target: int = 0) -> void:
 	if target > 0:
 		$Margin/TopBar/KillPanel/Kills.text = "击毁  %03d / %03d" % [value, target]
@@ -33,7 +37,12 @@ func set_weapon(weapon: WeaponData, index: int) -> void:
 
 
 func set_skill(skill: SkillData, level: int) -> void:
-	$Margin/BottomBar/UpgradeStatus.text = "%s  等级 %d" % [skill.display_name, level]
+	var suffix := "  已满级" if level >= skill.max_level else "  等级 %d" % level
+	$Margin/BottomBar/UpgradeStatus.text = skill.display_name + suffix
+
+
+func show_all_skills_maxed() -> void:
+	$Margin/BottomBar/UpgradeStatus.text = "全部强化已满级"
 
 
 func show_boss(current: float, maximum: float, phase_name: String = "") -> void:

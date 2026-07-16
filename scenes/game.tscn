@@ -174,9 +174,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -330.0
+offset_left = -380.0
 offset_top = -185.0
-offset_right = 330.0
+offset_right = 380.0
 offset_bottom = 185.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -207,15 +207,24 @@ theme_override_constants/separation = 18
 alignment = 1
 
 [node name="RestartButton" type="Button" parent="PauseLayer/ResultPanel/Panel/Content/Buttons"]
-custom_minimum_size = Vector2(235, 56)
+custom_minimum_size = Vector2(220, 56)
 layout_mode = 2
 text = "再次出击"
 theme_override_styles/normal = SubResource("Button")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
+[node name="NextButton" type="Button" parent="PauseLayer/ResultPanel/Panel/Content/Buttons"]
+visible = false
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 2
+text = "进入下一关"
+theme_override_styles/normal = SubResource("Button")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
 [node name="MenuButton" type="Button" parent="PauseLayer/ResultPanel/Panel/Content/Buttons"]
-custom_minimum_size = Vector2(235, 56)
+custom_minimum_size = Vector2(220, 56)
 layout_mode = 2
 text = "主菜单"
 theme_override_styles/normal = SubResource("Button")

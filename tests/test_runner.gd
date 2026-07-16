@@ -25,10 +25,12 @@ func _check(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
+	root.get_node("GameState").start_campaign()
 	_test_damage_rules()
 	_test_combat_data_resources()
 	_test_critical_hits()
 	_test_skill_stacking_and_choices()
+	await _test_upgrade_card_and_campaign_progression()
 	_test_enemy_data_catalog()
 	await _test_scene_smoke()
 	await _test_enemy_state_machine()
@@ -112,6 +114,37 @@ func _test_skill_stacking_and_choices() -> void:
 		ids[skill.skill_id] = true
 	_check(ids.size() == 3, "upgrade offer has no duplicate skills")
 	_check(not ids.has(&"rapid_fire"), "maxed skill is excluded from offers")
+
+
+func _test_upgrade_card_and_campaign_progression() -> void:
+	var game_state := root.get_node("GameState")
+	game_state.start_campaign()
+	game_state.advance_stage()
+	game_state.record_skill(&"rapid_fire", 2)
+	_check(game_state.current_stage == 2, "campaign advances to the next stage")
+	var player := (load("res://scenes/player.tscn") as PackedScene).instantiate() as WastelandPlayer
+	root.add_child(player)
+	await process_frame
+	_check(player.skill_system.get_level(&"rapid_fire") == 2, "next stage restores carried skill levels")
+	var panel := (load("res://scenes/upgrade_panel.tscn") as PackedScene).instantiate() as UpgradePanel
+	root.add_child(panel)
+	await process_frame
+	var rapid := load("res://assets/data/skills/rapid_fire.tres") as SkillData
+	panel.show_choices([rapid], player.skill_system)
+	var card_text: String = panel.buttons[0].text
+	_check(card_text.contains("3 / 3"), "upgrade card clearly shows the target maximum level")
+	_check(card_text.contains("+50%"), "upgrade card explains the resulting effect")
+	player.apply_skill(rapid)
+	_check(not player.skill_system.can_upgrade(rapid), "restored skill stops at maximum level")
+	var rng := RandomNumberGenerator.new()
+	var catalog: Array[SkillData] = [rapid]
+	_check(player.skill_system.available_choices(catalog, 3, rng).is_empty(), "maxed carried skill never appears again")
+	panel.close()
+	panel.queue_free()
+	player.queue_free()
+	await process_frame
+	game_state.start_campaign()
+	_check(game_state.current_stage == 1 and game_state.carried_skill_levels.is_empty(), "new campaign clears stage and upgrades")
 
 
 func _test_enemy_data_catalog() -> void:
@@ -479,6 +512,10 @@ func _test_round_results() -> void:
 		victory_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "区域已肃清",
 		"timer expiry shows victory result"
 	)
+	_check(
+		victory_game.get_node("PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton").visible,
+		"victory result offers the next stage"
+	)
 	paused = false
 	victory_game.queue_free()
 	await process_frame
@@ -495,6 +532,10 @@ func _test_round_results() -> void:
 		quota_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "区域失守",
 		"surviving without enough kills does not win"
 	)
+	_check(
+		not quota_game.get_node("PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton").visible,
+		"failed objective does not offer the next stage"
+	)
 	paused = false
 	quota_game.queue_free()
 	await process_frame
@@ -508,6 +549,10 @@ func _test_round_results() -> void:
 	_check(
 		defeat_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "作战单元已损毁",
 		"player death shows defeat result"
+	)
+	_check(
+		not defeat_game.get_node("PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton").visible,
+		"player death does not offer the next stage"
 	)
 	paused = false
 	defeat_game.queue_free()

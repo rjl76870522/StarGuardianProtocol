@@ -52,6 +52,7 @@ var _boss_defeated: bool = false
 
 func _ready() -> void:
 	GameState.begin_run()
+	_apply_stage_difficulty()
 	time_left = round_duration
 	_rng.randomize()
 	_camera_base_position = camera.position
@@ -66,13 +67,19 @@ func _ready() -> void:
 	hud.set_health(player.health, player.max_health)
 	hud.set_time(time_left)
 	hud.set_kills(kills, required_kills)
+	hud.set_stage(GameState.current_stage)
 	hud.set_weapon(player.current_weapon, player.weapon_index)
-	hud.show_message("进入战斗", "击毁 %d 个敌人并坚守六十秒" % required_kills)
+	for skill in SKILL_CATALOG:
+		var carried_level := player.skill_system.get_level(skill.skill_id)
+		if carried_level > 0:
+			hud.set_skill(skill, carried_level)
+	hud.show_message("第 %d 关" % GameState.current_stage, "击毁 %d 个敌人并坚守六十秒" % required_kills)
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/ResumeButton.pressed.connect(_toggle_pause)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/RestartButton.pressed.connect(_restart)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/MenuButton.pressed.connect(_return_to_menu)
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/RestartButton.pressed.connect(_restart)
+	$PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton.pressed.connect(_next_stage)
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/MenuButton.pressed.connect(_return_to_menu)
 
 
@@ -81,6 +88,8 @@ func _process(delta: float) -> void:
 		_toggle_pause()
 	if Input.is_action_just_pressed("boss_spawn_debug") and not _round_finished and not _boss_spawned:
 		_spawn_boss()
+	if Input.is_action_just_pressed("upgrade_debug") and not _round_finished and not upgrade_panel.overlay.visible:
+		_offer_upgrade()
 	if _paused or _round_finished:
 		return
 	time_left = maxf(time_left - delta, 0.0)
@@ -115,6 +124,7 @@ func _spawn_enemy() -> void:
 		2: enemy.position = Vector3(-15.5, 0.65, offset * 0.6)
 		_: enemy.position = Vector3(15.5, 0.65, offset * 0.6)
 	$Enemies.add_child(enemy)
+	enemy.apply_difficulty(_stage_multiplier())
 	enemy.died.connect(_on_enemy_died)
 	enemy.hit_player.connect(_on_player_hit)
 
@@ -137,6 +147,7 @@ func _spawn_boss() -> void:
 	boss.target = player
 	boss.position = Vector3(0.0, 0.0, -7.5)
 	$Enemies.add_child(boss)
+	boss.apply_difficulty(_stage_multiplier())
 	boss.health_changed.connect(func(current: float, maximum: float) -> void: hud.show_boss(current, maximum))
 	boss.phase_changed.connect(func(_index: int, phase: BossPhaseData) -> void: hud.show_boss(boss.health, boss.max_health, phase.display_name))
 	boss.summon_requested.connect(_summon_enemies)
@@ -185,6 +196,8 @@ func _offer_upgrade() -> void:
 		return
 	var choices := player.skill_system.available_choices(SKILL_CATALOG, 3, _rng)
 	if choices.is_empty():
+		_next_upgrade_kills = 1 << 30
+		hud.show_all_skills_maxed()
 		return
 	_paused = true
 	get_tree().paused = true
@@ -192,7 +205,8 @@ func _offer_upgrade() -> void:
 
 
 func _on_skill_selected(skill: SkillData) -> void:
-	player.apply_skill(skill)
+	if not player.apply_skill(skill):
+		return
 	_next_upgrade_kills += upgrade_kill_interval
 	_paused = false
 	get_tree().paused = false
@@ -248,15 +262,21 @@ func _finish_round(victory: bool, failure_title: String = "作战单元已损毁
 	result_panel.visible = true
 	result_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	var title := "区域已肃清" if victory else failure_title
-	var detail := "存活 %02d:%02d   |   击毁敌人 %d" % [
+	var detail := "第 %d 关   |   存活 %02d:%02d   |   击毁敌人 %d" % [
+		GameState.current_stage,
 		int(GameState.last_survival_time) / 60,
 		int(GameState.last_survival_time) % 60,
 		kills,
 	]
 	$PauseLayer/ResultPanel/Panel/Content/Title.text = title
 	$PauseLayer/ResultPanel/Panel/Content/Detail.text = detail
+	var next_button: Button = $PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton
+	next_button.visible = victory
 	get_tree().paused = true
-	$PauseLayer/ResultPanel/Panel/Content/Buttons/RestartButton.grab_focus()
+	if victory:
+		next_button.grab_focus()
+	else:
+		$PauseLayer/ResultPanel/Panel/Content/Buttons/RestartButton.grab_focus()
 
 
 func _toggle_pause() -> void:
@@ -271,6 +291,24 @@ func _toggle_pause() -> void:
 func _restart() -> void:
 	get_tree().paused = false
 	get_tree().reload_current_scene()
+
+
+func _next_stage() -> void:
+	GameState.advance_stage()
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+
+func _stage_multiplier() -> float:
+	return 1.0 + float(GameState.current_stage - 1) * 0.18
+
+
+func _apply_stage_difficulty() -> void:
+	var stage_offset := GameState.current_stage - 1
+	required_kills += stage_offset * 2
+	max_active_enemies += mini(stage_offset * 2, 10)
+	initial_spawn_interval = maxf(initial_spawn_interval * pow(0.94, stage_offset), 1.7)
+	minimum_spawn_interval = maxf(minimum_spawn_interval * pow(0.94, stage_offset), 0.85)
 
 
 func _return_to_menu() -> void:

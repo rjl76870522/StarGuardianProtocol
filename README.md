@@ -56,6 +56,7 @@ platform's executable and `WastelandProtocol.pck` together when distributing.
 - `1`, `2`, `3`: switch weapon
 - `F3`: toggle Boss debug panel
 - `F4`: spawn Boss immediately in debug runs
+- `F2`: open an upgrade offer in debug runs
 
 All visuals and sounds are generated from project-owned geometry, SVG, shaders,
 and synthesized waveforms. No third-party art assets are included.

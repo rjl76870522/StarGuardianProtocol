@@ -193,6 +193,13 @@ func heal(amount: float) -> void:
 		health = minf(health + maxf(amount, 0.0), max_health)
 
 
+func apply_difficulty(multiplier: float) -> void:
+	var safe_multiplier := maxf(multiplier, 1.0)
+	max_health *= safe_multiplier
+	health = max_health
+	contact_damage *= 1.0 + (safe_multiplier - 1.0) * 0.55
+
+
 func take_damage(amount: float) -> void:
 	if _dead or amount <= 0.0:
 		return

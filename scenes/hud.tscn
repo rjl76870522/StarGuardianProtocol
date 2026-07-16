@@ -90,6 +90,19 @@ show_percentage = false
 theme_override_styles/background = SubResource("HealthBackground")
 theme_override_styles/fill = SubResource("HealthFill")
 
+[node name="StagePanel" type="PanelContainer" parent="Margin/TopBar"]
+custom_minimum_size = Vector2(130, 68)
+layout_mode = 2
+theme_override_styles/panel = SubResource("PanelStyle")
+
+[node name="Stage" type="Label" parent="Margin/TopBar/StagePanel"]
+layout_mode = 2
+text = "第 1 关"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
+theme_override_font_sizes/font_size = 17
+
 [node name="SpacerLeft" type="Control" parent="Margin/TopBar"]
 custom_minimum_size = Vector2(20, 0)
 layout_mode = 2
@@ -167,6 +180,14 @@ layout_mode = 2
 text = "闪避  就绪"
 theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 14
+
+[node name="Controls" type="Label" parent="Margin/BottomBar"]
+custom_minimum_size = Vector2(270, 0)
+layout_mode = 2
+text = "空格 闪避   |   1 / 2 / 3 切换武器"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.62, 0.73, 0.7, 1)
+theme_override_font_sizes/font_size = 13
 
 [node name="UpgradeStatus" type="Label" parent="Margin/BottomBar"]
 custom_minimum_size = Vector2(260, 0)

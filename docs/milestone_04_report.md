@@ -14,6 +14,9 @@
   shockwave, and enrage-speed behavior
 - Boss health HUD and F3 debug panel for health, phase, state, cooldowns, reset
 - F4 development shortcut for immediate Boss spawning
+- Persistent stage progression with a victory-only next-stage action
+- Carried skill levels, explicit maximum-level filtering, and clearer upgrade cards
+- In-HUD controls for Space dodge and 1/2/3 weapon switching
 
 ## Verification
 

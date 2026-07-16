@@ -196,3 +196,9 @@ func reset_battle() -> void:
 	collision_mask = 3
 	_apply_phase(0)
 	health_changed.emit(health, max_health)
+
+
+func apply_difficulty(multiplier: float) -> void:
+	max_health *= maxf(multiplier, 1.0)
+	health = max_health
+	health_changed.emit(health, max_health)

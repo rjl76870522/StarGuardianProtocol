@@ -50,7 +50,27 @@ func _ready() -> void:
 	_rng.randomize()
 	dash_audio.stream = SoundSynth.tone(170.0, 0.13, 0.2)
 	equip_weapon(0)
+	_restore_campaign_skills()
 	health_changed.emit(health, max_health)
+
+
+func _restore_campaign_skills() -> void:
+	var game_state := get_node_or_null("/root/GameState")
+	if game_state == null:
+		return
+	for skill in [
+		preload("res://assets/data/skills/rapid_fire.tres"),
+		preload("res://assets/data/skills/move_speed.tres"),
+		preload("res://assets/data/skills/ricochet.tres"),
+		preload("res://assets/data/skills/penetration.tres"),
+		preload("res://assets/data/skills/kill_heal.tres"),
+		preload("res://assets/data/skills/orbit_drone.tres"),
+	]:
+		var target_level := int(game_state.carried_skill_levels.get(skill.skill_id, 0))
+		for level in target_level:
+			skill_system.apply_upgrade(skill)
+		if skill.skill_id == &"orbit_drone" and target_level > 0:
+			_sync_drones(int(skill.value_for_level(target_level)))
 
 
 func _physics_process(delta: float) -> void:
@@ -167,6 +187,9 @@ func apply_skill(skill: SkillData) -> bool:
 	if not skill_system.apply_upgrade(skill):
 		return false
 	var level := skill_system.get_level(skill.skill_id)
+	var game_state := get_node_or_null("/root/GameState")
+	if game_state != null:
+		game_state.record_skill(skill.skill_id, level)
 	if skill.skill_id == &"orbit_drone":
 		_sync_drones(int(skill.value_for_level(level)))
 	skill_upgraded.emit(skill, level)
