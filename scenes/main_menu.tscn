@@ -1,0 +1,156 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource path="res://src/ui/main_menu.gd" type="Script" id="1"]
+[ext_resource path="res://assets/generated/app_icon.svg" type="Texture2D" id="2"]
+
+[sub_resource type="StyleBoxFlat" id="Background"]
+bg_color = Color(0.012, 0.022, 0.025, 1)
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+bg_color = Color(0.025, 0.055, 0.06, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.15, 0.38, 0.36, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="ButtonNormal"]
+bg_color = Color(0.06, 0.13, 0.135, 1)
+border_width_left = 2
+border_color = Color(0.207843, 0.901961, 0.698039, 1)
+
+[sub_resource type="StyleBoxFlat" id="ButtonHover"]
+bg_color = Color(0.12, 0.27, 0.25, 1)
+border_width_left = 5
+border_color = Color(0.207843, 0.901961, 0.698039, 1)
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Background")
+
+[node name="AccentTop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 5.0
+grow_horizontal = 2
+color = Color(0.207843, 0.901961, 0.698039, 1)
+
+[node name="GridA" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 0.0
+offset_right = 82.0
+offset_bottom = 720.0
+color = Color(0.10, 0.23, 0.23, 0.65)
+
+[node name="GridB" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 1160.0
+offset_top = 0.0
+offset_right = 1162.0
+offset_bottom = 720.0
+color = Color(0.10, 0.23, 0.23, 0.65)
+
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 120.0
+offset_top = 86.0
+offset_right = -120.0
+offset_bottom = -86.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 70
+
+[node name="Identity" type="VBoxContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="Protocol" type="Label" parent="Layout/Identity"]
+layout_mode = 2
+text = "WASTELAND // PROTOCOL"
+theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Title" type="Label" parent="Layout/Identity"]
+layout_mode = 2
+text = "LAST\nDEFENSE"
+theme_override_colors/font_color = Color(0.86, 0.96, 0.92, 1)
+theme_override_font_sizes/font_size = 66
+
+[node name="Line" type="ColorRect" parent="Layout/Identity"]
+custom_minimum_size = Vector2(430, 2)
+layout_mode = 2
+color = Color(0.25, 0.42, 0.4, 1)
+
+[node name="Subtitle" type="Label" parent="Layout/Identity"]
+layout_mode = 2
+text = "机械废土：最后防线\nSURVIVAL DIRECTIVE  //  01"
+theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="Panel" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="Buttons" type="VBoxContainer" parent="Layout/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Icon" type="TextureRect" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+texture = ExtResource("2")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Status" type="Label" parent="Layout/Panel/Buttons"]
+layout_mode = 2
+text = "UNIT ONLINE\nSECTOR 07  //  THREAT ACTIVE"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+text = "DEPLOY"
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="QuitButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "SHUT DOWN"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[connection signal="pressed" from="Layout/Panel/Buttons/StartButton" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/QuitButton" to="." method="_on_quit_pressed"]
+

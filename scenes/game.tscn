@@ -1,0 +1,217 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource path="res://src/core/game.gd" type="Script" id="1"]
+[ext_resource path="res://src/world/arena.gd" type="Script" id="2"]
+[ext_resource path="res://scenes/player.tscn" type="PackedScene" id="3"]
+[ext_resource path="res://scenes/hud.tscn" type="PackedScene" id="4"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.012, 0.021, 0.024, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.16, 0.28, 0.28, 1)
+ambient_light_energy = 0.75
+reflected_light_source = 2
+fog_enabled = true
+fog_light_color = Color(0.07, 0.13, 0.13, 1)
+fog_light_energy = 0.55
+fog_density = 0.009
+
+[sub_resource type="StyleBoxFlat" id="OverlayPanel"]
+bg_color = Color(0.015, 0.03, 0.033, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.207843, 0.901961, 0.698039, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Button"]
+bg_color = Color(0.06, 0.13, 0.135, 1)
+border_width_left = 2
+border_color = Color(0.207843, 0.901961, 0.698039, 1)
+
+[sub_resource type="StyleBoxFlat" id="ButtonHover"]
+bg_color = Color(0.12, 0.27, 0.25, 1)
+border_width_left = 5
+border_color = Color(0.207843, 0.901961, 0.698039, 1)
+
+[node name="Game" type="Node3D"]
+script = ExtResource("1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.9, -0.5, 0)
+light_color = Color(0.62, 0.82, 0.78, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="RimLight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.45, 2.35, 0)
+light_color = Color(1, 0.39, 0.18, 1)
+light_energy = 0.42
+
+[node name="Arena" type="Node3D" parent="."]
+script = ExtResource("2")
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("3")]
+
+[node name="HUD" parent="." instance=ExtResource("4")]
+
+[node name="PauseLayer" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="PausePanel" type="Control" parent="PauseLayer"]
+visible = false
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="PauseLayer/PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.74)
+
+[node name="Panel" type="PanelContainer" parent="PauseLayer/PausePanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -210.0
+offset_right = 240.0
+offset_bottom = 210.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("OverlayPanel")
+
+[node name="Content" type="VBoxContainer" parent="PauseLayer/PausePanel/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="PauseLayer/PausePanel/Panel/Content"]
+layout_mode = 2
+text = "SYSTEM PAUSED"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
+theme_override_font_sizes/font_size = 28
+
+[node name="Buttons" type="VBoxContainer" parent="PauseLayer/PausePanel/Panel/Content"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="ResumeButton" type="Button" parent="PauseLayer/PausePanel/Panel/Content/Buttons"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+text = "RESUME"
+theme_override_styles/normal = SubResource("Button")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="RestartButton" type="Button" parent="PauseLayer/PausePanel/Panel/Content/Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "RESTART"
+theme_override_styles/normal = SubResource("Button")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="MenuButton" type="Button" parent="PauseLayer/PausePanel/Panel/Content/Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "RETURN TO COMMAND"
+theme_override_styles/normal = SubResource("Button")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="ResultPanel" type="Control" parent="PauseLayer"]
+visible = false
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="PauseLayer/ResultPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.78)
+
+[node name="Panel" type="PanelContainer" parent="PauseLayer/ResultPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -185.0
+offset_right = 330.0
+offset_bottom = 185.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("OverlayPanel")
+
+[node name="Content" type="VBoxContainer" parent="PauseLayer/ResultPanel/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="Title" type="Label" parent="PauseLayer/ResultPanel/Panel/Content"]
+layout_mode = 2
+text = "SECTOR SECURED"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="Detail" type="Label" parent="PauseLayer/ResultPanel/Panel/Content"]
+layout_mode = 2
+text = "Survived 01:00   |   Scrap recovered 0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.65, 0.76, 0.73, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Buttons" type="HBoxContainer" parent="PauseLayer/ResultPanel/Panel/Content"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="RestartButton" type="Button" parent="PauseLayer/ResultPanel/Panel/Content/Buttons"]
+custom_minimum_size = Vector2(235, 56)
+layout_mode = 2
+text = "RUN AGAIN"
+theme_override_styles/normal = SubResource("Button")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="MenuButton" type="Button" parent="PauseLayer/ResultPanel/Panel/Content/Buttons"]
+custom_minimum_size = Vector2(235, 56)
+layout_mode = 2
+text = "COMMAND"
+theme_override_styles/normal = SubResource("Button")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")

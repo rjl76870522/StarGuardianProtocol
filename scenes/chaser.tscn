@@ -1,0 +1,74 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource path="res://src/enemies/chaser.gd" type="Script" id="1"]
+
+[sub_resource type="CapsuleShape3D" id="Collision"]
+radius = 0.48
+height = 1.25
+
+[sub_resource type="CylinderMesh" id="BodyMesh"]
+top_radius = 0.5
+bottom_radius = 0.62
+height = 0.72
+radial_segments = 6
+
+[sub_resource type="StandardMaterial3D" id="BodyMaterial"]
+albedo_color = Color(0.24, 0.12, 0.09, 1)
+metallic = 0.72
+roughness = 0.58
+
+[sub_resource type="SphereMesh" id="CoreMesh"]
+radius = 0.19
+height = 0.38
+radial_segments = 8
+rings = 4
+
+[sub_resource type="StandardMaterial3D" id="CoreMaterial"]
+albedo_color = Color(1, 0.2, 0.12, 1)
+emission_enabled = true
+emission = Color(1, 0.08, 0.04, 1)
+emission_energy_multiplier = 3.2
+
+[sub_resource type="BoxMesh" id="BladeMesh"]
+size = Vector3(0.16, 0.18, 0.92)
+
+[sub_resource type="StandardMaterial3D" id="BladeMaterial"]
+albedo_color = Color(0.35, 0.38, 0.36, 1)
+metallic = 0.92
+roughness = 0.25
+
+[node name="ScrapChaser" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.62, 0)
+shape = SubResource("Collision")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("BodyMesh")
+material_override = SubResource("BodyMaterial")
+
+[node name="Core" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.66, -0.51)
+mesh = SubResource("CoreMesh")
+material_override = SubResource("CoreMaterial")
+
+[node name="LeftBlade" type="MeshInstance3D" parent="."]
+position = Vector3(-0.62, 0.55, -0.25)
+rotation = Vector3(0, -0.35, 0)
+mesh = SubResource("BladeMesh")
+material_override = SubResource("BladeMaterial")
+
+[node name="RightBlade" type="MeshInstance3D" parent="."]
+position = Vector3(0.62, 0.55, -0.25)
+rotation = Vector3(0, 0.35, 0)
+mesh = SubResource("BladeMesh")
+material_override = SubResource("BladeMaterial")
+
+[node name="HitAudio" type="AudioStreamPlayer3D" parent="."]
+unit_size = 8.0
+max_distance = 28.0
+
