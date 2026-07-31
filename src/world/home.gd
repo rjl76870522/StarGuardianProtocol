@@ -276,16 +276,33 @@ func _create_training_panel() -> void:
 	dim.color = Color(0.0, 0.0, 0.0, 0.8)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_training_panel.add_child(dim)
+	var frame := PanelContainer.new()
+	frame.name = "TrainingFrame"
+	frame.set_anchors_preset(Control.PRESET_CENTER)
+	frame.offset_left = -322.0
+	frame.offset_top = -272.0
+	frame.offset_right = 322.0
+	frame.offset_bottom = 272.0
+	frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	var frame_style := StyleBoxFlat.new()
+	frame_style.bg_color = Color("10211f")
+	frame_style.border_color = Color("ee6578")
+	frame_style.set_border_width_all(2)
+	frame_style.corner_radius_top_left = 12
+	frame_style.corner_radius_top_right = 12
+	frame_style.corner_radius_bottom_left = 12
+	frame_style.corner_radius_bottom_right = 12
+	frame_style.content_margin_left = 24.0
+	frame_style.content_margin_right = 24.0
+	frame_style.content_margin_top = 20.0
+	frame_style.content_margin_bottom = 20.0
+	frame.add_theme_stylebox_override("panel", frame_style)
+	_training_panel.add_child(frame)
 	var panel := VBoxContainer.new()
 	panel.name = "TrainingPanel"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -300.0
-	panel.offset_top = -250.0
-	panel.offset_right = 300.0
-	panel.offset_bottom = 250.0
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_constant_override("separation", 12)
-	_training_panel.add_child(panel)
+	frame.add_child(panel)
 	var title := Label.new()
 	title.text = "人物训练舱\n选择要在战斗中主动使用的能力"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -320,6 +337,8 @@ func _training_specs() -> Array[Dictionary]:
 
 
 func _open_training_panel() -> void:
+	if _training_panel == null:
+		return
 	_refresh_training_panel()
 	_training_panel.visible = true
 	get_tree().paused = true

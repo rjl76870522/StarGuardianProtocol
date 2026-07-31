@@ -48,6 +48,7 @@ func _run() -> void:
 	await _test_fire_rate_limit()
 	await _test_penetration()
 	await _test_status_duration_and_ticks()
+	await _test_player_gadget_fields()
 	await _test_player_damage_and_invulnerability()
 	await _test_player_aim_stays_level()
 	await _test_enemy_damage_once()
@@ -684,6 +685,42 @@ func _test_status_duration_and_ticks() -> void:
 	var invalid := StatusEffectData.new()
 	_check(not controller.apply_effect(invalid), "invalid status configuration is rejected")
 	target.queue_free()
+	await process_frame
+
+
+func _test_player_gadget_fields() -> void:
+	var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+	enemy.enemy_data = load("res://assets/data/enemies/chaser.tres") as EnemyData
+	enemy.position = Vector3(2.0, 0.0, 0.0)
+	enemy.add_to_group("enemies")
+	root.add_child(enemy)
+	await process_frame
+	var fire := PlayerGroundField.new()
+	root.add_child(fire)
+	fire.configure(&"fire", Vector3.ZERO, 4.0, 12.0, Color.ORANGE, "燃烧瓶")
+	await process_frame
+	fire._apply_tick()
+	_check(enemy.health < enemy.max_health, "player fire field damages enemies")
+	var emp := PlayerGroundField.new()
+	root.add_child(emp)
+	emp.configure(&"emp", Vector3.ZERO, 4.0, 8.0, Color.CORNFLOWER_BLUE, "电磁炸弹")
+	await process_frame
+	emp._apply_tick()
+	_check(enemy._slow_multiplier < 1.0 and enemy._slow_remaining > 0.0, "EMP field slows nearby enemies")
+	var grenade := PlayerGadget.new()
+	root.add_child(grenade)
+	grenade.configure(&"shock", Vector3.ZERO, Vector3(2.0, 0.0, 0.0), 3.5, 24.0, Color.CYAN, "震爆手雷")
+	await process_frame
+	grenade._damage_enemies(Vector3(2.0, 0.0, 0.0), 3.5, 24.0, 15.0)
+	_check(enemy.health < enemy.max_health - 12.0, "shock grenade damages at its target point")
+	if is_instance_valid(fire):
+		fire.queue_free()
+	if is_instance_valid(emp):
+		emp.queue_free()
+	if is_instance_valid(grenade):
+		grenade.queue_free()
+	if is_instance_valid(enemy):
+		enemy.queue_free()
 	await process_frame
 
 

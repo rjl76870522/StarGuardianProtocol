@@ -23,7 +23,8 @@ func configure(gadget_id: StringName, origin: Vector3, target: Vector3, radius: 
 	_damage = damage
 	_color = color
 	_label = label
-	global_position = origin + Vector3.UP * 0.55
+	# configure() is also used by tests before the node enters a scene tree.
+	position = origin + Vector3.UP * 0.55
 
 
 func _ready() -> void:
@@ -61,9 +62,15 @@ func _detonate() -> void:
 		_show_wave(_radius, 0.32)
 		queue_free()
 		return
+	var scene_parent: Node = get_tree().current_scene
+	if scene_parent == null:
+		scene_parent = get_parent()
+	if scene_parent == null:
+		queue_free()
+		return
 	var field := GROUND_FIELD.new()
 	field.configure(_gadget_id, _target, _radius, _damage, _color, _label)
-	get_tree().current_scene.add_child(field)
+	scene_parent.add_child(field)
 	_show_wave(_radius, 0.24)
 	queue_free()
 
@@ -92,7 +99,12 @@ func _show_wave(radius: float, lifetime: float) -> void:
 	mesh.outer_radius = 0.33
 	wave.mesh = mesh
 	wave.material_override = _material(_color, 4.0, 0.78)
-	get_tree().current_scene.add_child(wave)
+	var scene_parent: Node = get_tree().current_scene
+	if scene_parent == null:
+		scene_parent = get_parent()
+	if scene_parent == null:
+		return
+	scene_parent.add_child(wave)
 	wave.global_position = _target + Vector3.UP * 0.12
 	var tween := wave.create_tween()
 	tween.tween_property(wave, "scale", Vector3.ONE * radius, lifetime)

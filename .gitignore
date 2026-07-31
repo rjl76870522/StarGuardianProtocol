@@ -3,4 +3,4 @@ builds/*
 !builds/.gitkeep
 *.tmp
 *.log
-
+.tools/

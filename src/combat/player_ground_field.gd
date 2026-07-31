@@ -17,7 +17,8 @@ func configure(gadget_id: StringName, at: Vector3, radius: float, damage: float,
 	_color = color
 	_label = label
 	_remaining = 6.0 if gadget_id == &"fire" else 5.0
-	global_position = at + Vector3.UP * 0.035
+	# configure() may run before this node is attached to the scene tree.
+	position = at + Vector3.UP * 0.035
 
 
 func _ready() -> void:
