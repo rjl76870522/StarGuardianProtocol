@@ -8,6 +8,8 @@ var _stations: Array[Dictionary] = []
 var _nearest_station: Dictionary = {}
 var _notice_time := 0.0
 var _training_panel: Control
+var _training_status: Label
+var _training_buttons: Dictionary = {}
 
 @onready var player: WastelandPlayer = $Player
 @onready var summary: Label = $Interface/Margin/Top/Summary
@@ -275,20 +277,24 @@ func _create_training_panel() -> void:
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_training_panel.add_child(dim)
 	var panel := VBoxContainer.new()
+	panel.name = "TrainingPanel"
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.position = Vector2(-260.0, -230.0)
-	panel.size = Vector2(520.0, 460.0)
+	panel.offset_left = -300.0
+	panel.offset_top = -250.0
+	panel.offset_right = 300.0
+	panel.offset_bottom = 250.0
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_constant_override("separation", 12)
 	_training_panel.add_child(panel)
 	var title := Label.new()
-	title.text = "人物训练舱  ·  选择要学习的能力"
+	title.text = "人物训练舱\n选择要在战斗中主动使用的能力"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 24)
 	panel.add_child(title)
-	var status := Label.new()
-	status.name = "Status"
-	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.add_child(status)
+	_training_status = Label.new()
+	_training_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_training_status.add_theme_font_size_override("font_size", 18)
+	panel.add_child(_training_status)
 	for spec in _training_specs():
 		var button := Button.new()
 		button.name = "Skill_%s" % spec["id"]
@@ -296,6 +302,7 @@ func _create_training_panel() -> void:
 		button.add_theme_font_size_override("font_size", 16)
 		button.pressed.connect(_learn_training_skill.bind(spec["id"]))
 		panel.add_child(button)
+		_training_buttons[spec["id"]] = button
 	var close := Button.new()
 	close.text = "关闭训练舱"
 	close.custom_minimum_size = Vector2(0.0, 44.0)
@@ -326,11 +333,15 @@ func _close_training_panel() -> void:
 func _refresh_training_panel() -> void:
 	if _training_panel == null:
 		return
-	_training_panel.get_node("VBoxContainer/Status").text = "当前废料：%d" % GameState.scrap
+	if _training_status == null:
+		return
+	_training_status.text = "当前废料：%d  ·  已学习的能力可在战斗中按对应键启动" % GameState.scrap
 	for spec in _training_specs():
 		var level := GameState.home_skill_level(spec["id"])
 		var cost := 5 + level * 4
-		var button := _training_panel.get_node("VBoxContainer/Skill_%s" % spec["id"]) as Button
+		var button := _training_buttons.get(spec["id"]) as Button
+		if button == null:
+			continue
 		button.text = "%s  %d/%d\n%s  ·  消耗 %d 废料" % [spec["name"], level, spec["max"], spec["effect"], cost]
 		button.disabled = level >= int(spec["max"])
 

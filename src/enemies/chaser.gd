@@ -30,6 +30,8 @@ var _desired_direction := Vector3.ZERO
 var _hazard_cooldown: float = 1.0
 var _last_position := Vector3.ZERO
 var _stuck_time: float = 0.0
+var _slow_multiplier := 1.0
+var _slow_remaining := 0.0
 
 @onready var hit_audio: AudioStreamPlayer3D = $HitAudio
 @onready var status_effects: StatusEffectController = $StatusEffects
@@ -86,6 +88,9 @@ func _physics_process(delta: float) -> void:
 	_attack_cooldown = maxf(_attack_cooldown - delta, 0.0)
 	_update_telemetry()
 	_hazard_cooldown = maxf(_hazard_cooldown - delta, 0.0)
+	_slow_remaining = maxf(_slow_remaining - delta, 0.0)
+	if _slow_remaining <= 0.0:
+		_slow_multiplier = 1.0
 	if _spawn_remaining > 0.0:
 		_spawn_remaining -= delta
 		velocity = Vector3.ZERO
@@ -142,7 +147,7 @@ func _update_decision() -> void:
 
 func _execute_behavior(delta: float) -> void:
 	if state == State.CHASE or state == State.SEARCH:
-		velocity = _desired_direction * move_speed * status_effects.movement_multiplier()
+		velocity = _desired_direction * move_speed * status_effects.movement_multiplier() * _slow_multiplier
 		if _desired_direction.length_squared() > 0.01:
 			look_at(global_position + _desired_direction, Vector3.UP)
 		move_and_slide()
@@ -293,6 +298,11 @@ func apply_status_effect(effect: StatusEffectData, source_direction: Vector3 = V
 
 func apply_knockback(force: Vector3) -> void:
 	_knockback_velocity += Vector3(force.x, 0.0, force.z)
+
+
+func apply_slow(multiplier: float, duration: float) -> void:
+	_slow_multiplier = minf(_slow_multiplier, clampf(multiplier, 0.18, 1.0))
+	_slow_remaining = maxf(_slow_remaining, duration)
 
 
 func get_state_name() -> String:

@@ -14,6 +14,7 @@ const PROJECTILE_SCENE := preload("res://scenes/projectile.tscn")
 const DRONE_SCENE := preload("res://scenes/orbit_drone.tscn")
 const WEAPON_PICKUP := preload("res://src/world/weapon_pickup.gd")
 const MOBILE_CONTROLS := preload("res://src/ui/mobile_controls.gd")
+const PLAYER_GADGET := preload("res://src/combat/player_gadget.gd")
 const WEAPON_CATALOG = [
 	preload("res://assets/data/weapons/auto_rifle.tres"),
 	preload("res://assets/data/weapons/scatter_cannon.tres"),
@@ -491,21 +492,39 @@ func _activate_gadget(gadget_id: StringName, radius: float, base_damage: float, 
 		return
 	_gadget_cooldowns[gadget_id] = 10.0 if gadget_id != &"emp" else 14.0
 	var damage := base_damage * skill_system.get_value(&"combat_core", 1.0)
-	for candidate in get_tree().get_nodes_in_group("enemies"):
-		if not candidate is Node3D:
-			continue
-		var enemy := candidate as Node3D
-		var offset := enemy.global_position - global_position
-		if offset.length() > radius:
-			continue
-		if enemy.has_method("take_damage"):
-			enemy.take_damage(damage * (1.0 - offset.length() / maxf(radius * 1.35, 1.0)))
-		if enemy.has_method("apply_knockback"):
-			enemy.apply_knockback(offset.normalized() * (14.0 if gadget_id == &"shock" else 7.0))
-		if gadget_id == &"emp" and enemy.has_method("apply_support_boost"):
-			enemy.apply_support_boost(0.72, 2.8)
-	_show_gadget_wave(radius, color)
-	action_message.emit("%s 已释放" % label)
+	var projectile := PLAYER_GADGET.new()
+	projectile.configure(gadget_id, global_position, _gadget_target(), radius, damage, color, label)
+	var parent := get_tree().current_scene
+	if parent != null:
+		parent.add_child(projectile)
+	action_message.emit("%s 已投向准星位置" % label)
+
+
+func _gadget_target() -> Vector3:
+	if OS.has_feature("mobile"):
+		var closest: Node3D
+		var closest_distance := INF
+		for candidate in get_tree().get_nodes_in_group("enemies"):
+			if candidate is Node3D:
+				var enemy := candidate as Node3D
+				var distance := global_position.distance_squared_to(enemy.global_position)
+				if distance < closest_distance:
+					closest = enemy
+					closest_distance = distance
+		if closest != null:
+			return closest.global_position
+	var screen_position := get_viewport().get_mouse_position()
+	var ray_origin := camera.project_ray_origin(screen_position)
+	var ray_direction := camera.project_ray_normal(screen_position)
+	var hit: Variant = Plane(Vector3.UP, 0.0).intersects_ray(ray_origin, ray_direction)
+	if hit is Vector3:
+		var point := hit as Vector3
+		var direction := point - global_position
+		direction.y = 0.0
+		if direction.length() > 18.0:
+			return global_position + direction.normalized() * 18.0
+		return point
+	return global_position + -$Body.global_transform.basis.z * 10.0
 
 
 func _show_gadget_wave(radius: float, color: Color) -> void:

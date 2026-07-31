@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=星际防线：星港协议
+Comment=启动 Star Guardian Protocol
+Exec=/data/projects/wasteland-protocol/builds/linux/StarGuardianProtocol.x86_64
+Path=/data/projects/wasteland-protocol/builds/linux
+Icon=/data/projects/wasteland-protocol/assets/generated/app_icon.svg
+Terminal=false
+Categories=Game;ActionGame;
+StartupNotify=true
+StartupWMClass=Star Guardian Protocol
