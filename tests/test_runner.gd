@@ -44,12 +44,14 @@ func _run() -> void:
 	await _test_enemy_state_machine()
 	await _test_repair_enemy()
 	await _test_boss_phases_and_debug()
+	await _test_stage_two_boss_spawn()
 	await _test_fire_rate_limit()
 	await _test_penetration()
 	await _test_status_duration_and_ticks()
 	await _test_player_damage_and_invulnerability()
 	await _test_player_aim_stays_level()
 	await _test_enemy_damage_once()
+	await _test_core_hitbox_damage_bonus()
 	await _test_projectile_does_not_hit_twice()
 	await _test_projectile_physics_hit()
 	await _test_debris_has_collision()
@@ -119,6 +121,11 @@ func _test_combat_data_resources() -> void:
 		"res://assets/data/weapons/auto_rifle.tres",
 		"res://assets/data/weapons/scatter_cannon.tres",
 		"res://assets/data/weapons/rail_lance.tres",
+		"res://assets/data/weapons/arc_blade.tres",
+		"res://assets/data/weapons/sidearm.tres",
+		"res://assets/data/weapons/sniper_rifle.tres",
+		"res://assets/data/weapons/siege_cannon.tres",
+		"res://assets/data/weapons/flame_projector.tres",
 	]
 	for path in weapon_paths:
 		var weapon := load(path) as WeaponData
@@ -126,7 +133,7 @@ func _test_combat_data_resources() -> void:
 		_check(weapon.icon != null, "weapon has an icon: %s" % path)
 	var invalid_weapon := WeaponData.new()
 	_check(not invalid_weapon.is_valid(), "invalid weapon configuration is rejected")
-	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone", "combat_core", "critical_matrix", "armor_plating"]:
+	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone", "combat_core", "critical_matrix", "armor_plating", "split_rounds", "phase_rounds"]:
 		var skill := load("res://assets/data/skills/%s.tres" % skill_id) as SkillData
 		_check(skill != null and skill.is_valid(), "valid skill resource: %s" % skill_id)
 
@@ -152,7 +159,7 @@ func _test_skill_stacking_and_choices() -> void:
 	_check(is_equal_approx(system.get_value(&"rapid_fire"), 1.95), "stacked skill exposes final value")
 	_check(not system.apply_upgrade(rapid), "skill rejects upgrades above maximum")
 	var catalog: Array[SkillData] = []
-	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone", "combat_core", "critical_matrix", "armor_plating"]:
+	for skill_id in ["rapid_fire", "move_speed", "ricochet", "penetration", "kill_heal", "orbit_drone", "combat_core", "critical_matrix", "armor_plating", "split_rounds", "phase_rounds"]:
 		catalog.append(load("res://assets/data/skills/%s.tres" % skill_id) as SkillData)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 77
@@ -227,15 +234,15 @@ func _test_enemy_data_catalog() -> void:
 	var ids: Dictionary = {}
 	var archetypes: Dictionary = {}
 	var elite_count := 0
-	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "elite_blink", "elite_hazard"]:
+	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "mage", "elite_blink", "elite_hazard"]:
 		var data := load("res://assets/data/enemies/%s.tres" % enemy_id) as EnemyData
 		_check(data != null and data.is_valid(), "valid enemy data: %s" % enemy_id)
 		ids[data.enemy_id] = true
 		archetypes[data.archetype] = true
 		if data.elite:
 			elite_count += 1
-	_check(ids.size() == 7, "enemy catalog has seven unique definitions")
-	_check(archetypes.size() == 5, "enemy catalog covers five normal archetypes")
+	_check(ids.size() == 8, "enemy catalog has eight unique definitions")
+	_check(archetypes.size() == 6, "enemy catalog covers six normal archetypes")
 	_check(elite_count == 2, "enemy catalog contains two elite variants")
 	var blink := load("res://assets/data/enemies/elite_blink.tres") as EnemyData
 	var hazard := load("res://assets/data/enemies/elite_hazard.tres") as EnemyData
@@ -246,7 +253,7 @@ func _test_enemy_data_catalog() -> void:
 
 func _test_enemy_visual_profiles() -> void:
 	var profiles: Dictionary = {}
-	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "elite_blink", "elite_hazard"]:
+	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "mage", "elite_blink", "elite_hazard"]:
 		var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
 		enemy.enemy_data = load("res://assets/data/enemies/%s.tres" % enemy_id) as EnemyData
 		root.add_child(enemy)
@@ -258,6 +265,7 @@ func _test_enemy_visual_profiles() -> void:
 		await process_frame
 	_check(profiles["shooter"] != profiles["heavy"], "shooter and heavy use separate visual profiles")
 	_check(profiles["bomber"] != profiles["repair"], "bomber and repair use separate visual profiles")
+	_check(profiles["mage"] != profiles["shooter"], "mage and shooter use separate visual profiles")
 
 
 func _test_scene_smoke() -> void:
@@ -268,8 +276,10 @@ func _test_scene_smoke() -> void:
 		"res://scenes/projectile.tscn",
 		"res://scenes/hud.tscn",
 		"res://scenes/orbit_drone.tscn",
+		"res://scenes/drone_projectile.tscn",
 		"res://scenes/upgrade_panel.tscn",
 		"res://scenes/weapon_reward_panel.tscn",
+		"res://scenes/route_panel.tscn",
 		"res://scenes/enemy_projectile.tscn",
 		"res://scenes/ground_hazard.tscn",
 		"res://scenes/boss.tscn",
@@ -344,6 +354,20 @@ func _test_projectile_does_not_hit_twice() -> void:
 	await process_frame
 
 
+func _test_core_hitbox_damage_bonus() -> void:
+	var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
+	root.add_child(enemy)
+	await process_frame
+	var core := enemy.get_node_or_null("CoreHitbox") as EnemyCoreHitbox
+	_check(core != null, "enemy has a dedicated core hitbox")
+	if core != null:
+		var initial := enemy.health
+		core.take_damage(10.0)
+		_check(is_equal_approx(enemy.health, initial - 20.0), "core hit deals double damage")
+		enemy.queue_free()
+	await process_frame
+
+
 func _test_projectile_physics_hit() -> void:
 	var enemy_scene := load("res://scenes/chaser.tscn") as PackedScene
 	var projectile_scene := load("res://scenes/projectile.tscn") as PackedScene
@@ -372,19 +396,30 @@ func _test_debris_has_collision() -> void:
 	root.add_child(arena)
 	await physics_frame
 	var obstacles := get_nodes_in_group("obstacles")
-	_check(obstacles.size() == 4, "arena creates four physical debris obstacles")
+	_check(obstacles.size() == 8, "arena creates four debris blocks plus four physical boundary walls")
+	var debris_blocks: Array[StaticBody3D] = []
 	for obstacle in obstacles:
 		_check(obstacle is StaticBody3D, "debris obstacle is a static body")
-		_check(obstacle.get_node_or_null("CollisionShape3D") != null, "debris obstacle has a collision shape")
-	if not obstacles.is_empty():
-		var obstacle := obstacles[0] as StaticBody3D
-		var start := obstacle.global_position + Vector3(-3.0, 0.0, 0.0)
-		var finish := obstacle.global_position + Vector3(3.0, 0.0, 0.0)
-		var query := PhysicsRayQueryParameters3D.create(start, finish, 1)
+		if str(obstacle.name).begins_with("Obstacle"):
+			var debris := obstacle as StaticBody3D
+			debris_blocks.append(debris)
+			_check(debris.get_node_or_null("CollisionShape3D") != null, "debris obstacle has a collision shape")
+	_check(debris_blocks.size() == 4, "arena creates four internal cover blocks")
+	if not debris_blocks.is_empty():
+		var obstacle := debris_blocks[0]
+		var start := obstacle.global_position + Vector3(-3.0, 0.14, 0.0)
+		var finish := obstacle.global_position + Vector3(3.0, 0.14, 0.0)
+		var query := PhysicsRayQueryParameters3D.create(start, finish, 16)
 		var hit := arena.get_world_3d().direct_space_state.intersect_ray(query)
 		_check(not hit.is_empty(), "physics ray cannot pass through debris")
 		if not hit.is_empty():
 			_check(hit["collider"] == obstacle, "physics ray hits the expected debris body")
+		var muzzle_start := obstacle.global_position + Vector3(-3.0, 0.14, 0.0)
+		var muzzle_finish := obstacle.global_position + Vector3(3.0, 0.14, 0.0)
+		var muzzle_hit := arena.get_world_3d().direct_space_state.intersect_ray(
+			PhysicsRayQueryParameters3D.create(muzzle_start, muzzle_finish, 16)
+		)
+		_check(not muzzle_hit.is_empty(), "internal cover blocks shots at muzzle height")
 		var player_scene := load("res://scenes/player.tscn") as PackedScene
 		var player := player_scene.instantiate() as WastelandPlayer
 		var approach := obstacle.global_transform.basis.x.normalized()
@@ -429,7 +464,7 @@ func _test_seeded_arena_variants() -> void:
 	root.add_child(later)
 	await process_frame
 	_check(later.layout_signature != first_signature, "later stages generate a different obstacle layout")
-	_check(get_nodes_in_group("obstacles").size() == 5, "later stages add another physical obstacle")
+	_check(get_nodes_in_group("obstacles").size() == 9, "later stages add another physical obstacle")
 	later.queue_free()
 	await process_frame
 	state.start_campaign()
@@ -437,7 +472,7 @@ func _test_seeded_arena_variants() -> void:
 
 func _test_obstacle_blocks_actors_and_projectiles() -> void:
 	var wall := StaticBody3D.new()
-	wall.collision_layer = 1
+	wall.collision_layer = 16
 	wall.position = Vector3(3.0, 0.7, 0.0)
 	var wall_collision := CollisionShape3D.new()
 	var wall_shape := BoxShape3D.new()
@@ -558,6 +593,8 @@ func _test_boss_phases_and_debug() -> void:
 	root.add_child(player)
 	root.add_child(boss)
 	await process_frame
+
+
 	_check(WastelandBoss.PHASES.size() == 3, "boss has three data-driven phases")
 	for phase in WastelandBoss.PHASES:
 		_check(phase.is_valid(), "boss phase resource is valid: %s" % phase.display_name)
@@ -575,6 +612,25 @@ func _test_boss_phases_and_debug() -> void:
 	player.queue_free()
 	boss.queue_free()
 	await process_frame
+
+
+func _test_stage_two_boss_spawn() -> void:
+	var state := root.get_node("GameState")
+	state.start_campaign()
+	state.current_stage = 2
+	var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	game.initial_spawn_interval = 99.0
+	root.add_child(game)
+	await process_frame
+	game._process(12.1)
+	await process_frame
+	var boss := game.get_node_or_null("Enemies/WastelandBoss") as WastelandBoss
+	_check(boss != null, "stage two spawns a boss after twelve seconds")
+	if boss != null:
+		_check(boss.global_position.distance_to(game.player.global_position) <= 7.2, "stage two boss spawns in visible combat range")
+	game.queue_free()
+	await process_frame
+	state.start_campaign()
 
 
 func _test_penetration() -> void:
@@ -663,8 +719,13 @@ func _test_upgrade_offer_flow() -> void:
 	_check(not game.upgrade_panel.overlay.visible, "first kill does not trigger upgrade")
 	game._on_enemy_died(enemy)
 	await process_frame
-	_check(game.upgrade_panel.overlay.visible, "second kill opens upgrade offer")
-	_check(paused, "upgrade offer pauses combat")
+	_check(game._upgrade_ready, "second kill marks an upgrade as ready")
+	_check(not game.upgrade_panel.overlay.visible, "ready upgrade does not interrupt combat")
+	_check(not paused, "ready upgrade leaves combat running")
+	game._offer_upgrade()
+	await process_frame
+	_check(game.upgrade_panel.overlay.visible, "F upgrade action opens the ready offer")
+	_check(paused, "opened upgrade offer pauses combat")
 	_check(game.upgrade_panel._choices.size() == 3, "upgrade panel displays three choices")
 	game.upgrade_panel._choose(0)
 	await process_frame

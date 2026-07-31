@@ -91,7 +91,7 @@ theme_override_styles/background = SubResource("HealthBackground")
 theme_override_styles/fill = SubResource("HealthFill")
 
 [node name="StagePanel" type="PanelContainer" parent="Margin/TopBar"]
-custom_minimum_size = Vector2(130, 68)
+custom_minimum_size = Vector2(170, 68)
 layout_mode = 2
 theme_override_styles/panel = SubResource("PanelStyle")
 
@@ -101,7 +101,7 @@ text = "第 1 关"
 horizontal_alignment = 1
 vertical_alignment = 1
 theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 15
 
 [node name="SpacerLeft" type="Control" parent="Margin/TopBar"]
 custom_minimum_size = Vector2(20, 0)
@@ -150,7 +150,7 @@ grow_horizontal = 2
 
 [node name="BossName" type="Label" parent="Margin/BossBar"]
 layout_mode = 2
-text = "废土监管者  |  第一阶段"
+text = "异星母舰  |  第一阶段"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(1, 0.72, 0.25, 1)
 
@@ -184,7 +184,7 @@ theme_override_font_sizes/font_size = 14
 [node name="Controls" type="Label" parent="Margin/BottomBar"]
 custom_minimum_size = Vector2(270, 0)
 layout_mode = 2
-text = "空格 闪避   |   1 / 2 / 3 切换武器"
+text = "空格 闪避   |   1 至 5 切换武器   |   6 / 7 / 8 装备   |   E 强化   |   F 交互"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.62, 0.73, 0.7, 1)
 theme_override_font_sizes/font_size = 13
@@ -244,3 +244,36 @@ layout_mode = 2
 text = "消灭敌人并存活六十秒"
 horizontal_alignment = 1
 label_settings = SubResource("SmallSettings")
+
+[node name="InteractionHint" type="Label" parent="Margin"]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -190.0
+offset_top = -104.0
+offset_right = 190.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "F  拾取武器"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.78, 0.96, 0.88, 0.94)
+theme_override_font_sizes/font_size = 15
+
+[node name="SalvageHint" type="Label" parent="Margin"]
+visible = false
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -90.0
+offset_right = 340.0
+offset_bottom = -60.0
+grow_vertical = 0
+text = "回收箱已投放"
+theme_override_font_sizes/font_size = 14

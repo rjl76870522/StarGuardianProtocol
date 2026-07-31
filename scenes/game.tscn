@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource path="res://src/core/game.gd" type="Script" id="1"]
 [ext_resource path="res://src/world/arena.gd" type="Script" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource path="res://scenes/upgrade_panel.tscn" type="PackedScene" id="5"]
 [ext_resource path="res://scenes/boss_debug_panel.tscn" type="PackedScene" id="6"]
 [ext_resource path="res://scenes/weapon_reward_panel.tscn" type="PackedScene" id="7"]
+[ext_resource path="res://scenes/route_panel.tscn" type="PackedScene" id="8"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -73,6 +74,8 @@ script = ExtResource("2")
 [node name="BossDebugPanel" parent="." instance=ExtResource("6")]
 
 [node name="WeaponRewardPanel" parent="." instance=ExtResource("7")]
+
+[node name="RoutePanel" parent="." instance=ExtResource("8")]
 
 [node name="PauseLayer" type="CanvasLayer" parent="."]
 layer = 20
@@ -147,6 +150,14 @@ theme_override_styles/focus = SubResource("ButtonHover")
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 text = "返回主菜单"
+theme_override_styles/normal = SubResource("Button")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="TelemetryButton" type="Button" parent="PauseLayer/PausePanel/Panel/Content/Buttons"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+text = "战斗数值：显示"
 theme_override_styles/normal = SubResource("Button")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")

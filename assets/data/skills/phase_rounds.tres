@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/data/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = &"phase_rounds"
+display_name = "相位穿墙"
+description = "弹丸无视掩体和围墙，直接穿透战场结构"
+max_level = 1
+level_values = PackedFloat32Array(1)
+accent_color = Color(0.55, 0.4, 1, 1)

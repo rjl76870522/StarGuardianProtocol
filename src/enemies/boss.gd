@@ -30,6 +30,8 @@ var _laser_angle := 0.0
 
 @onready var core: MeshInstance3D = $Core
 @onready var laser: MeshInstance3D = $Laser
+@onready var phase_ring: MeshInstance3D = $PhaseRing
+@onready var core_light: OmniLight3D = $CoreLight
 
 
 func _ready() -> void:
@@ -46,6 +48,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if _dead or not is_instance_valid(target):
 		return
+	phase_ring.rotate_y(delta * (0.8 + float(phase_index) * 0.55))
 	_attack_cooldown -= delta
 	for key in cooldowns.keys():
 		cooldowns[key] = maxf(float(cooldowns[key]) - delta, 0.0)
@@ -174,6 +177,15 @@ func _apply_phase(index: int) -> void:
 	material.emission = phase.accent_color
 	material.emission_energy_multiplier = 4.0
 	core.material_override = material
+	core_light.light_color = phase.accent_color
+	core_light.light_energy = 5.5 + float(phase_index) * 1.8
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = phase.accent_color.darkened(0.18)
+	ring_material.emission_enabled = true
+	ring_material.emission = phase.accent_color
+	ring_material.emission_energy_multiplier = 2.0 + float(phase_index)
+	phase_ring.material_override = ring_material
+	phase_ring.scale = Vector3.ONE * (1.0 + float(phase_index) * 0.12)
 	_attack_cooldown = 0.35
 	phase_changed.emit(phase_index, phase)
 
@@ -193,12 +205,12 @@ func reset_battle() -> void:
 	health = max_health
 	_dead = false
 	collision_layer = 4
-	collision_mask = 3
+	collision_mask = 19
 	_apply_phase(0)
 	health_changed.emit(health, max_health)
 
 
 func apply_difficulty(multiplier: float) -> void:
-	max_health *= maxf(multiplier, 1.0)
+	max_health *= maxf(multiplier, 1.0) * 1.12
 	health = max_health
 	health_changed.emit(health, max_health)

@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/skills/drone_projectile.gd" id="1"]
+
+[sub_resource type="SphereMesh" id="BoltMesh"]
+radius = 0.15
+height = 0.3
+radial_segments = 10
+rings = 5
+
+[sub_resource type="StandardMaterial3D" id="BoltMaterial"]
+albedo_color = Color(0.2, 0.9, 1, 1)
+emission_enabled = true
+emission = Color(0.12, 0.72, 1, 1)
+emission_energy_multiplier = 5.5
+
+[sub_resource type="CylinderMesh" id="TrailMesh"]
+top_radius = 0.045
+bottom_radius = 0.085
+height = 0.82
+radial_segments = 8
+
+[node name="DroneProjectile" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Bolt" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoltMesh")
+material_override = SubResource("BoltMaterial")
+
+[node name="Trail" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0.38)
+rotation = Vector3(1.5708, 0, 0)
+mesh = SubResource("TrailMesh")
+material_override = SubResource("BoltMaterial")
+
+[node name="Light" type="OmniLight3D" parent="."]
+light_color = Color(0.18, 0.78, 1, 1)
+light_energy = 2.6
+omni_range = 3.0

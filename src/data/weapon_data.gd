@@ -5,6 +5,9 @@ extends Resource
 @export var display_name: String
 @export_multiline var description: String
 @export var icon: Texture2D
+@export var is_melee: bool = false
+@export_range(0.5, 10.0, 0.1) var melee_range: float = 2.8
+@export_range(10.0, 180.0, 1.0) var melee_arc_degrees: float = 100.0
 @export_range(0.1, 500.0, 0.1) var damage: float = 10.0
 @export_range(0.03, 5.0, 0.01) var fire_interval: float = 0.2
 @export_range(1, 32, 1) var projectile_count: int = 1
@@ -40,4 +43,3 @@ func is_valid() -> bool:
 		if effect == null or not effect.is_valid():
 			return false
 	return true
-

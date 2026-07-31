@@ -3,7 +3,7 @@
 [resource]
 script = ExtResource("1")
 enemy_id = &"heavy"
-display_name = "重型装甲单位"
+display_name = "重装 钢铁壁垒"
 archetype = 3
 max_health = 90.0
 move_speed = 1.25
@@ -13,3 +13,4 @@ attack_interval = 1.6
 body_color = Color(0.19, 0.2, 0.18, 1)
 core_color = Color(0.88, 0.22, 0.08, 1)
 scale_multiplier = 1.45
+role_summary = "高生命低机动，封锁路线"

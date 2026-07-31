@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/data/weapon_data.gd" id="1_weapon"]
+[ext_resource type="Script" path="res://src/data/weapon_vfx_data.gd" id="2_vfx"]
+[ext_resource type="Script" path="res://src/data/weapon_audio_data.gd" id="3_sfx"]
+[ext_resource type="Texture2D" path="res://assets/generated/weapon_icons/arc_blade.svg" id="4_icon"]
+
+[sub_resource type="Resource" id="VFX"]
+script = ExtResource("2_vfx")
+projectile_color = Color(0.95, 0.3, 0.52, 1)
+projectile_scale = 2.1
+hit_color = Color(1, 0.72, 0.8, 1)
+
+[sub_resource type="Resource" id="SFX"]
+script = ExtResource("3_sfx")
+frequency = 245.0
+duration = 0.11
+amplitude = 0.32
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_id = &"arc_blade"
+display_name = "KX-3 等离子战刃"
+description = "近距离扇形斩击，爆发伤害极高"
+icon = ExtResource("4_icon")
+is_melee = true
+melee_range = 3.2
+melee_arc_degrees = 110.0
+damage = 32.0
+fire_interval = 0.44
+projectile_count = 3
+spread_degrees = 42.0
+projectile_speed = 23.0
+projectile_range = 4.6
+recoil = 0.08
+critical_chance = 0.14
+critical_multiplier = 2.0
+vfx = SubResource("VFX")
+sfx = SubResource("SFX")

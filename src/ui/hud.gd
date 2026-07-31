@@ -13,8 +13,8 @@ func set_time(seconds_left: float) -> void:
 	$Margin/TopBar/TimerPanel/Timer.text = "%02d:%02d" % [total / 60, total % 60]
 
 
-func set_stage(stage: int) -> void:
-	$Margin/TopBar/StagePanel/Stage.text = "第 %d 关" % stage
+func set_stage(stage: int, map_name: String = "") -> void:
+	$Margin/TopBar/StagePanel/Stage.text = "第 %d 关\n%s" % [stage, map_name] if not map_name.is_empty() else "第 %d 关" % stage
 
 
 func set_kills(value: int, target: int = 0) -> void:
@@ -35,7 +35,7 @@ func set_weapon(weapon: WeaponData, index: int) -> void:
 	$Margin/BottomBar/WeaponIcon.texture = weapon.icon
 	var state := get_node_or_null("/root/GameState")
 	var level := int(state.weapon_level(weapon.weapon_id)) if state != null else 1
-	$Margin/BottomBar/WeaponStatus.text = "%d  %s  ·  %d级" % [index + 1, weapon.display_name, level]
+	$Margin/BottomBar/WeaponStatus.text = "%d  %s  ·  %d级  ·  单发 %d  ·  6震爆 7燃烧 8电磁\nT暴怒  G修复  Y反弹  H锁定" % [index + 1, weapon.display_name, level, weapon.damage]
 
 
 func set_skill(skill: SkillData, level: int) -> void:
@@ -45,6 +45,17 @@ func set_skill(skill: SkillData, level: int) -> void:
 
 func show_all_skills_maxed() -> void:
 	$Margin/BottomBar/UpgradeStatus.text = "全部强化已满级"
+	$Margin/BottomBar/UpgradeStatus.modulate = Color.WHITE
+
+
+func show_upgrade_ready() -> void:
+	$Margin/BottomBar/UpgradeStatus.text = "强化模块就绪  按 E 选择"
+	$Margin/BottomBar/UpgradeStatus.modulate = Color("ffb340")
+
+
+func clear_upgrade_ready() -> void:
+	$Margin/BottomBar/UpgradeStatus.text = "强化模块待获取"
+	$Margin/BottomBar/UpgradeStatus.modulate = Color.WHITE
 
 
 func show_boss(current: float, maximum: float, phase_name: String = "") -> void:
@@ -52,7 +63,7 @@ func show_boss(current: float, maximum: float, phase_name: String = "") -> void:
 	$Margin/BossBar/Health.max_value = maximum
 	$Margin/BossBar/Health.value = current
 	if not phase_name.is_empty():
-		$Margin/BossBar/BossName.text = "废土监管者  |  %s" % phase_name
+		$Margin/BossBar/BossName.text = "异星母舰  |  %s" % phase_name
 
 
 func hide_boss() -> void:
@@ -67,3 +78,19 @@ func show_message(title: String, subtitle: String) -> void:
 
 func hide_message() -> void:
 	$CenterMessage.visible = false
+
+
+func set_interaction_hint(message: String) -> void:
+	$Margin/InteractionHint.text = message
+	$Margin/InteractionHint.visible = not message.is_empty()
+
+
+func show_salvage_hint(message: String) -> void:
+	var label: Label = $Margin/SalvageHint
+	label.text = message
+	label.modulate = Color(0.65, 0.86, 0.78, 0.88)
+	label.visible = true
+	var tween := create_tween()
+	tween.tween_interval(1.25)
+	tween.tween_property(label, "modulate:a", 0.0, 0.35)
+	tween.tween_callback(func() -> void: label.visible = false)

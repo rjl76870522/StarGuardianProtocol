@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_id = &"mage"
+display_name = "法师 电弧术士"
+archetype = 5
+max_health = 34.0
+move_speed = 1.65
+contact_damage = 11.0
+attack_range = 7.2
+attack_interval = 2.1
+projectile_speed = 10.5
+body_color = Color(0.14, 0.06, 0.31, 1)
+core_color = Color(0.68, 0.3, 1, 1)
+scale_multiplier = 0.94
+role_summary = "远程范围法术，弹幕压制"

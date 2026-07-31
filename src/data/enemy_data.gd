@@ -1,7 +1,7 @@
 class_name EnemyData
 extends Resource
 
-enum Archetype { CHASER, SHOOTER, BOMBER, HEAVY, REPAIR }
+enum Archetype { CHASER, SHOOTER, BOMBER, HEAVY, REPAIR, MAGE }
 
 @export var enemy_id: StringName
 @export var display_name: String
@@ -20,6 +20,7 @@ enum Archetype { CHASER, SHOOTER, BOMBER, HEAVY, REPAIR }
 @export var elite: bool = false
 @export var teleport_on_hit: bool = false
 @export var leaves_hazard: bool = false
+@export var role_summary: String = ""
 
 
 func is_valid() -> bool:

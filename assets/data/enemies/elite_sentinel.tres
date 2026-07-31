@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_id = &"elite_sentinel"
+display_name = "精英 雷暴哨卫"
+archetype = 5
+max_health = 96.0
+move_speed = 2.2
+contact_damage = 14.0
+attack_range = 9.0
+attack_interval = 0.72
+projectile_speed = 18.0
+body_color = Color(0.035, 0.12, 0.25, 1)
+core_color = Color(0.42, 0.8, 1, 1)
+scale_multiplier = 1.32
+elite = true
+role_summary = "远程雷暴压制，移动时不断保持射程"

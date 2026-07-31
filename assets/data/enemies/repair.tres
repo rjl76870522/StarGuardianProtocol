@@ -3,7 +3,7 @@
 [resource]
 script = ExtResource("1")
 enemy_id = &"repair"
-display_name = "支援修复单位"
+display_name = "辅助 修复先知"
 archetype = 4
 max_health = 28.0
 move_speed = 1.8
@@ -13,3 +13,4 @@ attack_interval = 2.5
 repair_amount = 12.0
 body_color = Color(0.05, 0.27, 0.17, 1)
 core_color = Color(0.18, 1, 0.52, 1)
+role_summary = "修复友军、强化伤害并召唤护卫"

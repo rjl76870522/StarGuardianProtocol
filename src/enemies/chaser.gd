@@ -33,6 +33,7 @@ var _stuck_time: float = 0.0
 
 @onready var hit_audio: AudioStreamPlayer3D = $HitAudio
 @onready var status_effects: StatusEffectController = $StatusEffects
+@onready var telemetry: Label3D = $Telemetry
 
 
 func _ready() -> void:
@@ -43,6 +44,7 @@ func _ready() -> void:
 	_decision_cooldown = fmod(float(get_instance_id()) * 0.037, decision_interval)
 	_last_position = global_position
 	_set_state(State.SPAWN)
+	_update_telemetry()
 
 
 func _apply_data() -> void:
@@ -63,12 +65,26 @@ func _apply_data() -> void:
 	core_material.emission = enemy_data.core_color
 	core_material.emission_energy_multiplier = 3.5 if enemy_data.elite else 2.2
 	$Core.material_override = core_material
+	match enemy_data.archetype:
+		EnemyData.Archetype.CHASER:
+			$Body.scale = Vector3(1.1, 0.9, 1.18)
+		EnemyData.Archetype.SHOOTER:
+			$Body.scale = Vector3(0.78, 1.2, 0.78)
+		EnemyData.Archetype.BOMBER:
+			$Body.scale = Vector3(0.84, 1.04, 0.84)
+		EnemyData.Archetype.HEAVY:
+			$Body.scale = Vector3(1.32, 1.22, 1.25)
+		EnemyData.Archetype.REPAIR:
+			$Body.scale = Vector3(0.9, 0.76, 0.9)
+		EnemyData.Archetype.MAGE:
+			$Body.scale = Vector3(0.82, 1.42, 0.82)
 
 
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_attack_cooldown = maxf(_attack_cooldown - delta, 0.0)
+	_update_telemetry()
 	_hazard_cooldown = maxf(_hazard_cooldown - delta, 0.0)
 	if _spawn_remaining > 0.0:
 		_spawn_remaining -= delta
@@ -143,6 +159,8 @@ func _execute_behavior(delta: float) -> void:
 			_explode()
 		EnemyData.Archetype.REPAIR:
 			_repair_nearest_ally()
+		EnemyData.Archetype.MAGE:
+			_fire_radial(3, contact_damage * 0.72)
 		_:
 			target.take_damage(contact_damage)
 			hit_player.emit()
@@ -185,8 +203,9 @@ func _repair_nearest_ally() -> void:
 			best_distance = distance
 	if best != null:
 		best.heal(enemy_data.repair_amount)
+		best.apply_support_boost(1.28, 3.5)
 	else:
-		_fire_at_player()
+		_summon_support_guard()
 
 
 func heal(amount: float) -> void:
@@ -194,11 +213,49 @@ func heal(amount: float) -> void:
 		health = minf(health + maxf(amount, 0.0), max_health)
 
 
+func apply_support_boost(multiplier: float, duration: float) -> void:
+	var safe_multiplier := clampf(multiplier, 0.35, 2.5)
+	contact_damage *= safe_multiplier
+	get_tree().create_timer(duration).timeout.connect(func() -> void:
+		if not _dead:
+			contact_damage /= safe_multiplier
+	)
+
+
+func _summon_support_guard() -> void:
+	if get_tree().get_nodes_in_group("enemies").size() >= 18:
+		_fire_at_player()
+		return
+	var guard := preload("res://scenes/chaser.tscn").instantiate() as ScrapChaser
+	guard.enemy_data = preload("res://assets/data/enemies/chaser.tres") as EnemyData
+	guard.target = target
+	guard.global_position = global_position + Vector3(0.9, 0.0, 0.9)
+	guard.add_to_group("enemies")
+	get_parent().add_child(guard)
+	var game := get_tree().current_scene
+	if game != null and game.has_method("_on_enemy_died"):
+		guard.died.connect(Callable(game, "_on_enemy_died"))
+	if game != null and game.has_method("_on_player_hit"):
+		guard.hit_player.connect(Callable(game, "_on_player_hit"))
+
+
+func _update_telemetry() -> void:
+	if telemetry == null:
+		return
+	var state := get_node_or_null("/root/GameState")
+	telemetry.visible = state == null or bool(state.show_combat_telemetry)
+	if not telemetry.visible:
+		return
+	var blocks := clampi(int(round((health / maxf(max_health, 1.0)) * 8.0)), 0, 8)
+	telemetry.text = "█".repeat(blocks) + "░".repeat(8 - blocks)
+
+
 func apply_difficulty(multiplier: float) -> void:
-	var safe_multiplier := maxf(multiplier, 1.0)
+	# Base enemies must stay threatening even before the endless curve accelerates.
+	var safe_multiplier := maxf(multiplier, 1.0) * 1.22
 	max_health *= safe_multiplier
 	health = max_health
-	contact_damage *= 1.0 + (safe_multiplier - 1.0) * 0.55
+	contact_damage *= 1.14 + (safe_multiplier - 1.0) * 0.62
 
 
 func take_damage(amount: float) -> void:
@@ -285,6 +342,11 @@ func _build_archetype_visual() -> void:
 			_add_cylinder(details, Vector3(0.0, 1.03, 0.0), 0.48, 0.12, accent)
 			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.12, 0.42, 0.12), accent)
 			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.42, 0.12, 0.12), accent)
+		EnemyData.Archetype.MAGE:
+			_add_cylinder(details, Vector3(0.0, 1.28, 0.0), 0.62, 0.08, accent)
+			_add_box(details, Vector3(0.0, 1.52, 0.0), Vector3(0.16, 0.65, 0.16), accent)
+			_add_box(details, Vector3(-0.42, 1.04, 0.0), Vector3(0.12, 0.45, 0.12), accent, 0.25)
+			_add_box(details, Vector3(0.42, 1.04, 0.0), Vector3(0.12, 0.45, 0.12), accent, -0.25)
 		_:
 			_add_box(details, Vector3(-0.32, 0.96, 0.05), Vector3(0.18, 0.48, 0.28), accent.darkened(0.35), -0.3)
 			_add_box(details, Vector3(0.32, 0.96, 0.05), Vector3(0.18, 0.48, 0.28), accent.darkened(0.35), 0.3)

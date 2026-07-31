@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/data/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = &"scrap_familiar"
+display_name = "废料跟班"
+description = "唤醒跟班无人机，提高自动火力覆盖范围"
+max_level = 4
+level_values = PackedFloat32Array(1, 2, 3, 4)
+accent_color = Color(1, 0.74, 0.28, 1)

@@ -1,7 +1,8 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource path="res://src/enemies/chaser.gd" type="Script" id="1"]
 [ext_resource path="res://src/status/status_effect_controller.gd" type="Script" id="2"]
+[ext_resource path="res://src/combat/core_hitbox.gd" type="Script" id="3"]
 
 [sub_resource type="CapsuleShape3D" id="Collision"]
 radius = 0.48
@@ -38,9 +39,12 @@ albedo_color = Color(0.35, 0.38, 0.36, 1)
 metallic = 0.92
 roughness = 0.25
 
+[sub_resource type="SphereShape3D" id="CoreHitShape"]
+radius = 0.36
+
 [node name="ScrapChaser" type="CharacterBody3D"]
 collision_layer = 4
-collision_mask = 3
+collision_mask = 19
 script = ExtResource("1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -53,9 +57,19 @@ mesh = SubResource("BodyMesh")
 material_override = SubResource("BodyMaterial")
 
 [node name="Core" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.66, -0.51)
+position = Vector3(0, 0.9, -0.51)
 mesh = SubResource("CoreMesh")
 material_override = SubResource("CoreMaterial")
+
+[node name="CoreHitbox" type="Area3D" parent="."]
+position = Vector3(0, 0.92, -0.51)
+collision_layer = 4
+collision_mask = 0
+monitorable = true
+script = ExtResource("3")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CoreHitbox"]
+shape = SubResource("CoreHitShape")
 
 [node name="LeftBlade" type="MeshInstance3D" parent="."]
 position = Vector3(-0.62, 0.55, -0.25)
@@ -75,3 +89,12 @@ max_distance = 28.0
 
 [node name="StatusEffects" type="Node" parent="."]
 script = ExtResource("2")
+
+[node name="Telemetry" type="Label3D" parent="."]
+position = Vector3(0, 1.56, 0)
+billboard = 1
+pixel_size = 0.0042
+outline_size = 2
+modulate = Color(1, 0.32, 0.32, 0.86)
+font_size = 29
+horizontal_alignment = 1

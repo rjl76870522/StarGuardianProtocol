@@ -1,6 +1,8 @@
 class_name OrbitDrone
 extends Node3D
 
+const DRONE_PROJECTILE := preload("res://scenes/drone_projectile.tscn")
+
 @export var orbit_radius: float = 2.2
 @export var orbit_speed: float = 1.8
 @export var attack_interval: float = 0.9
@@ -44,7 +46,12 @@ func _attack_nearest() -> void:
 	if target == null or not target.has_method("take_damage"):
 		return
 	_attack_cooldown = attack_interval
-	target.take_damage(damage)
+	var bolt := DRONE_PROJECTILE.instantiate() as DroneProjectile
+	var projectile_parent := get_tree().current_scene
+	if projectile_parent == null:
+		projectile_parent = get_parent()
+	projectile_parent.add_child(bolt)
+	bolt.launch(global_position, target.global_position + Vector3.UP * 0.7, damage)
 	var tween := create_tween()
 	tween.tween_property($Core, "scale", Vector3.ONE * 1.8, 0.06)
 	tween.tween_property($Core, "scale", Vector3.ONE, 0.12)

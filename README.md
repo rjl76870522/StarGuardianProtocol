@@ -1,7 +1,7 @@
-# Wasteland Protocol
+# Star Guardian Protocol
 
-《机械废土：最后防线》是使用 Godot 4 和 GDScript 制作的低多边形
-2.5D俯视角动作 Roguelite
+《星际防线：深空守望》是使用 Godot 4 和 GDScript 制作的低多边形
+俯视角动作 Roguelite。玩家从星港中枢出发，守卫轨道设施并清除异星威胁。
 
 ## Development status
 
@@ -12,9 +12,8 @@
 - Campaign systems: in progress
 - Milestones 5-9: pending
 
-The current vertical slice includes a Chinese interface, one-minute industrial
-arena, three reward weapons, nine five-level upgrade paths, five normal enemy
-archetypes, two elite variants, and a three-phase mechanical boss.
+当前版本包含中文界面、十个随机防卫星域、八种武器、五格武器背包、局内主动
+人物技能、八类敌方单位、三阶段异星母舰，以及无尽关卡与持久化存档。
 
 Campaign progress is saved automatically after stage advancement, skill
 upgrades, and weapon rewards. `Continue Campaign` restores the current stage,
@@ -22,7 +21,9 @@ campaign seed, skill levels, weapon unlocks, and weapon levels. Resuming starts
 the current stage from its beginning rather than restoring enemies mid-combat.
 
 Each stage deterministically changes the arena palette, floor grid, and physical
-obstacle layout. Enemy health, damage, spawn pressure, and objective quota rise
+obstacle layout. Ten map patterns use distinct lanes and cover placement.
+Obstacle bodies are on a dedicated physics layer: they block the player,
+enemies, player projectiles, and enemy projectiles. Enemy health, damage, spawn pressure, and objective quota rise
 with the stage. Clearing a stage opens a choice of weapon unlocks or permanent
 weapon upgrades before the next arena loads.
 
@@ -72,7 +73,9 @@ platform's executable and `WastelandProtocol.pck` together when distributing.
 - Left mouse: fire
 - `Space`: dash
 - `Esc`: pause
-- `1`, `2`, `3`: switch weapon
+- `1` through `5`: switch weapon
+- `6`, `7`, `8`: shock grenade, fire bottle, EMP grenade
+- `T`, `G`, `Y`, `H`: active fury, repair, ricochet, target-lock abilities after learning them at the training station
 - `F3`: toggle Boss debug panel
 - `F4`: spawn Boss immediately in debug runs
 - `F2`: open an upgrade offer in debug runs

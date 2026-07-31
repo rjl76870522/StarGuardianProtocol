@@ -90,13 +90,13 @@ alignment = 1
 
 [node name="Protocol" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "机械废土 // 作战协议"
+text = "深空防卫 // 作战协议"
 theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 16
 
 [node name="Title" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "最后\n防线"
+text = "星际\n防线"
 theme_override_colors/font_color = Color(0.86, 0.96, 0.92, 1)
 theme_override_font_sizes/font_size = 66
 
@@ -107,7 +107,7 @@ color = Color(0.25, 0.42, 0.4, 1)
 
 [node name="Subtitle" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "机械废土：最后防线\n生存指令  //  01"
+text = "星际防线：深空守望\n清除异星威胁  //  01"
 theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
 theme_override_font_sizes/font_size = 18
 
@@ -134,10 +134,56 @@ horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
 theme_override_font_sizes/font_size = 13
 
+[node name="CampStatus" type="Label" parent="Layout/Panel/Buttons"]
+layout_mode = 2
+text = "营地补给  |  废料 12  |  初始步枪 1级"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.78, 0.64, 0.32, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="ZoneButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "初始武器：自动步枪  ‹ 点击切换 ›"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="UpgradeButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "升级初始步枪"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="GardenButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "升级初始生命"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="SkinButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "作战皮肤：翠绿侦察者  ‹ 点击切换 ›"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="AchievementStatus" type="Label" parent="Layout/Panel/Buttons"]
+layout_mode = 2
+text = "成就档案  ·  已解锁 0 项"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.55, 0.74, 0.68, 1)
+theme_override_font_sizes/font_size = 12
+
 [node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
-text = "新战役"
+text = "开始游戏  ·  进入营地"
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
@@ -161,5 +207,9 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [connection signal="pressed" from="Layout/Panel/Buttons/StartButton" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/ZoneButton" to="." method="_on_zone_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/UpgradeButton" to="." method="_on_upgrade_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/GardenButton" to="." method="_on_garden_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/SkinButton" to="." method="_on_skin_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/QuitButton" to="." method="_on_quit_pressed"]

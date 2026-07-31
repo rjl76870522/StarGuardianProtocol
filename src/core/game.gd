@@ -3,14 +3,18 @@ extends Node3D
 const ENEMY_SCENE := preload("res://scenes/chaser.tscn")
 const IMPACT_SCENE := preload("res://scenes/impact_flash.tscn")
 const BOSS_SCENE := preload("res://scenes/boss.tscn")
+const SALVAGE_CACHE := preload("res://src/world/salvage_cache.gd")
+const WEAPON_PICKUP := preload("res://src/world/weapon_pickup.gd")
 const ENEMY_CATALOG: Array[EnemyData] = [
 	preload("res://assets/data/enemies/chaser.tres"),
 	preload("res://assets/data/enemies/shooter.tres"),
 	preload("res://assets/data/enemies/bomber.tres"),
 	preload("res://assets/data/enemies/heavy.tres"),
 	preload("res://assets/data/enemies/repair.tres"),
+	preload("res://assets/data/enemies/mage.tres"),
 	preload("res://assets/data/enemies/elite_blink.tres"),
 	preload("res://assets/data/enemies/elite_hazard.tres"),
+	preload("res://assets/data/enemies/elite_sentinel.tres"),
 ]
 const SKILL_CATALOG: Array[SkillData] = [
 	preload("res://assets/data/skills/rapid_fire.tres"),
@@ -22,6 +26,8 @@ const SKILL_CATALOG: Array[SkillData] = [
 	preload("res://assets/data/skills/combat_core.tres"),
 	preload("res://assets/data/skills/critical_matrix.tres"),
 	preload("res://assets/data/skills/armor_plating.tres"),
+	preload("res://assets/data/skills/split_rounds.tres"),
+	preload("res://assets/data/skills/phase_rounds.tres"),
 ]
 
 @export var round_duration: float = 60.0
@@ -41,8 +47,13 @@ var _rng := RandomNumberGenerator.new()
 var _camera_shake: float = 0.0
 var _camera_base_position: Vector3
 var _next_upgrade_kills: int
+var _upgrade_ready: bool = false
 var _boss_spawned: bool = false
 var _boss_defeated: bool = false
+var _pending_reward_weapon: WeaponData
+var _zone_cache_interval := 6
+var _zone_cache_scrap := 2
+var _next_cache_kills := 6
 
 @onready var player: WastelandPlayer = $Player
 @onready var hud: WastelandHUD = $HUD
@@ -52,11 +63,13 @@ var _boss_defeated: bool = false
 @onready var upgrade_panel: UpgradePanel = $UpgradePanel
 @onready var boss_debug_panel: BossDebugPanel = $BossDebugPanel
 @onready var weapon_reward_panel: WeaponRewardPanel = $WeaponRewardPanel
+@onready var route_panel: RoutePanel = $RoutePanel
 
 
 func _ready() -> void:
 	GameState.begin_run()
 	_apply_stage_difficulty()
+	_apply_zone_contract()
 	time_left = round_duration
 	_rng.randomize()
 	_camera_base_position = camera.position
@@ -68,22 +81,26 @@ func _ready() -> void:
 	player.weapon_changed.connect(_on_weapon_changed)
 	player.skill_upgraded.connect(_on_skill_upgraded)
 	player.action_message.connect(_on_action_message)
+	player.interaction_hint.connect(hud.set_interaction_hint)
 	upgrade_panel.skill_selected.connect(_on_skill_selected)
 	weapon_reward_panel.weapon_selected.connect(_on_weapon_reward_selected)
+	route_panel.route_selected.connect(_on_route_selected)
 	hud.set_health(player.health, player.max_health)
 	hud.set_time(time_left)
 	hud.set_kills(kills, required_kills)
-	hud.set_stage(GameState.current_stage)
+	hud.set_stage(GameState.current_stage, $Arena.map_display_name)
 	hud.set_weapon(player.current_weapon, player.weapon_index)
+	_spawn_pending_weapon()
 	for skill in SKILL_CATALOG:
 		var carried_level := player.skill_system.get_level(skill.skill_id)
 		if carried_level > 0:
 			hud.set_skill(skill, carried_level)
-	hud.show_message("第 %d 关" % GameState.current_stage, "击毁 %d 个敌人并坚守六十秒" % required_kills)
+	hud.show_message("第 %d 关" % GameState.current_stage, "%s\n击毁 %d 个敌人并坚守六十秒" % [_zone_contract_brief(), required_kills])
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/ResumeButton.pressed.connect(_toggle_pause)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/RestartButton.pressed.connect(_restart)
 	$PauseLayer/PausePanel/Panel/Content/Buttons/MenuButton.pressed.connect(_return_to_menu)
+	$PauseLayer/PausePanel/Panel/Content/Buttons/TelemetryButton.pressed.connect(_toggle_telemetry)
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/RestartButton.pressed.connect(_restart)
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton.pressed.connect(_next_stage)
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/MenuButton.pressed.connect(_return_to_menu)
@@ -94,8 +111,10 @@ func _process(delta: float) -> void:
 		_toggle_pause()
 	if Input.is_action_just_pressed("boss_spawn_debug") and not _round_finished and not _boss_spawned:
 		_spawn_boss()
-	if Input.is_action_just_pressed("upgrade_debug") and not _round_finished and not upgrade_panel.overlay.visible:
+	if Input.is_action_just_pressed("upgrade") and _upgrade_ready and not _round_finished and not upgrade_panel.overlay.visible:
 		_offer_upgrade()
+	if Input.is_action_just_pressed("upgrade_debug") and not _round_finished and not upgrade_panel.overlay.visible:
+		_offer_upgrade(true)
 	if _paused or _round_finished:
 		return
 	time_left = maxf(time_left - delta, 0.0)
@@ -105,7 +124,7 @@ func _process(delta: float) -> void:
 		_spawn_enemy()
 		var pressure := 1.0 - time_left / round_duration
 		_spawn_cooldown = lerpf(initial_spawn_interval, minimum_spawn_interval, pressure)
-	if not _boss_spawned and round_duration - time_left >= boss_spawn_elapsed:
+	if not _boss_spawned and round_duration - time_left >= _boss_spawn_delay():
 		_spawn_boss()
 	if time_left <= 0.0:
 		if kills >= required_kills and (not _boss_spawned or _boss_defeated):
@@ -142,8 +161,8 @@ func _choose_enemy_data() -> EnemyData:
 		maximum_index = 2
 	if elapsed >= 20.0:
 		maximum_index = 4
-	if elapsed >= 38.0:
-		maximum_index = 6
+	if elapsed >= 34.0:
+		maximum_index = 8
 	return ENEMY_CATALOG[_rng.randi_range(0, maximum_index)]
 
 
@@ -151,16 +170,20 @@ func _spawn_boss() -> void:
 	_boss_spawned = true
 	var boss := BOSS_SCENE.instantiate() as WastelandBoss
 	boss.target = player
-	boss.position = Vector3(0.0, 0.0, -7.5)
+	boss.add_to_group("enemies")
 	$Enemies.add_child(boss)
+	boss.global_position = _boss_spawn_position()
 	boss.apply_difficulty(_stage_multiplier())
+	if GameState.current_stage == 1:
+		boss.max_health = minf(boss.max_health, 460.0)
+		boss.health = boss.max_health
 	boss.health_changed.connect(func(current: float, maximum: float) -> void: hud.show_boss(current, maximum))
 	boss.phase_changed.connect(func(_index: int, phase: BossPhaseData) -> void: hud.show_boss(boss.health, boss.max_health, phase.display_name))
 	boss.summon_requested.connect(_summon_enemies)
 	boss.died.connect(_on_boss_died)
 	boss_debug_panel.bind_boss(boss)
 	hud.show_boss(boss.health, boss.max_health, WastelandBoss.PHASES[0].display_name)
-	hud.show_message("警告", "废土监管者已进入战场")
+	hud.show_message("警告", "异星母舰已从前方进入战场")
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 
 
@@ -174,7 +197,7 @@ func _on_boss_died() -> void:
 	kills += 3
 	hud.set_kills(kills, required_kills)
 	hud.hide_boss()
-	hud.show_message("核心摧毁", "废土监管者已停止运行")
+	hud.show_message("核心摧毁", "异星母舰已停止运行")
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 
 
@@ -184,8 +207,11 @@ func _on_enemy_died(enemy: ScrapChaser) -> void:
 	hud.set_kills(kills, required_kills)
 	_spawn_impact(enemy.global_position, Color("ffb340"))
 	_camera_shake = maxf(_camera_shake, 0.12)
-	if kills >= _next_upgrade_kills and not _round_finished:
-		call_deferred("_offer_upgrade")
+	if kills >= _next_upgrade_kills and not _round_finished and not _upgrade_ready:
+		_mark_upgrade_ready()
+	if kills >= _next_cache_kills and not _round_finished:
+		_spawn_salvage_cache(enemy.global_position)
+		_next_cache_kills += _zone_cache_interval
 
 
 func _on_player_hit() -> void:
@@ -193,18 +219,43 @@ func _on_player_hit() -> void:
 
 
 func _on_player_fired(recoil: float) -> void:
-	_spawn_impact(player.muzzle.global_position, Color("35e6b2"), 0.11)
 	_camera_shake = maxf(_camera_shake, recoil * 0.06)
 
 
-func _offer_upgrade() -> void:
-	if _round_finished or upgrade_panel.overlay.visible:
+func _boss_spawn_delay() -> float:
+	return minf(boss_spawn_elapsed, 12.0)
+
+
+func _boss_spawn_position() -> Vector3:
+	var direction := Vector3(0.0, 0.0, -1.0)
+	if player.global_position.z < -3.5:
+		direction = Vector3(0.0, 0.0, 1.0)
+	# Keep the encounter visibly inside the fixed top-down camera at every stage.
+	var at := player.global_position + direction * 5.2
+	at.x = clampf(at.x, -12.5, 12.5)
+	at.z = clampf(at.z, -7.5, 7.5)
+	at.y = 0.0
+	return at
+
+
+func _mark_upgrade_ready() -> void:
+	_upgrade_ready = true
+	hud.show_upgrade_ready()
+	hud.show_message("强化模块就绪", "按 E 打开强化选择，当前战斗不会中断")
+	get_tree().create_timer(2.4).timeout.connect(hud.hide_message)
+
+
+func _offer_upgrade(force: bool = false) -> void:
+	if _round_finished or upgrade_panel.overlay.visible or (not _upgrade_ready and not force):
 		return
 	var choices := player.skill_system.available_choices(SKILL_CATALOG, 3, _rng)
 	if choices.is_empty():
 		_next_upgrade_kills = 1 << 30
+		_upgrade_ready = false
 		hud.show_all_skills_maxed()
 		return
+	_upgrade_ready = false
+	hud.clear_upgrade_ready()
 	_paused = true
 	get_tree().paused = true
 	upgrade_panel.show_choices(choices, player.skill_system)
@@ -227,7 +278,7 @@ func _on_skill_upgraded(skill: SkillData, level: int) -> void:
 
 
 func _on_action_message(message: String) -> void:
-	hud.show_message("武器未解锁", message)
+	hud.show_message("战术提示", message)
 	get_tree().create_timer(1.8).timeout.connect(hud.hide_message)
 
 
@@ -269,6 +320,8 @@ func _finish_round(victory: bool, failure_title: String = "作战单元已损毁
 	if _round_finished:
 		return
 	_round_finished = true
+	if victory:
+		_auto_collect_stage_loot()
 	GameState.finish_run(round_duration - time_left, kills)
 	result_panel.visible = true
 	result_panel.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -282,7 +335,10 @@ func _finish_round(victory: bool, failure_title: String = "作战单元已损毁
 	$PauseLayer/ResultPanel/Panel/Content/Title.text = title
 	$PauseLayer/ResultPanel/Panel/Content/Detail.text = detail
 	var next_button: Button = $PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton
-	next_button.visible = victory
+	next_button.visible = victory and GameState.current_stage < 2000
+	next_button.text = "领取武器，进入第 %d 关" % mini(GameState.current_stage + 1, 2000)
+	if victory and GameState.current_stage >= 2000:
+		$PauseLayer/ResultPanel/Panel/Content/Detail.text = detail + "\n已达无尽战区最高关卡，终焉守望者成就已记录"
 	get_tree().paused = true
 	if victory:
 		next_button.grab_focus()
@@ -296,7 +352,18 @@ func _toggle_pause() -> void:
 	pause_panel.visible = _paused
 	pause_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	if _paused:
+		_update_telemetry_button()
 		$PauseLayer/PausePanel/Panel/Content/Buttons/ResumeButton.grab_focus()
+
+
+func _toggle_telemetry() -> void:
+	GameState.show_combat_telemetry = not GameState.show_combat_telemetry
+	_update_telemetry_button()
+	hud.show_message("战场显示", "敌人血条与数值已%s" % ("显示" if GameState.show_combat_telemetry else "隐藏"))
+
+
+func _update_telemetry_button() -> void:
+	$PauseLayer/PausePanel/Panel/Content/Buttons/TelemetryButton.text = "战斗数值：%s" % ("显示" if GameState.show_combat_telemetry else "隐藏")
 
 
 func _restart() -> void:
@@ -306,29 +373,159 @@ func _restart() -> void:
 
 func _next_stage() -> void:
 	result_panel.visible = false
-	var rewards: Array[WeaponData] = []
+	var pool: Array[WeaponData] = []
+	# The first choice is always the equipped weapon: players can explicitly
+	# choose to upgrade it instead of taking a new weapon category.
+	if player.current_weapon != null:
+		pool.append(player.current_weapon)
 	for weapon in WastelandPlayer.WEAPON_CATALOG:
-		rewards.append(weapon as WeaponData)
+		var candidate := weapon as WeaponData
+		if candidate != null and (player.current_weapon == null or candidate.weapon_id != player.current_weapon.weapon_id):
+			pool.append(candidate)
+	for index in range(pool.size() - 1, 1, -1):
+		var swap_index := _rng.randi_range(1, index)
+		var temporary := pool[index]
+		pool[index] = pool[swap_index]
+		pool[swap_index] = temporary
+	var rewards: Array[WeaponData] = []
+	rewards.append(pool[0])
+	rewards.append_array(pool.slice(1, 3))
 	weapon_reward_panel.show_rewards(rewards)
 
 
+func _auto_collect_stage_loot() -> void:
+	var recovered := 0
+	for candidate in get_tree().get_nodes_in_group("salvage_caches"):
+		if candidate is SalvageCache and (candidate as SalvageCache).collect(player, false):
+			recovered += 1
+	if recovered > 0:
+		hud.show_salvage_hint("关卡结算已自动回收 %d 个补给箱" % recovered)
+
+
 func _on_weapon_reward_selected(weapon: WeaponData) -> void:
-	GameState.upgrade_weapon(weapon.weapon_id)
+	_pending_reward_weapon = weapon
+	# Routes are now generated by the wasteland network. Weapon choice remains
+	# player-controlled, while the next environment is a fresh random contract.
+	_on_route_selected(_rng.randi_range(0, 9))
+
+
+func _on_route_selected(zone: int) -> void:
+	if _pending_reward_weapon == null:
+		return
+	var level := GameState.queue_weapon_reward(_pending_reward_weapon.weapon_id)
+	var module_id := GameState.grant_weapon_module(_pending_reward_weapon.weapon_id)
+	var storage_note := "已写入背包" if GameState.pending_weapon_id.is_empty() else "背包已满，武器寄存器已部署"
+	hud.show_salvage_hint("%s升至 %d 级，获得武器模块：%s  ·  %s" % [_pending_reward_weapon.display_name, level, _weapon_module_name(module_id), storage_note])
+	GameState.select_zone(zone)
 	GameState.advance_stage()
 	get_tree().paused = false
 	get_tree().reload_current_scene()
 
 
+func _weapon_module_name(module_id: StringName) -> String:
+	match module_id:
+		&"overdrive": return "超频射速"
+		&"impact": return "冲击增幅"
+		&"ricochet": return "偏转反弹"
+		&"seeker": return "追踪锁定"
+		&"range": return "超距聚焦"
+		_: return "未知模块"
+
+
+func _apply_zone_contract() -> void:
+	match GameState.selected_zone:
+		0:
+			_zone_cache_interval = 5
+			_zone_cache_scrap = 3
+		1:
+			initial_spawn_interval *= 0.88
+			minimum_spawn_interval *= 0.9
+			_zone_cache_interval = 7
+		2:
+			upgrade_kill_interval = maxi(1, upgrade_kill_interval - 1)
+			_next_upgrade_kills = upgrade_kill_interval
+			max_active_enemies += 3
+			_zone_cache_interval = 7
+		3:
+			player.apply_zone_support(28.0, 0.45)
+			_zone_cache_interval = 6
+			_zone_cache_scrap = 2
+		4:
+			_zone_cache_interval = 4
+			_zone_cache_scrap = 3
+		5:
+			player.apply_zone_support(0.0, 0.85)
+			_zone_cache_interval = 5
+		6:
+			max_active_enemies += 4
+			_zone_cache_interval = 5
+			_zone_cache_scrap = 3
+		_:
+			player.apply_zone_support(40.0, 0.15)
+			_zone_cache_interval = 5
+	_next_cache_kills = _zone_cache_interval
+
+
+func _zone_contract_brief() -> String:
+	match GameState.selected_zone:
+		0: return "打捞特许：补给箱提供更多废料"
+		1: return "熔炉危机：敌军推进更快，爆炸物更多"
+		2: return "高压试验：强化模块更频繁，敌群更密集"
+		3: return "冷却庇护：获得额外生命与机动能力"
+		4: return "坠落打捞：回收箱出现更频繁"
+		5: return "风蚀机动：获得更高移动速度"
+		6: return "盐碱围猎：敌群更密集，废料更多"
+		_: return "深井庇护：获得重装生命补给"
+
+
+func _spawn_salvage_cache(origin: Vector3) -> void:
+	var cache := SALVAGE_CACHE.new() as SalvageCache
+	cache.scrap_amount = _zone_cache_scrap
+	cache.heal_amount = 18.0 if GameState.selected_zone == 3 else 13.0
+	cache.armor_charge = 8.0 if _rng.randf() < 0.18 else 0.0
+	cache.global_position = origin + Vector3(_rng.randf_range(-0.7, 0.7), 0.0, _rng.randf_range(-0.7, 0.7))
+	add_child(cache)
+	cache.collected.connect(_on_salvage_cache_collected)
+	hud.show_salvage_hint("回收箱已投放")
+
+
+func _on_salvage_cache_collected(scrap_amount: int, heal_amount: float) -> void:
+	GameState.add_scrap(scrap_amount)
+	hud.show_salvage_hint("回收 +%d 废料  ·  +%d 生命" % [scrap_amount, int(heal_amount)])
+
+
+func _spawn_pending_weapon() -> void:
+	if GameState.pending_weapon_id.is_empty():
+		return
+	var reward: WeaponData
+	for candidate in WastelandPlayer.WEAPON_CATALOG:
+		var weapon := candidate as WeaponData
+		if weapon != null and weapon.weapon_id == GameState.pending_weapon_id:
+			reward = weapon
+			break
+	if reward == null:
+		GameState.clear_pending_weapon(GameState.pending_weapon_id)
+		return
+	var pickup := WEAPON_PICKUP.new()
+	pickup.configure(reward)
+	pickup.global_position = player.global_position + Vector3(2.0, 0.0, 1.2)
+	call_deferred("add_child", pickup)
+	hud.show_salvage_hint("武器寄存器已部署  ·  靠近后按 F 更换装备")
+
+
 func _stage_multiplier() -> float:
-	return 1.0 + float(GameState.current_stage - 1) * 0.18
+	# Endless scaling: early stages ramp quickly, later stages stay survivable with upgrades.
+	return 1.0 + float(GameState.current_stage - 1) * 0.11 + pow(float(GameState.current_stage - 1), 1.18) * 0.012
 
 
 func _apply_stage_difficulty() -> void:
 	var stage_offset := GameState.current_stage - 1
-	required_kills += stage_offset * 2
-	max_active_enemies += mini(stage_offset * 2, 10)
+	required_kills += mini(stage_offset * 2, 44)
+	max_active_enemies += mini(stage_offset * 2, 22)
 	initial_spawn_interval = maxf(initial_spawn_interval * pow(0.94, stage_offset), 1.7)
 	minimum_spawn_interval = maxf(minimum_spawn_interval * pow(0.94, stage_offset), 0.85)
+	if GameState.current_stage >= 2000 and GameState.unlock_achievement(&"endless_2000"):
+		hud.show_message("终焉守望者", "你已抵达第 2000 关，获得无尽战区成就")
 
 
 func _return_to_menu() -> void:

@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 6
 var save_path := "user://campaign_save.json"
 var temp_path := "user://campaign_save.tmp"
 var backup_path := "user://campaign_save.backup.json"
@@ -20,6 +20,16 @@ func save_campaign(state: Node) -> bool:
 		"skills": _string_key_dictionary(state.carried_skill_levels),
 		"weapons": _string_key_dictionary(state.weapon_levels),
 		"unlocked_weapons": _string_key_dictionary(state.unlocked_weapons),
+		"loadout_weapons": _string_array(state.loadout_weapon_ids),
+		"selected_start_weapon": str(state.selected_start_weapon_id),
+		"pending_weapon": str(state.pending_weapon_id),
+		"scrap": int(state.scrap),
+		"garden_level": int(state.garden_level),
+		"home_skills": _string_key_dictionary(state.home_skill_levels),
+		"weapon_modules": _nested_string_key_dictionary(state.weapon_modules),
+		"selected_zone": int(state.selected_zone),
+		"achievements": _string_key_dictionary(state.achievements),
+		"equipped_skin": str(state.equipped_skin),
 		"saved_at": Time.get_datetime_string_from_system(true),
 	}
 	var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -61,11 +71,12 @@ func _load_file(path: String) -> Dictionary:
 	if not parsed is Dictionary:
 		return {}
 	var data := parsed as Dictionary
-	if int(data.get("version", -1)) != SAVE_VERSION:
+	var version := int(data.get("version", -1))
+	if version < 5 or version > SAVE_VERSION:
 		return {}
-	if int(data.get("stage", 0)) < 1 or int(data.get("stage", 0)) > 999:
+	if int(data.get("stage", 0)) < 1 or int(data.get("stage", 0)) > 2000:
 		return {}
-	if not data.get("skills", {}) is Dictionary or not data.get("weapons", {}) is Dictionary:
+	if not data.get("skills", {}) is Dictionary or not data.get("weapons", {}) is Dictionary or not data.get("loadout_weapons", []) is Array:
 		return {}
 	return data
 
@@ -80,6 +91,16 @@ func apply_campaign(state: Node) -> bool:
 	state.weapon_levels = _validated_levels(data.get("weapons", {}), 20)
 	state.unlocked_weapons = _validated_unlocks(data.get("unlocked_weapons", {}))
 	state.unlocked_weapons[&"auto_rifle"] = true
+	state.loadout_weapon_ids = _validated_loadout(data.get("loadout_weapons", []))
+	state.selected_start_weapon_id = StringName(str(data.get("selected_start_weapon", state.loadout_weapon_ids[0])))
+	state.pending_weapon_id = StringName(str(data.get("pending_weapon", "")))
+	state.scrap = clampi(int(data.get("scrap", 12)), 0, 99999)
+	state.garden_level = clampi(int(data.get("garden_level", 0)), 0, 30)
+	state.home_skill_levels = _validated_levels(data.get("home_skills", {}), 5)
+	state.weapon_modules = _validated_nested_levels(data.get("weapon_modules", {}), 5)
+	state.selected_zone = posmod(int(data.get("selected_zone", 0)), 10)
+	state.achievements = _validated_unlocks(data.get("achievements", {}))
+	state.equipped_skin = StringName(str(data.get("equipped_skin", "verdant_scout")))
 	return true
 
 
@@ -99,6 +120,21 @@ func _string_key_dictionary(source: Dictionary) -> Dictionary:
 	return result
 
 
+func _string_array(source: Array) -> Array:
+	var result: Array[String] = []
+	for item in source:
+		result.append(str(item))
+	return result
+
+
+func _nested_string_key_dictionary(source: Dictionary) -> Dictionary:
+	var result := {}
+	for outer_key in source:
+		if source[outer_key] is Dictionary:
+			result[str(outer_key)] = _string_key_dictionary(source[outer_key])
+	return result
+
+
 func _validated_levels(source: Dictionary, maximum: int) -> Dictionary:
 	var result := {}
 	for key in source:
@@ -113,4 +149,27 @@ func _validated_unlocks(source: Dictionary) -> Dictionary:
 	for key in source:
 		if source[key] is bool:
 			result[StringName(str(key))] = bool(source[key])
+	return result
+
+
+func _validated_nested_levels(source: Dictionary, maximum: int) -> Dictionary:
+	var result := {}
+	for outer_key in source:
+		if not source[outer_key] is Dictionary:
+			continue
+		result[StringName(str(outer_key))] = _validated_levels(source[outer_key], maximum)
+	return result
+
+
+func _validated_loadout(source: Array) -> Array[StringName]:
+	var result: Array[StringName] = []
+	for item in source:
+		var weapon_id := StringName(str(item))
+		if weapon_id.is_empty() or result.has(weapon_id):
+			continue
+		result.append(weapon_id)
+		if result.size() >= 5:
+			break
+	if result.is_empty():
+		result.append(&"auto_rifle")
 	return result

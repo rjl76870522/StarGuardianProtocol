@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=7 format=3]
+[ext_resource type="Script" path="res://src/data/weapon_data.gd" id="1"]
+[ext_resource type="Script" path="res://src/data/weapon_vfx_data.gd" id="2"]
+[ext_resource type="Script" path="res://src/data/weapon_audio_data.gd" id="3"]
+[ext_resource type="Texture2D" path="res://assets/generated/weapon_icons/rail_lance.svg" id="4"]
+[sub_resource type="Resource" id="VFX"]
+script = ExtResource("2")
+projectile_color = Color(0.95, 0.24, 0.24, 1)
+projectile_scale = 1.25
+hit_color = Color(1, 0.72, 0.72, 1)
+[sub_resource type="Resource" id="SFX"]
+script = ExtResource("3")
+frequency = 960.0
+duration = 0.18
+amplitude = 0.25
+[resource]
+script = ExtResource("1")
+weapon_id = &"sniper_rifle"
+display_name = "H-77 长距狙击枪"
+description = "超远距离高伤害精确射击"
+icon = ExtResource("4")
+damage = 108.0
+fire_interval = 1.6
+projectile_count = 1
+projectile_speed = 70.0
+projectile_range = 58.0
+recoil = 0.4
+critical_chance = 0.3
+critical_multiplier = 2.5
+base_penetration = 1
+vfx = SubResource("VFX")
+sfx = SubResource("SFX")

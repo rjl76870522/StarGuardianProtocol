@@ -3,7 +3,7 @@
 [resource]
 script = ExtResource("1")
 enemy_id = &"bomber"
-display_name = "快速自爆单位"
+display_name = "刺客 爆裂潜行者"
 archetype = 2
 max_health = 14.0
 move_speed = 4.5
@@ -13,3 +13,4 @@ attack_interval = 2.0
 body_color = Color(0.38, 0.24, 0.02, 1)
 core_color = Color(1, 0.82, 0.05, 1)
 scale_multiplier = 0.78
+role_summary = "低生命高机动，贴身自爆"
