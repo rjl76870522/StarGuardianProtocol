@@ -13,15 +13,34 @@ func _ready() -> void:
 	mesh.top_radius = 0.34
 	mesh.bottom_radius = 0.42
 	mesh.height = 1.0
+	mesh.radial_segments = 12
 	mesh_instance.mesh = mesh
 	mesh_instance.position.y = 0.5
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color("9b2e1c")
+	material.albedo_color = Color("102842")
+	material.metallic = 0.9
+	material.roughness = 0.22
 	material.emission_enabled = true
-	material.emission = Color("ff4e1e")
-	material.emission_energy_multiplier = 1.2
+	material.emission = Color("28c8ff")
+	material.emission_energy_multiplier = 1.45
 	mesh_instance.material_override = material
 	add_child(mesh_instance)
+	for height in [0.24, 0.76]:
+		var ring := MeshInstance3D.new()
+		var ring_mesh := CylinderMesh.new()
+		ring_mesh.top_radius = 0.46
+		ring_mesh.bottom_radius = 0.46
+		ring_mesh.height = 0.055
+		ring_mesh.radial_segments = 16
+		ring.mesh = ring_mesh
+		ring.position.y = height
+		var ring_material := StandardMaterial3D.new()
+		ring_material.albedo_color = Color("7cecff")
+		ring_material.emission_enabled = true
+		ring_material.emission = Color("26b9ff")
+		ring_material.emission_energy_multiplier = 3.1
+		ring.material_override = ring_material
+		add_child(ring)
 	var collision := CollisionShape3D.new()
 	var shape := CylinderShape3D.new()
 	shape.radius = 0.43

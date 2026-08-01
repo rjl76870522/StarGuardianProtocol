@@ -60,26 +60,52 @@ func _apply_data() -> void:
 	scale = Vector3.ONE * enemy_data.scale_multiplier
 	var body_material := StandardMaterial3D.new()
 	body_material.albedo_color = enemy_data.body_color
+	body_material.metallic = 0.88
+	body_material.roughness = 0.24
 	$Body.material_override = body_material
+	$LeftBlade.visible = false
+	$RightBlade.visible = false
 	var core_material := StandardMaterial3D.new()
 	core_material.albedo_color = enemy_data.core_color
 	core_material.emission_enabled = true
 	core_material.emission = enemy_data.core_color
 	core_material.emission_energy_multiplier = 3.5 if enemy_data.elite else 2.2
 	$Core.material_override = core_material
+	var hull: PrimitiveMesh
 	match enemy_data.archetype:
 		EnemyData.Archetype.CHASER:
-			$Body.scale = Vector3(1.1, 0.9, 1.18)
+			var chaser_hull := BoxMesh.new()
+			chaser_hull.size = Vector3(0.72, 0.68, 0.92)
+			hull = chaser_hull
 		EnemyData.Archetype.SHOOTER:
-			$Body.scale = Vector3(0.78, 1.2, 0.78)
+			var shooter_hull := BoxMesh.new()
+			shooter_hull.size = Vector3(0.9, 0.38, 1.05)
+			hull = shooter_hull
 		EnemyData.Archetype.BOMBER:
-			$Body.scale = Vector3(0.84, 1.04, 0.84)
+			var bomber_hull := SphereMesh.new()
+			bomber_hull.radius = 0.52
+			bomber_hull.height = 0.9
+			hull = bomber_hull
 		EnemyData.Archetype.HEAVY:
-			$Body.scale = Vector3(1.32, 1.22, 1.25)
+			var heavy_hull := BoxMesh.new()
+			heavy_hull.size = Vector3(1.28, 0.8, 1.1)
+			hull = heavy_hull
 		EnemyData.Archetype.REPAIR:
-			$Body.scale = Vector3(0.9, 0.76, 0.9)
+			var repair_hull := CylinderMesh.new()
+			repair_hull.top_radius = 0.58
+			repair_hull.bottom_radius = 0.64
+			repair_hull.height = 0.34
+			repair_hull.radial_segments = 12
+			hull = repair_hull
 		EnemyData.Archetype.MAGE:
-			$Body.scale = Vector3(0.82, 1.42, 0.82)
+			var mage_hull := CylinderMesh.new()
+			mage_hull.top_radius = 0.36
+			mage_hull.bottom_radius = 0.55
+			mage_hull.height = 1.05
+			mage_hull.radial_segments = 6
+			hull = mage_hull
+	$Body.mesh = hull
+	$Body.scale = Vector3.ONE
 
 
 func _physics_process(delta: float) -> void:
@@ -110,6 +136,7 @@ func _physics_process(delta: float) -> void:
 	if _knockback_velocity.length_squared() > 0.05:
 		velocity = _knockback_velocity
 		move_and_slide()
+		_confine_to_combat_sector()
 		_knockback_velocity = _knockback_velocity.move_toward(Vector3.ZERO, 24.0 * delta)
 		return
 	if not is_instance_valid(target) or target.is_dead:
@@ -151,6 +178,7 @@ func _execute_behavior(delta: float) -> void:
 		if _desired_direction.length_squared() > 0.01:
 			look_at(global_position + _desired_direction, Vector3.UP)
 		move_and_slide()
+		_confine_to_combat_sector()
 		return
 	velocity = Vector3.ZERO
 	if state != State.ATTACK or _attack_cooldown > 0.0:
@@ -324,7 +352,17 @@ func _try_teleport(offset: Vector3) -> bool:
 	if collision != null:
 		return false
 	global_position += motion
+	_confine_to_combat_sector()
 	return true
+
+
+func _confine_to_combat_sector() -> void:
+	var game := get_tree().current_scene
+	if game == null:
+		return
+	var arena := game.get_node_or_null("Arena")
+	if arena != null and arena.has_method("confine_to_combat_area"):
+		global_position = arena.confine_to_combat_area(global_position, 0.58 * maxf(scale.x, 0.8))
 
 
 func _build_archetype_visual() -> void:
@@ -336,20 +374,26 @@ func _build_archetype_visual() -> void:
 	add_child(details)
 	var accent := enemy_data.core_color
 	match enemy_data.archetype:
+		EnemyData.Archetype.CHASER:
+			_add_box(details, Vector3(0.0, 1.05, 0.0), Vector3(0.48, 0.32, 0.42), enemy_data.body_color.lightened(0.16))
+			_add_box(details, Vector3(0.0, 0.72, -0.62), Vector3(0.16, 0.16, 0.45), accent, 0.0)
+			for side in [-1.0, 1.0]:
+				_add_box(details, Vector3(side * 0.32, 0.25, 0.18), Vector3(0.18, 0.32, 0.55), enemy_data.body_color.darkened(0.15), side * 0.12)
 		EnemyData.Archetype.SHOOTER:
-			_add_box(details, Vector3(-0.3, 0.82, -0.55), Vector3(0.13, 0.13, 0.95), accent)
-			_add_box(details, Vector3(0.3, 0.82, -0.55), Vector3(0.13, 0.13, 0.95), accent)
-			_add_box(details, Vector3(0.0, 0.9, 0.2), Vector3(0.9, 0.12, 0.35), enemy_data.body_color.lightened(0.2))
+			_add_box(details, Vector3(-0.62, 0.67, 0.0), Vector3(0.5, 0.08, 0.75), enemy_data.body_color.lightened(0.15), -0.16)
+			_add_box(details, Vector3(0.62, 0.67, 0.0), Vector3(0.5, 0.08, 0.75), enemy_data.body_color.lightened(0.15), 0.16)
+			_add_box(details, Vector3(0.0, 0.7, -0.72), Vector3(0.15, 0.15, 0.85), accent)
 		EnemyData.Archetype.BOMBER:
-			for index in 6:
-				var angle := TAU * float(index) / 6.0
-				_add_box(details, Vector3(cos(angle) * 0.58, 0.7, sin(angle) * 0.58), Vector3(0.13, 0.55, 0.13), accent, angle)
+			for index in 4:
+				var angle := TAU * float(index) / 4.0
+				_add_box(details, Vector3(cos(angle) * 0.62, 0.68, sin(angle) * 0.62), Vector3(0.12, 0.16, 0.65), accent, angle)
+			_add_cylinder(details, Vector3(0.0, 1.0, 0.0), 0.28, 0.08, accent)
 		EnemyData.Archetype.HEAVY:
 			_add_box(details, Vector3(-0.48, 0.72, 0.0), Vector3(0.32, 0.72, 1.0), enemy_data.body_color.lightened(0.16))
 			_add_box(details, Vector3(0.48, 0.72, 0.0), Vector3(0.32, 0.72, 1.0), enemy_data.body_color.lightened(0.16))
 			_add_box(details, Vector3(0.0, 1.02, 0.18), Vector3(0.72, 0.24, 0.62), accent.darkened(0.25))
 		EnemyData.Archetype.REPAIR:
-			_add_cylinder(details, Vector3(0.0, 1.03, 0.0), 0.48, 0.12, accent)
+			_add_cylinder(details, Vector3(0.0, 0.92, 0.0), 0.68, 0.08, accent)
 			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.12, 0.42, 0.12), accent)
 			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.42, 0.12, 0.12), accent)
 		EnemyData.Archetype.MAGE:
@@ -357,9 +401,6 @@ func _build_archetype_visual() -> void:
 			_add_box(details, Vector3(0.0, 1.52, 0.0), Vector3(0.16, 0.65, 0.16), accent)
 			_add_box(details, Vector3(-0.42, 1.04, 0.0), Vector3(0.12, 0.45, 0.12), accent, 0.25)
 			_add_box(details, Vector3(0.42, 1.04, 0.0), Vector3(0.12, 0.45, 0.12), accent, -0.25)
-		_:
-			_add_box(details, Vector3(-0.32, 0.96, 0.05), Vector3(0.18, 0.48, 0.28), accent.darkened(0.35), -0.3)
-			_add_box(details, Vector3(0.32, 0.96, 0.05), Vector3(0.18, 0.48, 0.28), accent.darkened(0.35), 0.3)
 	if enemy_data.elite:
 		_add_cylinder(details, Vector3(0.0, 1.2, 0.0), 0.68, 0.08, accent)
 

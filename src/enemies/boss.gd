@@ -59,6 +59,7 @@ func _physics_process(delta: float) -> void:
 		_charge_remaining -= delta
 		velocity = _charge_velocity
 		move_and_slide()
+		_confine_to_combat_sector()
 		if global_position.distance_to(target.global_position) < 1.8:
 			target.take_damage(18.0 + phase_index * 5.0)
 			_charge_remaining = 0.0
@@ -71,6 +72,7 @@ func _physics_process(delta: float) -> void:
 		velocity = offset.normalized() * phase.move_speed
 		look_at(global_position + offset.normalized(), Vector3.UP)
 		move_and_slide()
+		_confine_to_combat_sector()
 	else:
 		velocity = Vector3.ZERO
 	if _attack_cooldown <= 0.0:
@@ -205,7 +207,7 @@ func reset_battle() -> void:
 	health = max_health
 	_dead = false
 	collision_layer = 4
-	collision_mask = 19
+	collision_mask = 51
 	_apply_phase(0)
 	health_changed.emit(health, max_health)
 
@@ -214,3 +216,12 @@ func apply_difficulty(multiplier: float) -> void:
 	max_health *= maxf(multiplier, 1.0) * 1.12
 	health = max_health
 	health_changed.emit(health, max_health)
+
+
+func _confine_to_combat_sector() -> void:
+	var game := get_tree().current_scene
+	if game == null:
+		return
+	var arena := game.get_node_or_null("Arena")
+	if arena != null and arena.has_method("confine_to_combat_area"):
+		global_position = arena.confine_to_combat_area(global_position, 1.65)

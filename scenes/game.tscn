@@ -11,13 +11,13 @@
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
-background_color = Color(0.012, 0.021, 0.024, 1)
+background_color = Color(0.003, 0.008, 0.03, 1)
 ambient_light_source = 3
-ambient_light_color = Color(0.16, 0.28, 0.28, 1)
+ambient_light_color = Color(0.09, 0.19, 0.39, 1)
 ambient_light_energy = 0.75
 reflected_light_source = 2
 fog_enabled = true
-fog_light_color = Color(0.07, 0.13, 0.13, 1)
+fog_light_color = Color(0.025, 0.07, 0.18, 1)
 fog_light_energy = 0.55
 fog_density = 0.009
 

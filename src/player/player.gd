@@ -101,7 +101,65 @@ func _apply_skin() -> void:
 	$Body/Core.material_override = glow_material
 	$Body/Antenna.material_override = glow_material
 	$Body/CoreLight.light_color = palette[1]
+	_build_starfighter_frame(palette[0], palette[1])
 	_add_skin_accents(palette[1])
+
+
+func _build_starfighter_frame(hull_color: Color, glow_color: Color) -> void:
+	var previous := $Body.get_node_or_null("StarfighterFrame")
+	if previous != null:
+		previous.queue_free()
+	for node_name in ["Chassis", "UpperArmor", "Canopy", "LeftWheel", "RightWheel", "LeftTrackGuard", "RightTrackGuard", "LeftFin", "RightFin", "Antenna"]:
+		var node := $Body.get_node_or_null(node_name)
+		if node is VisualInstance3D:
+			node.visible = false
+	var frame := Node3D.new()
+	frame.name = "StarfighterFrame"
+	$Body.add_child(frame)
+	_add_ship_box(frame, Vector3(0.0, 0.22, 0.02), Vector3(0.68, 0.38, 1.42), hull_color)
+	_add_ship_box(frame, Vector3(0.0, 0.3, -0.76), Vector3(0.4, 0.22, 0.48), hull_color.lightened(0.1))
+	_add_ship_box(frame, Vector3(0.0, 0.47, -0.12), Vector3(0.42, 0.22, 0.5), glow_color.darkened(0.5), true)
+	for side in [-1.0, 1.0]:
+		_add_ship_box(frame, Vector3(side * 0.63, 0.2, 0.04), Vector3(0.72, 0.09, 0.72), hull_color.lightened(0.06), false, side * 0.18)
+		_add_ship_engine(frame, Vector3(side * 0.24, 0.18, 0.73), glow_color)
+
+
+func _add_ship_box(parent: Node3D, at: Vector3, size: Vector3, color: Color, emissive: bool = false, yaw: float = 0.0) -> void:
+	var part := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	part.mesh = mesh
+	part.position = at
+	part.rotation.y = yaw
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.metallic = 0.86
+	material.roughness = 0.22
+	if emissive:
+		material.emission_enabled = true
+		material.emission = color.lightened(0.2)
+		material.emission_energy_multiplier = 1.8
+	part.material_override = material
+	parent.add_child(part)
+
+
+func _add_ship_engine(parent: Node3D, at: Vector3, color: Color) -> void:
+	var engine := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.13
+	mesh.bottom_radius = 0.18
+	mesh.height = 0.34
+	mesh.radial_segments = 12
+	engine.mesh = mesh
+	engine.position = at
+	engine.rotation.x = PI * 0.5
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = 3.0
+	engine.material_override = material
+	parent.add_child(engine)
 
 
 func _add_skin_accents(color: Color) -> void:
@@ -209,6 +267,17 @@ func _physics_process(delta: float) -> void:
 	if not _home_mode and Input.is_action_just_pressed("pulse"):
 		_try_pulse()
 	move_and_slide()
+	if not _home_mode:
+		_confine_to_combat_sector()
+
+
+func _confine_to_combat_sector() -> void:
+	var game := get_tree().current_scene
+	if game == null:
+		return
+	var arena := game.get_node_or_null("Arena")
+	if arena != null and arena.has_method("confine_to_combat_area"):
+		global_position = arena.confine_to_combat_area(global_position, 0.52)
 
 
 func set_home_mode(enabled: bool) -> void:

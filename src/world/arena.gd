@@ -3,6 +3,7 @@ extends Node3D
 const WIDTH := 34.0
 const DEPTH := 22.0
 const OBSTACLE_LAYER := 16
+const BOUNDARY_LAYER := 32
 
 const MAP_NAMES := [
 	"近地轨道平台",
@@ -165,9 +166,9 @@ func _create_bounds() -> void:
 
 func _create_wall(at: Vector3, size: Vector3, rotation_y: float = 0.0) -> void:
 	var body := StaticBody3D.new()
-	# Projectile collision masks include the obstacle layer, not the floor layer.
-	# Keep irregular sector walls on the same layer as every other solid obstacle.
-	body.collision_layer = OBSTACLE_LAYER
+	# Perimeter walls are deliberately separate from internal cover. Phase rounds
+	# may bypass cover but must never leave an irregular combat sector.
+	body.collision_layer = BOUNDARY_LAYER
 	body.position = at
 	body.rotation.y = rotation_y
 	body.add_to_group("obstacles")
@@ -239,6 +240,7 @@ func _create_debris() -> void:
 
 func _create_space_backdrop() -> void:
 	# Non-colliding structures make each sector read as an orbital defence zone.
+	_create_starfield()
 	for side in [-1.0, 1.0]:
 		for index in 5:
 			var module := MeshInstance3D.new()
@@ -250,26 +252,51 @@ func _create_space_backdrop() -> void:
 			module.rotation.y = _rng.randf_range(-0.28, 0.28)
 			module.material_override = _tech_material(Color("111c28").lightened(_rng.randf_range(0.0, 0.12)), true)
 			add_child(module)
-	for index in 8:
-		var wreck := MeshInstance3D.new()
-		var wreck_mesh := CylinderMesh.new()
-		wreck_mesh.top_radius = 0.22
-		wreck_mesh.bottom_radius = 0.45
-		wreck_mesh.height = _rng.randf_range(1.2, 2.8)
-		wreck.mesh = wreck_mesh
-		wreck.position = Vector3(_rng.randf_range(-15.6, 15.6), 0.28, _rng.randf_range(-9.6, 9.6))
-		wreck.rotation = Vector3(0.0, _rng.randf_range(0.0, TAU), _rng.randf_range(-0.55, 0.55))
-		wreck.material_override = _tech_material(_grid_color.darkened(0.35), true)
-		add_child(wreck)
-	var tower := MeshInstance3D.new()
-	var tower_mesh := CylinderMesh.new()
-	tower_mesh.top_radius = 0.18
-	tower_mesh.bottom_radius = 0.38
-	tower_mesh.height = 8.5
-	tower.mesh = tower_mesh
-	tower.position = Vector3(-15.7, 4.25, -9.5)
-	tower.material_override = _tech_material(_accent_color.darkened(0.35), true)
-	add_child(tower)
+	for index in 6:
+		_create_orbital_relay(index)
+
+
+func _create_starfield() -> void:
+	for index in 54:
+		var star := MeshInstance3D.new()
+		var mesh := SphereMesh.new()
+		var radius := _rng.randf_range(0.025, 0.085)
+		mesh.radius = radius
+		mesh.height = radius * 2.0
+		star.mesh = mesh
+		var angle := _rng.randf_range(0.0, TAU)
+		var distance := _rng.randf_range(18.0, 31.0)
+		star.position = Vector3(cos(angle) * distance, _rng.randf_range(1.5, 8.0), sin(angle) * distance)
+		var starlight := Color("a8ddff") if index % 3 else _accent_color.lightened(0.28)
+		star.material_override = _tech_material(starlight, true)
+		add_child(star)
+
+
+func _create_orbital_relay(index: int) -> void:
+	var relay := Node3D.new()
+	var angle := TAU * float(index) / 6.0 + 0.18
+	var radius := 18.0 + float(index % 2) * 2.2
+	relay.position = Vector3(cos(angle) * radius, 0.8, sin(angle) * radius)
+	relay.rotation.y = -angle
+	var core := MeshInstance3D.new()
+	var core_mesh := CylinderMesh.new()
+	core_mesh.top_radius = 0.22
+	core_mesh.bottom_radius = 0.42
+	core_mesh.height = 2.2
+	core_mesh.radial_segments = 8
+	core.mesh = core_mesh
+	core.position.y = 1.1
+	core.material_override = _tech_material(Color("23374d"), true)
+	relay.add_child(core)
+	for side in [-1.0, 1.0]:
+		var panel := MeshInstance3D.new()
+		var panel_mesh := BoxMesh.new()
+		panel_mesh.size = Vector3(1.35, 0.07, 0.62)
+		panel.mesh = panel_mesh
+		panel.position = Vector3(side * 1.0, 1.25, 0.0)
+		panel.material_override = _tech_material(_accent_color.darkened(0.35), true)
+		relay.add_child(panel)
+	add_child(relay)
 
 
 func _create_combat_interactables() -> void:
@@ -446,7 +473,38 @@ func combat_spawn_position(rng: RandomNumberGenerator) -> Vector3:
 
 
 func keep_inside_combat_area(position_value: Vector3) -> Vector3:
+	return confine_to_combat_area(position_value, 0.18)
+
+
+func confine_to_combat_area(position_value: Vector3, margin: float = 0.36) -> Vector3:
 	var point := Vector2(position_value.x, position_value.z)
-	while not _is_inside_boundary(point) and point.length_squared() > 0.01:
-		point *= 0.88
-	return Vector3(point.x, position_value.y, point.y)
+	if _is_inside_boundary(point):
+		return position_value
+	var nearest := Vector2.ZERO
+	var nearest_distance := INF
+	for index in boundary_points.size():
+		var start := boundary_points[index]
+		var finish := boundary_points[(index + 1) % boundary_points.size()]
+		var segment := finish - start
+		var length_squared := segment.length_squared()
+		if length_squared <= 0.0001:
+			continue
+		var progress := clampf((point - start).dot(segment) / length_squared, 0.0, 1.0)
+		var candidate := start + segment * progress
+		var distance := point.distance_squared_to(candidate)
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest = candidate
+	var center := Vector2.ZERO
+	for vertex in boundary_points:
+		center += vertex
+	center /= maxf(float(boundary_points.size()), 1.0)
+	var inward := (center - nearest).normalized()
+	var corrected := nearest + inward * maxf(margin, 0.08)
+	# Concave sectors can require more than one inward step. Interpolate toward
+	# the polygon center until the corrected point is safely valid.
+	for _attempt in 8:
+		if _is_inside_boundary(corrected):
+			return Vector3(corrected.x, position_value.y, corrected.y)
+		corrected = corrected.lerp(center, 0.35)
+	return Vector3(center.x, position_value.y, center.y)

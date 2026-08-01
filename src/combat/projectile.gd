@@ -189,16 +189,26 @@ func _bounce_from_surface(surface_normal: Vector3) -> void:
 		queue_free()
 		return
 	ricochet_remaining -= 1
-	var normal := surface_normal.normalized()
+	var incoming := direction.normalized()
+	var normal := surface_normal
+	normal.y = 0.0
 	if normal.length_squared() < 0.001:
-		normal = -direction
-	direction = direction.bounce(normal)
+		normal = -incoming
+	else:
+		normal = normal.normalized()
+	# Raycast normals should face the incident side. Correct an inverted normal
+	# before reflecting so sloped pentagon walls preserve the real incident angle.
+	if incoming.dot(normal) > 0.0:
+		normal = -normal
+	direction = incoming - normal * (2.0 * incoming.dot(normal))
 	direction.y = 0.0
 	if direction.length_squared() < 0.001:
 		direction = Vector3.FORWARD
 	else:
 		direction = direction.normalized()
-	global_position += direction * 0.12
+	# Start the next ray just inside the legal side of the wall. This prevents a
+	# grazing shot from immediately re-hitting a corner or leaking beyond it.
+	global_position += normal * 0.055 + direction * 0.12
 	look_at(global_position + direction, Vector3.UP)
 	_show_bounce_flash(global_position, normal)
 
