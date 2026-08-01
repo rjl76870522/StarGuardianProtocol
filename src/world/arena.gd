@@ -25,7 +25,7 @@ var variant: int = 0
 var layout_signature: String = ""
 var map_display_name: String = "近地轨道平台"
 var _rng := RandomNumberGenerator.new()
-var _floor_color := Color("173a66")
+var _floor_color := Color("0d2346")
 var _grid_color := Color("4e91c9")
 var _accent_color := Color("8edfff")
 var boundary_points: Array[Vector2] = []
@@ -52,16 +52,16 @@ func _ready() -> void:
 
 func _apply_palette() -> void:
 	var palettes := [
-		[Color("173a66"), Color("4e91c9"), Color("8edfff")],
-		[Color("1d4678"), Color("5a9fd4"), Color("9ce8ff")],
-		[Color("244875"), Color("669ed0"), Color("b0ebff")],
-		[Color("183b6d"), Color("4d8bc9"), Color("7ed5ff")],
-		[Color("21466f"), Color("5e9dd0"), Color("a4e2ff")],
-		[Color("1d4c70"), Color("55a7d5"), Color("8ddfff")],
-		[Color("2b5277"), Color("74aad3"), Color("c0eeff")],
-		[Color("1b466e"), Color("4f9fce"), Color("73d8ff")],
-		[Color("24466d"), Color("649bca"), Color("9ce4ff")],
-		[Color("173f72"), Color("5a9bd4"), Color("b6edff")],
+		[Color("0d2346"), Color("4e91c9"), Color("8edfff")],
+		[Color("102a4f"), Color("5a9fd4"), Color("9ce8ff")],
+		[Color("142c4d"), Color("669ed0"), Color("b0ebff")],
+		[Color("0d2548"), Color("4d8bc9"), Color("7ed5ff")],
+		[Color("102a48"), Color("5e9dd0"), Color("a4e2ff")],
+		[Color("102d46"), Color("55a7d5"), Color("8ddfff")],
+		[Color("16324c"), Color("74aad3"), Color("c0eeff")],
+		[Color("10294a"), Color("4f9fce"), Color("73d8ff")],
+		[Color("142b47"), Color("649bca"), Color("9ce4ff")],
+		[Color("0d284c"), Color("5a9bd4"), Color("b6edff")],
 	]
 	_floor_color = palettes[variant][0]
 	_grid_color = palettes[variant][1]
@@ -77,12 +77,12 @@ func _create_floor() -> void:
 	mesh_instance.mesh = mesh
 	mesh_instance.position.y = -0.2
 	var material := StandardMaterial3D.new()
-	material.albedo_color = _floor_color.lightened(0.18)
+	material.albedo_color = _floor_color.lightened(0.08)
 	material.metallic = 0.65
 	material.roughness = 0.82
 	material.emission_enabled = true
-	material.emission = _floor_color.lightened(0.28)
-	material.emission_energy_multiplier = 0.62
+	material.emission = _floor_color.lightened(0.12)
+	material.emission_energy_multiplier = 0.28
 	mesh_instance.material_override = material
 	floor_body.add_child(mesh_instance)
 	var collision := CollisionShape3D.new()
