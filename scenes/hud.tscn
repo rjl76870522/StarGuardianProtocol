@@ -180,6 +180,7 @@ theme_override_styles/background = SubResource("HealthBackground")
 theme_override_styles/fill = SubResource("HealthFill")
 
 [node name="BottomPanel" type="Panel" parent="Margin"]
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -195,6 +196,7 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("BottomPanelStyle")
 
 [node name="BottomBar" type="HBoxContainer" parent="Margin"]
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
