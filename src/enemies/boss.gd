@@ -111,7 +111,13 @@ func _fire_radial(count: int, damage: float) -> void:
 
 func _spawn_projectile(direction: Vector3, damage: float, speed: float) -> void:
 	var projectile = ENEMY_PROJECTILE.instantiate()
-	get_tree().current_scene.add_child(projectile)
+	var scene_parent := get_tree().current_scene
+	if scene_parent == null:
+		scene_parent = get_tree().root
+	if scene_parent == null:
+		projectile.queue_free()
+		return
+	scene_parent.add_child(projectile)
 	projectile.launch(global_position + Vector3.UP, direction, damage, speed)
 
 
@@ -123,7 +129,13 @@ func _start_charge() -> void:
 
 func _spawn_hazard() -> void:
 	var hazard = HAZARD.instantiate()
-	get_tree().current_scene.add_child(hazard)
+	var scene_parent := get_tree().current_scene
+	if scene_parent == null:
+		scene_parent = get_tree().root
+	if scene_parent == null:
+		hazard.queue_free()
+		return
+	scene_parent.add_child(hazard)
 	hazard.global_position = Vector3(target.global_position.x, 0.08, target.global_position.z)
 
 

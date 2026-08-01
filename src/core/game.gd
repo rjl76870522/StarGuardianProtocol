@@ -164,12 +164,15 @@ func _choose_enemy_data() -> EnemyData:
 func _spawn_boss() -> void:
 	if _boss_defeated or is_instance_valid(_active_boss):
 		return
-	_boss_spawned = true
 	var boss := BOSS_SCENE.instantiate() as WastelandBoss
+	if boss == null:
+		push_error("Boss scene could not be instantiated")
+		return
 	boss.target = player
 	boss.add_to_group("enemies")
-	_active_boss = boss
 	$Enemies.add_child(boss)
+	_active_boss = boss
+	_boss_spawned = true
 	boss.global_position = _boss_spawn_position()
 	boss.apply_difficulty(_stage_multiplier())
 	if GameState.current_stage == 1:
@@ -231,6 +234,10 @@ func _on_player_fired(recoil: float) -> void:
 
 
 func _boss_spawn_delay() -> float:
+	# The first stage is the tutorial encounter. It must always appear early
+	# enough to be seen and defeated before the sixty-second round ends.
+	if GameState.current_stage == 1:
+		return 8.0
 	return minf(boss_spawn_elapsed, 12.0)
 
 

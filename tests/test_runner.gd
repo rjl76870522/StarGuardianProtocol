@@ -44,6 +44,7 @@ func _run() -> void:
 	await _test_enemy_state_machine()
 	await _test_repair_enemy()
 	await _test_boss_phases_and_debug()
+	await _test_stage_one_boss_spawn_and_hud()
 	await _test_stage_two_boss_spawn()
 	await _test_fire_rate_limit()
 	await _test_penetration()
@@ -629,6 +630,28 @@ func _test_stage_two_boss_spawn() -> void:
 	_check(boss != null, "stage two spawns a boss after twelve seconds")
 	if boss != null:
 		_check(boss.global_position.distance_to(game.player.global_position) <= 7.2, "stage two boss spawns in visible combat range")
+	game.queue_free()
+	await process_frame
+	state.start_campaign()
+
+
+func _test_stage_one_boss_spawn_and_hud() -> void:
+	var state := root.get_node("GameState")
+	state.start_campaign()
+	var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	game.initial_spawn_interval = 99.0
+	root.add_child(game)
+	await process_frame
+	game._process(8.1)
+	await process_frame
+	var boss := game.get_node_or_null("Enemies/WastelandBoss") as WastelandBoss
+	_check(boss != null, "stage one always spawns a boss after eight seconds")
+	if boss != null:
+		_check(boss.global_position.distance_to(game.player.global_position) <= 7.2, "stage one boss spawns in visible combat range")
+	var hud := game.get_node("HUD") as WastelandHUD
+	_check(hud.layer == 10 and hud.get_node("Margin").is_visible_in_tree(), "combat HUD remains on its dedicated visible layer")
+	_check(hud.get_node("Margin/BottomPanel").visible, "combat weapon panel is visible")
+	_check(hud.get_node("Margin/BottomBar/WeaponStatus").visible, "combat weapon status is visible")
 	game.queue_free()
 	await process_frame
 	state.start_campaign()
