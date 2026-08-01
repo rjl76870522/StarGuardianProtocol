@@ -28,7 +28,7 @@ func set_kills(value: int, target: int = 0) -> void:
 
 func set_dash_ready(ready: bool) -> void:
 	$Margin/BottomBar/DashStatus.text = "闪避  就绪" if ready else "闪避  充能中"
-	$Margin/BottomBar/DashStatus.modulate = Color("35e6b2") if ready else Color("7b8c88")
+	$Margin/BottomBar/DashStatus.modulate = Color("8edfff") if ready else Color("6689a8")
 
 
 func set_weapon(weapon: WeaponData, index: int) -> void:
@@ -52,7 +52,7 @@ func show_all_skills_maxed() -> void:
 
 func show_upgrade_ready() -> void:
 	$Margin/BottomBar/UpgradeStatus.text = "强化模块就绪  按 E 选择"
-	$Margin/BottomBar/UpgradeStatus.modulate = Color("ffb340")
+	$Margin/BottomBar/UpgradeStatus.modulate = Color("9ce8ff")
 
 
 func clear_upgrade_ready() -> void:
@@ -92,7 +92,7 @@ func show_salvage_hint(message: String) -> void:
 	if is_instance_valid(_salvage_hint_tween):
 		_salvage_hint_tween.kill()
 	label.text = message
-	label.modulate = Color(0.65, 0.86, 0.78, 0.88)
+	label.modulate = Color(0.65, 0.88, 1.0, 0.92)
 	label.visible = true
 	_salvage_hint_tween = create_tween()
 	_salvage_hint_tween.tween_interval(0.72)

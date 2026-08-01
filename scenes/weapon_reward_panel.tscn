@@ -6,12 +6,12 @@ border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.64, 0.2, 1)
+border_color = Color(0.34, 0.82, 1, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-shadow_color = Color(1, 0.32, 0.04, 0.24)
+shadow_color = Color(0.03, 0.5, 1, 0.28)
 shadow_size = 18
 [sub_resource type="StyleBoxFlat" id="Card"]
 bg_color = Color(0.045, 0.09, 0.16, 1)
@@ -19,25 +19,25 @@ border_width_left = 2
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.68, 0.4, 0.16, 0.82)
+border_color = Color(0.2, 0.62, 0.9, 0.82)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 [sub_resource type="StyleBoxFlat" id="CardHover"]
-bg_color = Color(0.2, 0.13, 0.055, 1)
+bg_color = Color(0.055, 0.22, 0.38, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.67, 0.18, 1)
+border_color = Color(0.46, 0.9, 1, 1)
 [sub_resource type="StyleBoxFlat" id="CardFocus"]
 bg_color = Color(0.04, 0.22, 0.32, 1)
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(0.207843, 0.901961, 0.698039, 1)
+border_color = Color(0.5, 0.92, 1, 1)
 [node name="WeaponRewardPanel" type="CanvasLayer"]
 layer = 35
 process_mode = 3
@@ -80,7 +80,7 @@ alignment = 1
 layout_mode = 2
 text = "关卡武器奖励"
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(1, 0.72, 0.25, 1)
+theme_override_colors/font_color = Color(0.5, 0.86, 1, 1)
 theme_override_font_sizes/font_size = 30
 [node name="Subtitle" type="Label" parent="Overlay/Panel/Content"]
 layout_mode = 2

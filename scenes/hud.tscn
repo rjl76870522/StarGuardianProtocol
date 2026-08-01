@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource path="res://src/ui/hud.gd" type="Script" id="1"]
 
@@ -35,6 +35,20 @@ bg_color = Color(0.008, 0.025, 0.065, 0.94)
 border_width_left = 3
 border_width_right = 3
 border_color = Color(0.2, 0.77, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="BottomPanelStyle"]
+bg_color = Color(0.008, 0.036, 0.09, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.28, 0.78, 1, 0.88)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.03, 0.45, 0.9, 0.3)
+shadow_size = 10
 
 [sub_resource type="LabelSettings" id="TitleSettings"]
 font_size = 34
@@ -154,7 +168,7 @@ grow_horizontal = 2
 layout_mode = 2
 text = "异星母舰  |  第一阶段"
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(1, 0.72, 0.25, 1)
+theme_override_colors/font_color = Color(0.52, 0.86, 1, 1)
 
 [node name="Health" type="ProgressBar" parent="Margin/BossBar"]
 custom_minimum_size = Vector2(600, 14)
@@ -164,23 +178,38 @@ show_percentage = false
 theme_override_styles/background = SubResource("HealthBackground")
 theme_override_styles/fill = SubResource("HealthFill")
 
+[node name="BottomPanel" type="Panel" parent="Margin"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -104.0
+offset_right = -20.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("BottomPanelStyle")
+
 [node name="BottomBar" type="HBoxContainer" parent="Margin"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = -78.0
-offset_right = -24.0
-offset_bottom = -16.0
+offset_left = 40.0
+offset_top = -96.0
+offset_right = -40.0
+offset_bottom = -22.0
 grow_horizontal = 2
 grow_vertical = 0
 
 [node name="DashStatus" type="Label" parent="Margin/BottomBar"]
 layout_mode = 2
 text = "闪避  就绪"
-theme_override_colors/font_color = Color(0.26, 0.86, 1, 1)
+theme_override_colors/font_color = Color(0.52, 0.86, 1, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="Controls" type="Label" parent="Margin/BottomBar"]
@@ -191,7 +220,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 clip_text = true
-theme_override_colors/font_color = Color(0.56, 0.76, 0.92, 1)
+theme_override_colors/font_color = Color(0.62, 0.82, 0.98, 1)
 theme_override_font_sizes/font_size = 12
 
 [node name="UpgradeStatus" type="Label" parent="Margin/BottomBar"]
@@ -202,7 +231,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 clip_text = true
-theme_override_colors/font_color = Color(0.52, 0.68, 0.65, 1)
+theme_override_colors/font_color = Color(0.58, 0.76, 0.94, 1)
 theme_override_font_sizes/font_size = 13
 
 [node name="Spacer" type="Control" parent="Margin/BottomBar"]
@@ -222,7 +251,7 @@ text = "1  VX-9 自动步枪"
 vertical_alignment = 1
 autowrap_mode = 2
 clip_text = true
-theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
+theme_override_colors/font_color = Color(0.84, 0.95, 1, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="CenterMessage" type="PanelContainer" parent="."]
@@ -267,16 +296,16 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -190.0
-offset_top = -104.0
+offset_top = -138.0
 offset_right = 190.0
-offset_bottom = -72.0
+offset_bottom = -106.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "F  拾取武器"
 horizontal_alignment = 1
 autowrap_mode = 2
 clip_text = true
-theme_override_colors/font_color = Color(0.78, 0.96, 0.88, 0.94)
+theme_override_colors/font_color = Color(0.68, 0.9, 1, 0.94)
 theme_override_font_sizes/font_size = 15
 
 [node name="SalvageHint" type="Label" parent="Margin"]

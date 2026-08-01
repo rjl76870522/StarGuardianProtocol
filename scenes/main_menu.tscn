@@ -70,7 +70,7 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 5.0
 grow_horizontal = 2
-color = Color(0.207843, 0.901961, 0.698039, 1)
+color = Color(0.46, 0.84, 1, 1)
 
 [node name="StarBand" type="ColorRect" parent="."]
 layout_mode = 1
@@ -110,7 +110,7 @@ offset_left = 80.0
 offset_top = 0.0
 offset_right = 82.0
 offset_bottom = 720.0
-color = Color(0.10, 0.23, 0.23, 0.65)
+color = Color(0.10, 0.23, 0.38, 0.65)
 
 [node name="GridB" type="ColorRect" parent="."]
 layout_mode = 0
@@ -118,7 +118,7 @@ offset_left = 1160.0
 offset_top = 0.0
 offset_right = 1162.0
 offset_bottom = 720.0
-color = Color(0.10, 0.23, 0.23, 0.65)
+color = Color(0.10, 0.23, 0.38, 0.65)
 
 [node name="Layout" type="HBoxContainer" parent="."]
 layout_mode = 1
@@ -131,44 +131,50 @@ offset_right = -120.0
 offset_bottom = -52.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 70
+theme_override_constants/separation = 36
 
-[node name="Identity" type="VBoxContainer" parent="Layout"]
+[node name="IdentityCard" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(480, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="Identity" type="VBoxContainer" parent="Layout/IdentityCard"]
+layout_mode = 2
+theme_override_constants/separation = 18
 alignment = 1
 
-[node name="Protocol" type="Label" parent="Layout/Identity"]
+[node name="Protocol" type="Label" parent="Layout/IdentityCard/Identity"]
 layout_mode = 2
 text = "ORBITAL DEFENCE  //  作战协议"
 theme_override_colors/font_color = Color(0.32, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 16
 
-[node name="Title" type="Label" parent="Layout/Identity"]
+[node name="Title" type="Label" parent="Layout/IdentityCard/Identity"]
 layout_mode = 2
 text = "星际\n防线"
 theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
 theme_override_font_sizes/font_size = 76
 
-[node name="Line" type="ColorRect" parent="Layout/Identity"]
-custom_minimum_size = Vector2(430, 2)
+[node name="Line" type="ColorRect" parent="Layout/IdentityCard/Identity"]
+custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 color = Color(0.26, 0.8, 1, 0.84)
 
-[node name="Subtitle" type="Label" parent="Layout/Identity"]
+[node name="Subtitle" type="Label" parent="Layout/IdentityCard/Identity"]
 layout_mode = 2
 text = "深空守望协议已部署\n清除异星威胁  //  SECTOR 01"
 theme_override_colors/font_color = Color(0.53, 0.72, 0.88, 1)
 theme_override_font_sizes/font_size = 18
 
 [node name="Panel" type="PanelContainer" parent="Layout"]
-custom_minimum_size = Vector2(390, 0)
+custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
 
 [node name="Buttons" type="VBoxContainer" parent="Layout/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 11
 
 [node name="Icon" type="TextureRect" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(92, 92)
@@ -188,7 +194,7 @@ theme_override_font_sizes/font_size = 13
 layout_mode = 2
 text = "星港补给  |  合金 12  |  喷火器 1级"
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(1, 0.7, 0.27, 1)
+theme_override_colors/font_color = Color(0.56, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 13
 
 [node name="ZoneButton" type="Button" parent="Layout/Panel/Buttons"]
@@ -235,7 +241,7 @@ theme_override_styles/focus = SubResource("ButtonHover")
 layout_mode = 2
 text = "成就档案  ·  已解锁 0 项"
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.55, 0.74, 0.68, 1)
+theme_override_colors/font_color = Color(0.55, 0.78, 0.96, 1)
 theme_override_font_sizes/font_size = 12
 
 [node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
