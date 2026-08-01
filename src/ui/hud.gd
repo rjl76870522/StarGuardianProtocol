@@ -62,8 +62,8 @@ func _create_combat_dock() -> void:
 
 	_weapon_status = _add_status_card("WeaponCard", "当前武器", "1  等待武器数据")
 	_gadget_status = _add_status_card("GadgetCard", "投掷装备", "6 震爆  ·  7 燃烧  ·  8 电磁")
-	_skill_status = _add_status_card("SkillCard", "人物技能", "T 暴怒  ·  G 修复  ·  Y 反弹  ·  H 锁定")
-	_upgrade_status = _add_status_card("UpgradeCard", "武器强化", "击毁敌人后按 E 选择强化")
+	_skill_status = _add_status_card("SkillCard", "人物技能", "T 暴怒  ·  G 修复\nY 反弹  ·  H 锁定")
+	_upgrade_status = _add_status_card("UpgradeCard", "武器强化", "击毁敌人后\n按 E 选择强化")
 	_dash_status = _add_status_card("DashCard", "机动", "空格  闪避就绪")
 
 	_controls_status = Label.new()
@@ -106,7 +106,8 @@ func _add_status_card(node_name: String, title: String, value: String) -> Label:
 	value_label.name = "Value"
 	value_label.text = value
 	value_label.position = Vector2(9.0, 24.0)
-	value_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	value_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	value_label.clip_text = true
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	value_label.add_theme_font_size_override("font_size", 13)
 	value_label.add_theme_color_override("font_color", Color(0.86, 0.95, 1.0, 1.0))
@@ -185,7 +186,7 @@ func set_weapon(weapon: WeaponData, index: int) -> void:
 		return
 	var state := get_node_or_null("/root/GameState")
 	var level := int(state.weapon_level(weapon.weapon_id)) if state != null else 1
-	_weapon_status.text = "%d  %s\n%d级  ·  单发伤害 %d" % [index + 1, weapon.display_name, level, weapon.damage]
+	_weapon_status.text = "%d  %s\n%d级  ·  单发 %d" % [index + 1, weapon.display_name, level, weapon.damage]
 
 
 func set_skill(skill: SkillData, level: int) -> void:

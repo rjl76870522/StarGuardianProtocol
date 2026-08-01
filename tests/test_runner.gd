@@ -651,7 +651,7 @@ func _test_stage_one_boss_spawn_and_hud() -> void:
 	var hud := game.get_node("HUD") as WastelandHUD
 	_check(hud.layer == 10 and hud.get_node("Margin").is_visible_in_tree(), "combat HUD remains on its dedicated visible layer")
 	_check(hud.get_node("CombatDock").visible, "combat tactical dock is visible")
-	_check(hud._weapon_status != null and hud._weapon_status.text.contains("单发伤害"), "combat dock reports the equipped weapon and damage")
+	_check(hud._weapon_status != null and hud._weapon_status.text.contains("单发"), "combat dock reports the equipped weapon and damage")
 	_check(hud._gadget_status != null and hud._gadget_status.text.contains("震爆"), "combat dock reports grenade hotkeys")
 	_check(hud._skill_status != null and hud._skill_status.text.contains("暴怒"), "combat dock reports active player skills")
 	_check(hud._upgrade_status != null and hud._upgrade_status.text.contains("强化"), "combat dock reports upgrade availability")
@@ -659,11 +659,11 @@ func _test_stage_one_boss_spawn_and_hud() -> void:
 	hud._layout_tactical_bar()
 	_check((hud.get_node("CombatDock") as Control).size.y >= 120.0, "combat tactical dock keeps a readable fixed height")
 	await process_frame
-	_check(hud._weapon_status.is_visible_in_tree() and hud._weapon_status.get_global_rect().size.x >= 80.0, "weapon status has a visible on-screen layout rect")
-	_check(hud._gadget_status.is_visible_in_tree() and hud._gadget_status.get_global_rect().size.x >= 80.0, "gadget status has a visible on-screen layout rect")
-	_check(hud._skill_status.is_visible_in_tree() and hud._skill_status.get_global_rect().size.x >= 80.0, "skill status has a visible on-screen layout rect")
-	_check(hud._upgrade_status.is_visible_in_tree() and hud._upgrade_status.get_global_rect().size.x >= 80.0, "upgrade status has a visible on-screen layout rect")
-	_check(hud._dash_status.is_visible_in_tree() and hud._dash_status.get_global_rect().size.x >= 80.0, "dash status has a visible on-screen layout rect")
+	_check(hud._weapon_status.is_visible_in_tree() and hud._weapon_status.get_global_rect().size.x >= 80.0 and hud._weapon_status.get_global_rect().size.y <= 44.0, "weapon status stays inside its card")
+	_check(hud._gadget_status.is_visible_in_tree() and hud._gadget_status.get_global_rect().size.x >= 80.0 and hud._gadget_status.get_global_rect().size.y <= 44.0, "gadget status stays inside its card")
+	_check(hud._skill_status.is_visible_in_tree() and hud._skill_status.get_global_rect().size.x >= 80.0 and hud._skill_status.get_global_rect().size.y <= 44.0, "skill status stays inside its card")
+	_check(hud._upgrade_status.is_visible_in_tree() and hud._upgrade_status.get_global_rect().size.x >= 80.0 and hud._upgrade_status.get_global_rect().size.y <= 44.0, "upgrade status stays inside its card")
+	_check(hud._dash_status.is_visible_in_tree() and hud._dash_status.get_global_rect().size.x >= 80.0 and hud._dash_status.get_global_rect().size.y <= 44.0, "dash status stays inside its card")
 	game.queue_free()
 	await process_frame
 	state.start_campaign()
