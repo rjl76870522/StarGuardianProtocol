@@ -4,6 +4,33 @@ extends CanvasLayer
 var _salvage_hint_tween: Tween
 
 
+func _ready() -> void:
+	# The game can run in arbitrary desktop window sizes. Explicitly place the
+	# tactical bar instead of relying on a bottom anchor that some display
+	# backends calculate before the first viewport resize.
+	get_viewport().size_changed.connect(_layout_tactical_bar)
+	call_deferred("_layout_tactical_bar")
+
+
+func _layout_tactical_bar() -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
+		return
+	var panel := $Margin/BottomPanel as Control
+	var bar := $Margin/BottomBar as Control
+	var panel_size := Vector2(maxf(640.0, viewport_size.x - 40.0), 90.0)
+	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel.position = Vector2(20.0, viewport_size.y - 104.0)
+	panel.size = panel_size
+	panel.z_index = 30
+	panel.show()
+	bar.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	bar.position = Vector2(40.0, viewport_size.y - 96.0)
+	bar.size = Vector2(maxf(600.0, viewport_size.x - 80.0), 74.0)
+	bar.z_index = 31
+	bar.show()
+
+
 func set_health(current: float, maximum: float) -> void:
 	$Margin/TopBar/HealthPanel/HealthContent/HealthBar.max_value = maximum
 	$Margin/TopBar/HealthPanel/HealthContent/HealthBar.value = current

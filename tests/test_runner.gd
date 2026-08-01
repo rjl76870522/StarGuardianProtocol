@@ -652,6 +652,8 @@ func _test_stage_one_boss_spawn_and_hud() -> void:
 	_check(hud.layer == 10 and hud.get_node("Margin").is_visible_in_tree(), "combat HUD remains on its dedicated visible layer")
 	_check(hud.get_node("Margin/BottomPanel").visible, "combat weapon panel is visible")
 	_check(hud.get_node("Margin/BottomBar/WeaponStatus").visible, "combat weapon status is visible")
+	hud._layout_tactical_bar()
+	_check((hud.get_node("Margin/BottomPanel") as Control).size.y >= 80.0, "combat tactical bar keeps a readable fixed height")
 	game.queue_free()
 	await process_frame
 	state.start_campaign()
