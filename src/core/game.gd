@@ -6,6 +6,8 @@ const BOSS_SCENE := preload("res://scenes/boss.tscn")
 const SALVAGE_CACHE := preload("res://src/world/salvage_cache.gd")
 const WEAPON_PICKUP := preload("res://src/world/weapon_pickup.gd")
 const END_CREDITS := preload("res://src/ui/end_credits.gd")
+const BOSS_SPAWN_DISTANCE := 5.8
+const BOSS_SPAWN_CLEARANCE := 2.05
 const ENEMY_CATALOG: Array[EnemyData] = [
 	preload("res://assets/data/enemies/chaser.tres"),
 	preload("res://assets/data/enemies/shooter.tres"),
@@ -52,6 +54,7 @@ var _upgrade_ready: bool = false
 var _boss_spawned: bool = false
 var _boss_defeated: bool = false
 var _active_boss: WastelandBoss
+var _boss_position_check_pending := false
 var _pending_reward_weapon: WeaponData
 var _zone_cache_interval := 6
 var _zone_cache_scrap := 2
@@ -188,6 +191,11 @@ func _spawn_boss() -> void:
 	hud.show_boss(boss.health, boss.max_health, WastelandBoss.PHASES[0].display_name)
 	hud.show_message("警告", "异星母舰已从前方进入战场")
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
+	# Let the scene enter the tree before making the final visibility check.
+	# This also protects later maps whose cover layout differs from stage one.
+	if not _boss_position_check_pending:
+		_boss_position_check_pending = true
+		call_deferred("_verify_boss_spawn", boss)
 
 
 func _ensure_boss_present() -> void:
@@ -197,6 +205,17 @@ func _ensure_boss_present() -> void:
 	# unwinnable just because its boolean was set before it reached the tree.
 	_boss_spawned = false
 	_spawn_boss()
+
+
+func _verify_boss_spawn(boss: WastelandBoss) -> void:
+	_boss_position_check_pending = false
+	if _boss_defeated or not is_instance_valid(boss) or boss != _active_boss:
+		return
+	var arena := $Arena
+	if not arena.is_clear_for_boss(boss.global_position, BOSS_SPAWN_CLEARANCE) or not _is_boss_position_visible(boss.global_position):
+		boss.global_position = _boss_spawn_position()
+	# A Boss health bar must remain visible even while its entrance animation is playing.
+	hud.show_boss(boss.health, boss.max_health, WastelandBoss.PHASES[boss.phase_index].display_name)
 
 
 func _summon_enemies(count: int) -> void:
@@ -244,13 +263,38 @@ func _boss_spawn_delay() -> float:
 
 
 func _boss_spawn_position() -> Vector3:
-	var direction := Vector3(0.0, 0.0, -1.0)
+	# A single fixed point worked on the rectangular first map but can land in
+	# cover on the angled second map.  Prefer a clear point that is already in
+	# the player's camera view; fall back to a safe point near the player.
+	var directions := [
+		Vector3(0.0, 0.0, -1.0),
+		Vector3(0.72, 0.0, -0.7).normalized(),
+		Vector3(-0.72, 0.0, -0.7).normalized(),
+		Vector3(1.0, 0.0, 0.0),
+		Vector3(-1.0, 0.0, 0.0),
+		Vector3(0.0, 0.0, 1.0),
+	]
 	if player.global_position.z < -3.5:
-		direction = Vector3(0.0, 0.0, 1.0)
-	# Keep the encounter visibly inside the fixed top-down camera at every stage.
-	var at := player.global_position + direction * 5.2
-	at.y = 0.0
-	return $Arena.keep_inside_combat_area(at)
+		directions.reverse()
+	for direction in directions:
+		var candidate: Vector3 = player.global_position + direction * BOSS_SPAWN_DISTANCE
+		candidate.y = 0.0
+		candidate = $Arena.confine_to_combat_area(candidate, 2.2)
+		if $Arena.is_clear_for_boss(candidate, BOSS_SPAWN_CLEARANCE) and _is_boss_position_visible(candidate):
+			return candidate
+	var fallback: Vector3 = $Arena.confine_to_combat_area(player.global_position + Vector3(0.0, 0.0, 3.6), 2.2)
+	fallback.y = 0.0
+	return fallback
+
+
+func _is_boss_position_visible(position_value: Vector3) -> bool:
+	if camera == null or camera.is_position_behind(position_value + Vector3.UP * 0.9):
+		return false
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
+		return true
+	var screen_position: Vector2 = camera.unproject_position(position_value + Vector3.UP * 0.9)
+	return Rect2(Vector2(18.0, 72.0), viewport_size - Vector2(36.0, 150.0)).has_point(screen_position)
 
 
 func _mark_upgrade_ready() -> void:

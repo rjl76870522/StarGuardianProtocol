@@ -641,12 +641,22 @@ func _test_stage_two_boss_spawn() -> void:
 	game.initial_spawn_interval = 99.0
 	root.add_child(game)
 	await process_frame
+	# Stage two has tall internal cover.  Start away from the default centre so
+	# this verifies the spawn selection rather than only the old fixed point.
+	game.player.global_position = Vector3(7.4, 0.0, 3.8)
 	game._process(12.1)
+	await process_frame
 	await process_frame
 	var boss := game.get_node_or_null("Enemies/WastelandBoss") as WastelandBoss
 	_check(boss != null, "stage two spawns a boss after twelve seconds")
 	if boss != null:
 		_check(boss.global_position.distance_to(game.player.global_position) <= 7.2, "stage two boss spawns in visible combat range")
+		_check(game.get_node("Arena").is_clear_for_boss(boss.global_position, 2.05), "stage two boss never spawns inside cover")
+		_check(not game.camera.is_position_behind(boss.global_position + Vector3.UP * 0.9), "stage two boss is in front of the combat camera")
+		var screen_position: Vector2 = game.camera.unproject_position(boss.global_position + Vector3.UP * 0.9)
+		var viewport_size: Vector2 = root.get_viewport().get_visible_rect().size
+		_check(Rect2(Vector2(18.0, 72.0), viewport_size - Vector2(36.0, 150.0)).has_point(screen_position), "stage two boss appears inside the playable camera frame")
+		_check(game.get_node("HUD/Margin/BossBar").visible, "stage two boss health bar is visible")
 	game.queue_free()
 	await process_frame
 	state.start_campaign()

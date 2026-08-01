@@ -479,6 +479,23 @@ func keep_inside_combat_area(position_value: Vector3) -> Vector3:
 	return confine_to_combat_area(position_value, 0.18)
 
 
+func is_clear_for_boss(position_value: Vector3, clearance: float = 1.8) -> bool:
+	# Bosses are much wider than normal enemies.  Do not place one inside cover,
+	# where it can look like it failed to spawn or become trapped immediately.
+	for child in get_children():
+		if not (child is StaticBody3D) or not String(child.name).begins_with("Obstacle"):
+			continue
+		var collision := child.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if collision == null or not (collision.shape is BoxShape3D):
+			continue
+		var shape := collision.shape as BoxShape3D
+		var local: Vector3 = child.global_transform.affine_inverse() * position_value
+		var half_size: Vector3 = shape.size * 0.5
+		if absf(local.x) <= half_size.x + clearance and absf(local.z) <= half_size.z + clearance:
+			return false
+	return true
+
+
 func confine_to_combat_area(position_value: Vector3, margin: float = 0.36) -> Vector3:
 	var point := Vector2(position_value.x, position_value.z)
 	if _is_inside_boundary(point):
