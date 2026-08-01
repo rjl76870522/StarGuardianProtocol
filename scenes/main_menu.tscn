@@ -4,29 +4,47 @@
 [ext_resource path="res://assets/generated/app_icon.svg" type="Texture2D" id="2"]
 
 [sub_resource type="StyleBoxFlat" id="Background"]
-bg_color = Color(0.012, 0.022, 0.025, 1)
+bg_color = Color(0.004, 0.009, 0.028, 1)
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
-bg_color = Color(0.025, 0.055, 0.06, 0.96)
-border_width_left = 1
+bg_color = Color(0.025, 0.065, 0.12, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.16, 0.74, 0.94, 0.88)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0.0, 0.45, 0.9, 0.16)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="ButtonNormal"]
+bg_color = Color(0.035, 0.12, 0.21, 0.98)
+border_width_left = 3
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.15, 0.38, 0.36, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
-[sub_resource type="StyleBoxFlat" id="ButtonNormal"]
-bg_color = Color(0.06, 0.13, 0.135, 1)
-border_width_left = 2
-border_color = Color(0.207843, 0.901961, 0.698039, 1)
+border_color = Color(0.22, 0.74, 0.96, 0.9)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
 
 [sub_resource type="StyleBoxFlat" id="ButtonHover"]
-bg_color = Color(0.12, 0.27, 0.25, 1)
-border_width_left = 5
-border_color = Color(0.207843, 0.901961, 0.698039, 1)
+bg_color = Color(0.065, 0.28, 0.42, 1)
+border_width_left = 4
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.42, 0.92, 1, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+shadow_color = Color(0.08, 0.7, 1, 0.3)
+shadow_size = 8
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -53,6 +71,38 @@ anchor_right = 1.0
 offset_bottom = 5.0
 grow_horizontal = 2
 color = Color(0.207843, 0.901961, 0.698039, 1)
+
+[node name="StarBand" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 112.0
+offset_bottom = -96.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.025, 0.16, 0.34, 0.18)
+
+[node name="SignalLeft" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 54.0
+offset_top = 130.0
+offset_right = 58.0
+offset_bottom = 590.0
+color = Color(0.2, 0.8, 1, 0.54)
+
+[node name="SignalRight" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -58.0
+offset_top = 130.0
+offset_right = -54.0
+offset_bottom = 590.0
+color = Color(0.2, 0.8, 1, 0.54)
 
 [node name="GridA" type="ColorRect" parent="."]
 layout_mode = 0
@@ -90,25 +140,25 @@ alignment = 1
 
 [node name="Protocol" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "深空防卫 // 作战协议"
-theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
+text = "ORBITAL DEFENCE  //  作战协议"
+theme_override_colors/font_color = Color(0.32, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 16
 
 [node name="Title" type="Label" parent="Layout/Identity"]
 layout_mode = 2
 text = "星际\n防线"
-theme_override_colors/font_color = Color(0.86, 0.96, 0.92, 1)
-theme_override_font_sizes/font_size = 66
+theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 76
 
 [node name="Line" type="ColorRect" parent="Layout/Identity"]
 custom_minimum_size = Vector2(430, 2)
 layout_mode = 2
-color = Color(0.25, 0.42, 0.4, 1)
+color = Color(0.26, 0.8, 1, 0.84)
 
 [node name="Subtitle" type="Label" parent="Layout/Identity"]
 layout_mode = 2
-text = "星际防线：深空守望\n清除异星威胁  //  01"
-theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
+text = "深空守望协议已部署\n清除异星威胁  //  SECTOR 01"
+theme_override_colors/font_color = Color(0.53, 0.72, 0.88, 1)
 theme_override_font_sizes/font_size = 18
 
 [node name="Panel" type="PanelContainer" parent="Layout"]
@@ -131,14 +181,14 @@ stretch_mode = 5
 layout_mode = 2
 text = "作战单元在线\n第 07 区  //  威胁活跃"
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.5, 0.65, 0.62, 1)
+theme_override_colors/font_color = Color(0.48, 0.73, 0.9, 1)
 theme_override_font_sizes/font_size = 13
 
 [node name="CampStatus" type="Label" parent="Layout/Panel/Buttons"]
 layout_mode = 2
 text = "星港补给  |  合金 12  |  喷火器 1级"
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.78, 0.64, 0.32, 1)
+theme_override_colors/font_color = Color(1, 0.7, 0.27, 1)
 theme_override_font_sizes/font_size = 13
 
 [node name="ZoneButton" type="Button" parent="Layout/Panel/Buttons"]
@@ -191,7 +241,7 @@ theme_override_font_sizes/font_size = 12
 [node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
-text = "开始任务  ·  进入星港"
+text = "部署作战单元  ·  进入星港"
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")

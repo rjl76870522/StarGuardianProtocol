@@ -3,46 +3,48 @@
 [ext_resource path="res://src/ui/hud.gd" type="Script" id="1"]
 
 [sub_resource type="StyleBoxFlat" id="PanelStyle"]
-bg_color = Color(0.025, 0.045, 0.05, 0.92)
+bg_color = Color(0.012, 0.04, 0.09, 0.9)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.12, 0.28, 0.29, 0.9)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
+border_color = Color(0.12, 0.66, 0.92, 0.82)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+shadow_color = Color(0, 0.32, 0.72, 0.22)
+shadow_size = 7
 
 [sub_resource type="StyleBoxFlat" id="HealthBackground"]
-bg_color = Color(0.08, 0.11, 0.11, 1)
+bg_color = Color(0.025, 0.09, 0.16, 1)
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
 [sub_resource type="StyleBoxFlat" id="HealthFill"]
-bg_color = Color(0.207843, 0.901961, 0.698039, 1)
+bg_color = Color(0.1, 0.78, 1, 1)
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
 [sub_resource type="StyleBoxFlat" id="MessageStyle"]
-bg_color = Color(0.015, 0.025, 0.028, 0.9)
+bg_color = Color(0.008, 0.025, 0.065, 0.94)
 border_width_left = 3
 border_width_right = 3
-border_color = Color(0.207843, 0.901961, 0.698039, 1)
+border_color = Color(0.2, 0.77, 1, 1)
 
 [sub_resource type="LabelSettings" id="TitleSettings"]
 font_size = 34
-font_color = Color(0.84, 0.95, 0.91, 1)
+font_color = Color(0.84, 0.95, 1, 1)
 outline_size = 8
 outline_color = Color(0, 0, 0, 0.65)
 
 [sub_resource type="LabelSettings" id="SmallSettings"]
 font_size = 15
-font_color = Color(0.52, 0.68, 0.65, 1)
+font_color = Color(0.5, 0.72, 0.9, 1)
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1")
@@ -178,7 +180,7 @@ grow_vertical = 0
 [node name="DashStatus" type="Label" parent="Margin/BottomBar"]
 layout_mode = 2
 text = "闪避  就绪"
-theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
+theme_override_colors/font_color = Color(0.26, 0.86, 1, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="Controls" type="Label" parent="Margin/BottomBar"]
@@ -189,7 +191,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 clip_text = true
-theme_override_colors/font_color = Color(0.62, 0.73, 0.7, 1)
+theme_override_colors/font_color = Color(0.56, 0.76, 0.92, 1)
 theme_override_font_sizes/font_size = 12
 
 [node name="UpgradeStatus" type="Label" parent="Margin/BottomBar"]

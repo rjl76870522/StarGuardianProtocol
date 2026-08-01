@@ -1,12 +1,18 @@
 [gd_scene load_steps=3 format=3]
 [ext_resource type="Script" path="res://src/ui/boss_debug_panel.gd" id="1"]
 [sub_resource type="StyleBoxFlat" id="PanelStyle"]
-bg_color = Color(0.02, 0.04, 0.045, 0.94)
+bg_color = Color(0.01, 0.04, 0.09, 0.94)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.28, 0.08, 1)
+border_color = Color(0.25, 0.76, 1, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0.04, 0.42, 1, 0.22)
+shadow_size = 12
 [node name="BossDebugPanel" type="CanvasLayer"]
 layer = 40
 process_mode = 3
