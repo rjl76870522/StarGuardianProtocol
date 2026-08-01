@@ -113,9 +113,10 @@ func _physics_process(delta: float) -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		global_position = hit["position"] as Vector3
+		traveled += start.distance_to(global_position)
 		var collider := hit["collider"] as Node3D
 		if collider != null:
-			_apply_hit(collider)
+			_handle_collision(collider, hit["normal"] as Vector3)
 		else:
 			queue_free()
 		return
@@ -126,11 +127,25 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_body_entered(body: Node3D) -> void:
-	_apply_hit(body)
+	var fallback_normal := global_position - body.global_position
+	fallback_normal.y = 0.0
+	_handle_collision(body, fallback_normal.normalized() if fallback_normal.length_squared() > 0.001 else -direction)
 
 
-func _apply_hit(body: Node3D) -> void:
+func _handle_collision(body: Node3D, surface_normal: Vector3) -> void:
 	var enemy_owner := _enemy_owner(body)
+	# Some lightweight enemies and test doubles expose the combat interface but
+	# do not register in the enemies group. They must still be damageable rather
+	# than being treated as a wall.
+	if enemy_owner == null and body.has_method("take_damage"):
+		enemy_owner = body
+	if enemy_owner == null:
+		_bounce_from_surface(surface_normal)
+		return
+	_apply_hit(body, enemy_owner)
+
+
+func _apply_hit(body: Node3D, enemy_owner: Node3D) -> void:
 	var hit_identity: int = enemy_owner.get_instance_id() if enemy_owner != null else body.get_instance_id()
 	if _hit_ids.has(hit_identity):
 		return
@@ -158,16 +173,34 @@ func _apply_hit(body: Node3D) -> void:
 		global_position += direction * 0.08
 		return
 	if damaged_enemy and ricochet_remaining > 0:
-		var target := _find_ricochet_target(enemy_owner if enemy_owner != null else body)
-		if target != null:
-			ricochet_remaining -= 1
-			var previous_position := global_position
-			direction = (target.global_position - global_position).normalized()
-			direction.y = 0.0
-			global_position += direction * 0.08
-			_show_ricochet_link(previous_position, target.global_position)
-			return
+		# Real collision bounce: an enemy is treated as a round target and the
+		# projectile reflects away from the impact point. It does not auto-aim.
+		var enemy_normal := global_position - enemy_owner.global_position
+		enemy_normal.y = 0.0
+		if enemy_normal.length_squared() < 0.001:
+			enemy_normal = -direction
+		_bounce_from_surface(enemy_normal.normalized())
+		return
 	queue_free()
+
+
+func _bounce_from_surface(surface_normal: Vector3) -> void:
+	if ricochet_remaining <= 0:
+		queue_free()
+		return
+	ricochet_remaining -= 1
+	var normal := surface_normal.normalized()
+	if normal.length_squared() < 0.001:
+		normal = -direction
+	direction = direction.bounce(normal)
+	direction.y = 0.0
+	if direction.length_squared() < 0.001:
+		direction = Vector3.FORWARD
+	else:
+		direction = direction.normalized()
+	global_position += direction * 0.12
+	look_at(global_position + direction, Vector3.UP)
+	_show_bounce_flash(global_position, normal)
 
 
 func _spawn_split_shots(hit_body: Node3D) -> void:
@@ -213,43 +246,23 @@ func _add_hit_colliders_to_exclude(body: Node3D, owner: Node3D) -> void:
 				_excluded_rids.append(rid)
 
 
-func _find_ricochet_target(current: Node3D) -> Node3D:
-	var nearest: Node3D
-	var nearest_distance := 12.0
-	for candidate in get_tree().get_nodes_in_group("enemies"):
-		if not candidate is Node3D or candidate == current or _hit_ids.has(candidate.get_instance_id()):
-			continue
-		var candidate_node := candidate as Node3D
-		var distance := global_position.distance_to(candidate_node.global_position)
-		if distance < nearest_distance:
-			nearest = candidate_node
-			nearest_distance = distance
-	return nearest
-
-
-func _show_ricochet_link(from: Vector3, to: Vector3) -> void:
-	var link := MeshInstance3D.new()
-	var length := from.distance_to(to)
-	if length <= 0.1:
-		return
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 0.028
-	mesh.bottom_radius = 0.045
-	mesh.height = length
-	link.mesh = mesh
+func _show_bounce_flash(position: Vector3, normal: Vector3) -> void:
+	var flash := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.13
+	mesh.height = 0.26
+	flash.mesh = mesh
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color("8ef4ff")
 	material.emission_enabled = true
 	material.emission = Color("49cfff")
 	material.emission_energy_multiplier = 5.0
-	link.material_override = material
-	get_parent().add_child(link)
-	link.global_position = from.lerp(to, 0.5)
-	link.look_at(to, Vector3.UP)
-	link.rotate_object_local(Vector3.RIGHT, PI * 0.5)
-	var tween := link.create_tween()
-	tween.tween_property(link, "scale", Vector3(1.7, 0.08, 1.7), 0.12)
-	tween.tween_callback(link.queue_free)
+	flash.material_override = material
+	get_parent().add_child(flash)
+	flash.global_position = position + normal * 0.025
+	var tween := flash.create_tween()
+	tween.tween_property(flash, "scale", Vector3(2.8, 2.8, 2.8), 0.10)
+	tween.tween_callback(flash.queue_free)
 
 
 func _find_tracking_target() -> Node3D:
