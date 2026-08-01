@@ -144,7 +144,7 @@ theme_override_font_sizes/font_size = 13
 [node name="ZoneButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "初始武器：自动步枪  ‹ 点击切换 ›"
+text = "初始武器：喷火器  ‹ 点击切换 ›"
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
@@ -152,7 +152,7 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [node name="UpgradeButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-text = "升级初始步枪"
+text = "升级当前初始武器"
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")

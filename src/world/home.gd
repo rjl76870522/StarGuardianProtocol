@@ -94,11 +94,11 @@ func _create_spaceport_shell() -> void:
 
 
 func _create_stations() -> void:
-	_add_station(&"departure", "出发终端", "开始星际防卫任务", Vector3(0.0, 0.0, -6.8), Color("36e5ad"))
-	_add_station(&"workbench", "武器工作台", "升级当前初始武器", Vector3(-7.6, 0.0, -2.4), Color("ffb344"))
-	_add_station(&"health", "生命维护舱", "投入合金提升初始生命", Vector3(-7.6, 0.0, 5.2), Color("75d66a"))
-	_add_station(&"training", "人物训练舱", "选择局内主动技能", Vector3(7.6, 0.0, -2.4), Color("ee6578"))
-	_add_station(&"exit", "返回终端", "返回主菜单", Vector3(7.6, 0.0, 5.2), Color("b490ef"))
+	_add_station(&"departure", "出发终端", _station_description(&"departure"), Vector3(0.0, 0.0, -6.8), Color("36e5ad"))
+	_add_station(&"workbench", "武器工作台", _station_description(&"workbench"), Vector3(-7.6, 0.0, -2.4), Color("ffb344"))
+	_add_station(&"health", "生命维护舱", _station_description(&"health"), Vector3(-7.6, 0.0, 5.2), Color("75d66a"))
+	_add_station(&"training", "人物训练舱", _station_description(&"training"), Vector3(7.6, 0.0, -2.4), Color("ee6578"))
+	_add_station(&"exit", "返回终端", _station_description(&"exit"), Vector3(7.6, 0.0, 5.2), Color("b490ef"))
 
 
 func _add_station(id: StringName, title: String, description: String, at: Vector3, color: Color) -> void:
@@ -156,7 +156,43 @@ func _add_station(id: StringName, title: String, description: String, at: Vector
 	light.position.y = 1.45
 	body.add_child(light)
 	add_child(body)
-	_stations.append({"id": id, "title": title, "description": description, "position": at})
+	_stations.append({"id": id, "title": title, "description": description, "position": at, "label": label})
+
+
+func _station_description(id: StringName) -> String:
+	match id:
+		&"workbench":
+			return "%s %d级  ·  下次 %d 合金" % [_weapon_name(GameState.selected_start_weapon_id), GameState.weapon_level(GameState.selected_start_weapon_id), GameState.starter_weapon_upgrade_cost()]
+		&"health":
+			return "维护 %d级  ·  下次 %d 合金" % [GameState.garden_level, GameState.health_system_upgrade_cost()]
+		&"training":
+			return "选择人物技能  ·  每项 5 合金起"
+		&"departure":
+			return "开始星际防卫任务  ·  不消耗合金"
+		_:
+			return "返回主菜单  ·  不消耗合金"
+
+
+func _weapon_name(weapon_id: StringName) -> String:
+	match weapon_id:
+		&"flame_projector": return "喷火器"
+		&"auto_rifle": return "自动步枪"
+		&"scatter_cannon": return "霰弹炮"
+		&"rail_lance": return "轨道枪"
+		&"arc_blade": return "电弧刃"
+		&"sidearm": return "脉冲手枪"
+		&"sniper_rifle": return "狙击步枪"
+		&"siege_cannon": return "攻城火炮"
+		_: return "喷火器"
+
+
+func _refresh_station_labels() -> void:
+	for station in _stations:
+		var id := StringName(station["id"])
+		station["description"] = _station_description(id)
+		var label := station.get("label") as Label3D
+		if label != null:
+			label.text = "%s\n%s\n[F] 交互" % [station["title"], station["description"]]
 
 
 func _create_wall(at: Vector3, size: Vector3) -> void:
@@ -232,7 +268,7 @@ func _interact(id: StringName) -> void:
 			get_tree().change_scene_to_file("res://scenes/game.tscn")
 		&"workbench":
 			if GameState.upgrade_starter_weapon():
-				_show_notice("初始步枪升级完成")
+				_show_notice("%s 升级完成" % _weapon_name(GameState.selected_start_weapon_id))
 			else:
 				_show_notice("合金不足，完成战役并回收补给箱可获得合金")
 		&"health":
@@ -248,6 +284,7 @@ func _interact(id: StringName) -> void:
 
 
 func _refresh_interface() -> void:
+	_refresh_station_labels()
 	summary.text = "星港中枢  ·  合金 %d  ·  初始生命 %d  ·  训练技能 %d级\n下个防卫星域将在结算后随机生成" % [
 		GameState.scrap,
 		160 + GameState.garden_level * 18,

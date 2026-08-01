@@ -163,7 +163,7 @@ func remove_weapon_from_loadout(weapon_id: StringName) -> bool:
 
 
 func upgrade_starter_weapon() -> bool:
-	var cost := 4 + weapon_level(selected_start_weapon_id) * 2
+	var cost := starter_weapon_upgrade_cost()
 	if scrap < cost:
 		return false
 	scrap -= cost
@@ -171,14 +171,22 @@ func upgrade_starter_weapon() -> bool:
 	return true
 
 
+func starter_weapon_upgrade_cost() -> int:
+	return 4 + weapon_level(selected_start_weapon_id) * 2
+
+
 func upgrade_health_system() -> bool:
-	var cost := 4 + garden_level * 3
+	var cost := health_system_upgrade_cost()
 	if scrap < cost:
 		return false
 	scrap -= cost
 	garden_level += 1
 	_autosave()
 	return true
+
+
+func health_system_upgrade_cost() -> int:
+	return 4 + garden_level * 3
 
 
 func add_scrap(amount: int) -> void:

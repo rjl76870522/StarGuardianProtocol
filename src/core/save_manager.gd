@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION := 6
+const SAVE_VERSION := 7
 var save_path := "user://campaign_save.json"
 var temp_path := "user://campaign_save.tmp"
 var backup_path := "user://campaign_save.backup.json"
@@ -93,6 +93,16 @@ func apply_campaign(state: Node) -> bool:
 	state.unlocked_weapons[&"flame_projector"] = true
 	state.loadout_weapon_ids = _validated_loadout(data.get("loadout_weapons", []))
 	state.selected_start_weapon_id = StringName(str(data.get("selected_start_weapon", state.loadout_weapon_ids[0])))
+	# Version 7 changes the default starter from the former automatic rifle to
+	# the flame projector. Migrate only legacy saves; choices made afterwards
+	# remain the player's own selection.
+	if int(data.get("version", 0)) < 7 and state.selected_start_weapon_id == &"auto_rifle":
+		state.selected_start_weapon_id = &"flame_projector"
+		state.weapon_levels[&"flame_projector"] = maxi(int(state.weapon_levels.get(&"flame_projector", 0)), 1)
+		state.unlocked_weapons[&"flame_projector"] = true
+		if state.loadout_weapon_ids.is_empty():
+			state.loadout_weapon_ids = [&"flame_projector"]
+		state._autosave()
 	state.pending_weapon_id = StringName(str(data.get("pending_weapon", "")))
 	state.scrap = clampi(int(data.get("scrap", 12)), 0, 99999)
 	state.garden_level = clampi(int(data.get("garden_level", 0)), 0, 30)
