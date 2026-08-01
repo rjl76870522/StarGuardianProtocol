@@ -50,8 +50,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-offset_right = 1280.0
-offset_bottom = 720.0
 
 [node name="Top" type="VBoxContainer" parent="Interface/Margin"]
 layout_mode = 0
@@ -69,6 +67,8 @@ theme_override_font_sizes/font_size = 26
 [node name="Summary" type="Label" parent="Interface/Margin/Top"]
 layout_mode = 2
 text = "合金 0"
+autowrap_mode = 2
+clip_text = true
 theme_override_colors/font_color = Color(0.66, 0.76, 0.69, 1)
 theme_override_font_sizes/font_size = 14
 
@@ -79,7 +79,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -190.0
-offset_top = -126.0
+offset_top = -142.0
 offset_right = 190.0
 offset_bottom = -58.0
 grow_horizontal = 2
@@ -91,8 +91,10 @@ layout_mode = 2
 text = "靠近设施后按 F 交互"
 horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 2
+clip_text = true
 theme_override_colors/font_color = Color(0.82, 0.95, 0.86, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 14
 
 [node name="Notice" type="Label" parent="Interface/Margin"]
 layout_mode = 0
@@ -101,9 +103,11 @@ anchor_right = 0.5
 offset_left = -310.0
 offset_top = 58.0
 offset_right = 310.0
-offset_bottom = 88.0
+offset_bottom = 106.0
 grow_horizontal = 2
 horizontal_alignment = 1
+autowrap_mode = 2
+clip_text = true
 theme_override_colors/font_color = Color(1, 0.75, 0.35, 1)
 theme_override_font_sizes/font_size = 15
 
@@ -111,12 +115,14 @@ theme_override_font_sizes/font_size = 15
 layout_mode = 0
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -330.0
+offset_left = -404.0
 offset_top = 26.0
 offset_right = -28.0
-offset_bottom = 150.0
+offset_bottom = 166.0
 grow_horizontal = 0
 text = "星港设施"
 theme_override_colors/font_color = Color(0.72, 0.88, 0.76, 0.92)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 horizontal_alignment = 2
+autowrap_mode = 2
+clip_text = true

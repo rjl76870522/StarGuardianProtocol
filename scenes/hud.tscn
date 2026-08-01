@@ -169,9 +169,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
-offset_top = -54.0
+offset_top = -78.0
 offset_right = -24.0
-offset_bottom = -20.0
+offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
 
@@ -182,18 +182,24 @@ theme_override_colors/font_color = Color(0.207843, 0.901961, 0.698039, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="Controls" type="Label" parent="Margin/BottomBar"]
-custom_minimum_size = Vector2(270, 0)
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-text = "空格 闪避   |   1 至 5 切换武器   |   6 震爆 7 燃烧 8 电磁   |   E 强化   |   F 交互"
+text = "空格闪避  |  1-5武器  |  6-8投掷\nE强化  F交互  T/G/Y/H主动技能"
 horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+clip_text = true
 theme_override_colors/font_color = Color(0.62, 0.73, 0.7, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 12
 
 [node name="UpgradeStatus" type="Label" parent="Margin/BottomBar"]
 custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
 text = "暂无强化模块"
 horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+clip_text = true
 theme_override_colors/font_color = Color(0.52, 0.68, 0.65, 1)
 theme_override_font_sizes/font_size = 13
 
@@ -212,6 +218,8 @@ custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
 text = "1  VX-9 自动步枪"
 vertical_alignment = 1
+autowrap_mode = 2
+clip_text = true
 theme_override_colors/font_color = Color(0.84, 0.95, 0.91, 1)
 theme_override_font_sizes/font_size = 14
 
@@ -237,12 +245,15 @@ alignment = 1
 layout_mode = 2
 text = "坚守阵地"
 horizontal_alignment = 1
+clip_text = true
 label_settings = SubResource("TitleSettings")
 
 [node name="Subtitle" type="Label" parent="CenterMessage/Content"]
 layout_mode = 2
 text = "消灭敌人并存活六十秒"
 horizontal_alignment = 1
+autowrap_mode = 2
+clip_text = true
 label_settings = SubResource("SmallSettings")
 
 [node name="InteractionHint" type="Label" parent="Margin"]
@@ -261,6 +272,8 @@ grow_horizontal = 2
 grow_vertical = 0
 text = "F  拾取武器"
 horizontal_alignment = 1
+autowrap_mode = 2
+clip_text = true
 theme_override_colors/font_color = Color(0.78, 0.96, 0.88, 0.94)
 theme_override_font_sizes/font_size = 15
 
@@ -276,4 +289,6 @@ offset_right = 340.0
 offset_bottom = -60.0
 grow_vertical = 0
 text = "回收箱已投放"
+autowrap_mode = 2
+clip_text = true
 theme_override_font_sizes/font_size = 14
