@@ -50,6 +50,7 @@ var _next_upgrade_kills: int
 var _upgrade_ready: bool = false
 var _boss_spawned: bool = false
 var _boss_defeated: bool = false
+var _active_boss: WastelandBoss
 var _pending_reward_weapon: WeaponData
 var _zone_cache_interval := 6
 var _zone_cache_scrap := 2
@@ -124,8 +125,8 @@ func _process(delta: float) -> void:
 		_spawn_enemy()
 		var pressure := 1.0 - time_left / round_duration
 		_spawn_cooldown = lerpf(initial_spawn_interval, minimum_spawn_interval, pressure)
-	if not _boss_spawned and round_duration - time_left >= _boss_spawn_delay():
-		_spawn_boss()
+	if round_duration - time_left >= _boss_spawn_delay():
+		_ensure_boss_present()
 	if time_left <= 0.0:
 		if kills >= required_kills and (not _boss_spawned or _boss_defeated):
 			_finish_round(true)
@@ -161,10 +162,13 @@ func _choose_enemy_data() -> EnemyData:
 
 
 func _spawn_boss() -> void:
+	if _boss_defeated or is_instance_valid(_active_boss):
+		return
 	_boss_spawned = true
 	var boss := BOSS_SCENE.instantiate() as WastelandBoss
 	boss.target = player
 	boss.add_to_group("enemies")
+	_active_boss = boss
 	$Enemies.add_child(boss)
 	boss.global_position = _boss_spawn_position()
 	boss.apply_difficulty(_stage_multiplier())
@@ -181,12 +185,22 @@ func _spawn_boss() -> void:
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
 
 
+func _ensure_boss_present() -> void:
+	if _boss_defeated or is_instance_valid(_active_boss):
+		return
+	# A queued-free boss or a failed initial insertion must not leave a stage
+	# unwinnable just because its boolean was set before it reached the tree.
+	_boss_spawned = false
+	_spawn_boss()
+
+
 func _summon_enemies(count: int) -> void:
 	for index in count:
 		_spawn_enemy()
 
 
 func _on_boss_died() -> void:
+	_active_boss = null
 	_boss_defeated = true
 	kills += 3
 	hud.set_kills(kills, required_kills)
@@ -270,8 +284,8 @@ func _on_skill_upgraded(skill: SkillData, level: int) -> void:
 
 
 func _on_action_message(message: String) -> void:
-	hud.show_message("战术提示", message)
-	get_tree().create_timer(1.8).timeout.connect(hud.hide_message)
+	# Gadget feedback must not cover the tactical view while the player aims.
+	hud.show_salvage_hint(message)
 
 
 func _on_dash_started() -> void:
@@ -327,10 +341,10 @@ func _finish_round(victory: bool, failure_title: String = "作战单元已损毁
 	$PauseLayer/ResultPanel/Panel/Content/Title.text = title
 	$PauseLayer/ResultPanel/Panel/Content/Detail.text = detail
 	var next_button: Button = $PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton
-	next_button.visible = victory and GameState.current_stage < 2000
-	next_button.text = "领取武器，进入第 %d 关" % mini(GameState.current_stage + 1, 2000)
-	if victory and GameState.current_stage >= 2000:
-		$PauseLayer/ResultPanel/Panel/Content/Detail.text = detail + "\n已达无尽战区最高关卡，终焉守望者成就已记录"
+	next_button.visible = victory and GameState.current_stage < GameState.MAX_STAGE
+	next_button.text = "领取武器，进入第 %d 关" % mini(GameState.current_stage + 1, GameState.MAX_STAGE)
+	if victory and GameState.current_stage >= GameState.MAX_STAGE:
+		$PauseLayer/ResultPanel/Panel/Content/Detail.text = detail + "\n已完成全部十个星区，终焉守望者成就已记录"
 	get_tree().paused = true
 	if victory:
 		next_button.grab_focus()
@@ -518,8 +532,8 @@ func _apply_stage_difficulty() -> void:
 	max_active_enemies += mini(stage_offset * 2, 22)
 	initial_spawn_interval = maxf(initial_spawn_interval * pow(0.94, stage_offset), 1.7)
 	minimum_spawn_interval = maxf(minimum_spawn_interval * pow(0.94, stage_offset), 0.85)
-	if GameState.current_stage >= 2000 and GameState.unlock_achievement(&"endless_2000"):
-		hud.show_message("终焉守望者", "你已抵达第 2000 关，获得无尽战区成就")
+	if GameState.current_stage >= GameState.MAX_STAGE and GameState.unlock_achievement(&"endless_2000"):
+		hud.show_message("终焉守望者", "你已抵达第 %d 关，获得星域守望者成就" % GameState.MAX_STAGE)
 
 
 func _return_to_menu() -> void:

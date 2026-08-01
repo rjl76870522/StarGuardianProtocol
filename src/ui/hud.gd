@@ -1,6 +1,8 @@
 class_name WastelandHUD
 extends CanvasLayer
 
+var _salvage_hint_tween: Tween
+
 
 func set_health(current: float, maximum: float) -> void:
 	$Margin/TopBar/HealthPanel/HealthContent/HealthBar.max_value = maximum
@@ -87,10 +89,12 @@ func set_interaction_hint(message: String) -> void:
 
 func show_salvage_hint(message: String) -> void:
 	var label: Label = $Margin/SalvageHint
+	if is_instance_valid(_salvage_hint_tween):
+		_salvage_hint_tween.kill()
 	label.text = message
 	label.modulate = Color(0.65, 0.86, 0.78, 0.88)
 	label.visible = true
-	var tween := create_tween()
-	tween.tween_interval(1.25)
-	tween.tween_property(label, "modulate:a", 0.0, 0.35)
-	tween.tween_callback(func() -> void: label.visible = false)
+	_salvage_hint_tween = create_tween()
+	_salvage_hint_tween.tween_interval(0.72)
+	_salvage_hint_tween.tween_property(label, "modulate:a", 0.0, 0.22)
+	_salvage_hint_tween.tween_callback(func() -> void: label.visible = false)

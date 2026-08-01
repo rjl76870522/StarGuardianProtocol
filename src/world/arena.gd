@@ -165,6 +165,9 @@ func _create_bounds() -> void:
 
 func _create_wall(at: Vector3, size: Vector3, rotation_y: float = 0.0) -> void:
 	var body := StaticBody3D.new()
+	# Projectile collision masks include the obstacle layer, not the floor layer.
+	# Keep irregular sector walls on the same layer as every other solid obstacle.
+	body.collision_layer = OBSTACLE_LAYER
 	body.position = at
 	body.rotation.y = rotation_y
 	body.add_to_group("obstacles")

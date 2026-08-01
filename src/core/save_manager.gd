@@ -85,7 +85,9 @@ func apply_campaign(state: Node) -> bool:
 	var data := load_campaign()
 	if data.is_empty() or state == null:
 		return false
-	state.current_stage = int(data["stage"])
+	# Older endless-mode saves remain loadable, but the current campaign ends at
+	# stage 10. Clamp rather than discard a valid older save.
+	state.current_stage = clampi(int(data["stage"]), 1, 10)
 	state.campaign_seed = int(data.get("seed", 1))
 	state.carried_skill_levels = _validated_levels(data.get("skills", {}), 10)
 	state.weapon_levels = _validated_levels(data.get("weapons", {}), 20)

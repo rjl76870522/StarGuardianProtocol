@@ -1,5 +1,7 @@
 extends Node
 
+const MAX_STAGE := 10
+
 var last_survival_time: float = 0.0
 var last_kills: int = 0
 var runs_started: int = 0
@@ -38,7 +40,7 @@ func continue_campaign() -> bool:
 
 
 func advance_stage() -> void:
-	current_stage = mini(current_stage + 1, 2000)
+	current_stage = mini(current_stage + 1, MAX_STAGE)
 	_autosave()
 
 

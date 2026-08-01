@@ -76,9 +76,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 120.0
-offset_top = 86.0
+offset_top = 52.0
 offset_right = -120.0
-offset_bottom = -86.0
+offset_bottom = -52.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 70
@@ -121,7 +121,7 @@ layout_mode = 2
 theme_override_constants/separation = 16
 
 [node name="Icon" type="TextureRect" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(128, 128)
+custom_minimum_size = Vector2(92, 92)
 layout_mode = 2
 texture = ExtResource("2")
 expand_mode = 3
@@ -173,6 +173,14 @@ theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
+[node name="ArchiveButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "星港档案  ·  武器 / 技能 / 敌人"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
 [node name="AchievementStatus" type="Label" parent="Layout/Panel/Buttons"]
 layout_mode = 2
 text = "成就档案  ·  已解锁 0 项"
@@ -211,5 +219,6 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [connection signal="pressed" from="Layout/Panel/Buttons/UpgradeButton" to="." method="_on_upgrade_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/GardenButton" to="." method="_on_garden_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/SkinButton" to="." method="_on_skin_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/ArchiveButton" to="." method="_on_archive_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/QuitButton" to="." method="_on_quit_pressed"]
