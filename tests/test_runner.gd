@@ -650,10 +650,14 @@ func _test_stage_one_boss_spawn_and_hud() -> void:
 		_check(boss.global_position.distance_to(game.player.global_position) <= 7.2, "stage one boss spawns in visible combat range")
 	var hud := game.get_node("HUD") as WastelandHUD
 	_check(hud.layer == 10 and hud.get_node("Margin").is_visible_in_tree(), "combat HUD remains on its dedicated visible layer")
-	_check(hud.get_node("Margin/BottomPanel").visible, "combat weapon panel is visible")
-	_check(hud.get_node("Margin/BottomBar/WeaponStatus").visible, "combat weapon status is visible")
+	_check(hud.get_node("CombatDock").visible, "combat tactical dock is visible")
+	_check(hud._weapon_status != null and hud._weapon_status.text.contains("单发伤害"), "combat dock reports the equipped weapon and damage")
+	_check(hud._gadget_status != null and hud._gadget_status.text.contains("震爆"), "combat dock reports grenade hotkeys")
+	_check(hud._skill_status != null and hud._skill_status.text.contains("暴怒"), "combat dock reports active player skills")
+	_check(hud._upgrade_status != null and hud._upgrade_status.text.contains("强化"), "combat dock reports upgrade availability")
+	_check(hud._dash_status != null and hud._dash_status.text.contains("闪避"), "combat dock reports dash state")
 	hud._layout_tactical_bar()
-	_check((hud.get_node("Margin/BottomPanel") as Control).size.y >= 80.0, "combat tactical bar keeps a readable fixed height")
+	_check((hud.get_node("CombatDock") as Control).size.y >= 120.0, "combat tactical dock keeps a readable fixed height")
 	game.queue_free()
 	await process_frame
 	state.start_campaign()

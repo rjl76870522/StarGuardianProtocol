@@ -64,7 +64,25 @@ godot4 --headless --path . --export-release Windows
 
 Outputs are written to `builds/linux/` and `builds/windows/`. Exported builds
 are intentionally ignored by Git and must be regenerated locally. Keep each
-platform's executable and `WastelandProtocol.pck` together when distributing.
+platform's executable and matching `.pck` file together when distributing.
+
+## Windows distribution
+
+For Windows players, distribute the release archive named
+`StarGuardianProtocol-Windows-x86_64.zip`. Extract the archive to a normal
+folder, then double-click `StarGuardianProtocol.exe`. The executable and
+`StarGuardianProtocol.pck` must remain in the same folder. Windows SmartScreen
+may display a warning because this is an unsigned independent release; choose
+"More info" and then "Run anyway" only after downloading it from the project's
+official GitHub Release.
+
+Maintainers can produce the archive with:
+
+```bash
+XDG_DATA_HOME="$HOME/.local/share" godot4 --headless --path . --export-release Windows builds/windows/StarGuardianProtocol.exe
+cd builds/windows
+zip -j StarGuardianProtocol-Windows-x86_64.zip StarGuardianProtocol.exe StarGuardianProtocol.pck
+```
 
 ## Controls
 
