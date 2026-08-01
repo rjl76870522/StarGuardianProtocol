@@ -5,22 +5,22 @@
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
-background_color = Color(0.022, 0.031, 0.027, 1)
+background_color = Color(0.008, 0.022, 0.065, 1)
 ambient_light_source = 3
-ambient_light_color = Color(0.3, 0.37, 0.29, 1)
+ambient_light_color = Color(0.22, 0.42, 0.7, 1)
 ambient_light_energy = 0.72
 fog_enabled = true
-fog_light_color = Color(0.15, 0.19, 0.14, 1)
+fog_light_color = Color(0.08, 0.2, 0.42, 1)
 fog_light_energy = 0.65
 fog_density = 0.012
 
 [sub_resource type="StyleBoxFlat" id="PromptPanel"]
-bg_color = Color(0.015, 0.035, 0.028, 0.9)
+bg_color = Color(0.012, 0.05, 0.12, 0.92)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.25, 0.85, 0.6, 0.8)
+border_color = Color(0.22, 0.75, 1, 0.88)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
@@ -61,7 +61,7 @@ offset_bottom = 124.0
 [node name="Title" type="Label" parent="Interface/Margin/Top"]
 layout_mode = 2
 text = "星港中枢"
-theme_override_colors/font_color = Color(0.75, 0.95, 0.82, 1)
+theme_override_colors/font_color = Color(0.7, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 26
 
 [node name="Summary" type="Label" parent="Interface/Margin/Top"]
@@ -69,7 +69,7 @@ layout_mode = 2
 text = "合金 0"
 autowrap_mode = 2
 clip_text = true
-theme_override_colors/font_color = Color(0.66, 0.76, 0.69, 1)
+theme_override_colors/font_color = Color(0.6, 0.8, 0.96, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="PromptPanel" type="PanelContainer" parent="Interface/Margin"]
@@ -93,7 +93,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 clip_text = true
-theme_override_colors/font_color = Color(0.82, 0.95, 0.86, 1)
+theme_override_colors/font_color = Color(0.75, 0.92, 1, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="Notice" type="Label" parent="Interface/Margin"]
@@ -121,7 +121,7 @@ offset_right = -28.0
 offset_bottom = 166.0
 grow_horizontal = 0
 text = "星港设施"
-theme_override_colors/font_color = Color(0.72, 0.88, 0.76, 0.92)
+theme_override_colors/font_color = Color(0.62, 0.84, 1, 0.92)
 theme_override_font_sizes/font_size = 13
 horizontal_alignment = 2
 autowrap_mode = 2

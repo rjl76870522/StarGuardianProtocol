@@ -80,8 +80,9 @@ func _ready() -> void:
 
 func _apply_skin() -> void:
 	var state := get_node_or_null("/root/GameState")
-	var skin_id: StringName = state.equipped_skin if state != null else &"verdant_scout"
+	var skin_id: StringName = state.equipped_skin if state != null else &"prism_guardian"
 	var colors := {
+		&"prism_guardian": [Color("24365f"), Color("65e8ff")],
 		&"verdant_scout": [Color("0f4c4e"), Color("33e8b4")],
 		&"ember_raider": [Color("5a2017"), Color("ff7650")],
 		&"azure_sentinel": [Color("142c55"), Color("57b5ff")],
@@ -101,11 +102,15 @@ func _apply_skin() -> void:
 	$Body/Core.material_override = glow_material
 	$Body/Antenna.material_override = glow_material
 	$Body/CoreLight.light_color = palette[1]
-	_build_starfighter_frame(palette[0], palette[1])
+	var prism_colors: Array[Color] = []
+	if skin_id == &"prism_guardian":
+		for color in [Color("ff4d6d"), Color("ff9f43"), Color("ffe66d"), Color("52e08c"), Color("4dd7ff"), Color("6f7dff"), Color("c77dff")]:
+			prism_colors.append(color)
+	_build_starfighter_frame(palette[0], palette[1], prism_colors)
 	_add_skin_accents(palette[1])
 
 
-func _build_starfighter_frame(hull_color: Color, glow_color: Color) -> void:
+func _build_starfighter_frame(hull_color: Color, glow_color: Color, prism_colors: Array[Color] = []) -> void:
 	var previous := $Body.get_node_or_null("StarfighterFrame")
 	if previous != null:
 		previous.queue_free()
@@ -117,11 +122,15 @@ func _build_starfighter_frame(hull_color: Color, glow_color: Color) -> void:
 	frame.name = "StarfighterFrame"
 	$Body.add_child(frame)
 	_add_ship_box(frame, Vector3(0.0, 0.22, 0.02), Vector3(0.68, 0.38, 1.42), hull_color)
-	_add_ship_box(frame, Vector3(0.0, 0.3, -0.76), Vector3(0.4, 0.22, 0.48), hull_color.lightened(0.1))
+	_add_ship_box(frame, Vector3(0.0, 0.3, -0.76), Vector3(0.4, 0.22, 0.48), prism_colors[0] if not prism_colors.is_empty() else hull_color.lightened(0.1))
 	_add_ship_box(frame, Vector3(0.0, 0.47, -0.12), Vector3(0.42, 0.22, 0.5), glow_color.darkened(0.5), true)
 	for side in [-1.0, 1.0]:
-		_add_ship_box(frame, Vector3(side * 0.63, 0.2, 0.04), Vector3(0.72, 0.09, 0.72), hull_color.lightened(0.06), false, side * 0.18)
-		_add_ship_engine(frame, Vector3(side * 0.24, 0.18, 0.73), glow_color)
+		var wing_color := prism_colors[1] if side < 0.0 and not prism_colors.is_empty() else prism_colors[5] if not prism_colors.is_empty() else hull_color.lightened(0.06)
+		_add_ship_box(frame, Vector3(side * 0.63, 0.2, 0.04), Vector3(0.72, 0.09, 0.72), wing_color, false, side * 0.18)
+		_add_ship_engine(frame, Vector3(side * 0.24, 0.18, 0.73), prism_colors[4] if not prism_colors.is_empty() else glow_color)
+	if not prism_colors.is_empty():
+		for index in prism_colors.size():
+			_add_ship_box(frame, Vector3(-0.27 + index * 0.09, 0.45, 0.2), Vector3(0.065, 0.035, 0.86), prism_colors[index], true)
 
 
 func _add_ship_box(parent: Node3D, at: Vector3, size: Vector3, color: Color, emissive: bool = false, yaw: float = 0.0) -> void:

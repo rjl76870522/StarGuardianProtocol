@@ -375,32 +375,42 @@ func _build_archetype_visual() -> void:
 	var accent := enemy_data.core_color
 	match enemy_data.archetype:
 		EnemyData.Archetype.CHASER:
+			# Forward-leaning blades and a narrow head make the fast melee unit readable.
 			_add_box(details, Vector3(0.0, 1.05, 0.0), Vector3(0.48, 0.32, 0.42), enemy_data.body_color.lightened(0.16))
 			_add_box(details, Vector3(0.0, 0.72, -0.62), Vector3(0.16, 0.16, 0.45), accent, 0.0)
 			for side in [-1.0, 1.0]:
 				_add_box(details, Vector3(side * 0.32, 0.25, 0.18), Vector3(0.18, 0.32, 0.55), enemy_data.body_color.darkened(0.15), side * 0.12)
 		EnemyData.Archetype.SHOOTER:
+			# Wide stabilizers plus a long barrel read as a ranged artillery silhouette.
 			_add_box(details, Vector3(-0.62, 0.67, 0.0), Vector3(0.5, 0.08, 0.75), enemy_data.body_color.lightened(0.15), -0.16)
 			_add_box(details, Vector3(0.62, 0.67, 0.0), Vector3(0.5, 0.08, 0.75), enemy_data.body_color.lightened(0.15), 0.16)
 			_add_box(details, Vector3(0.0, 0.7, -0.72), Vector3(0.15, 0.15, 0.85), accent)
+			_add_cylinder(details, Vector3(0.0, 0.72, -1.05), 0.13, 0.34, accent)
 		EnemyData.Archetype.BOMBER:
+			# A spherical charge body with a bright fuse makes its self-destruct role obvious.
 			for index in 4:
 				var angle := TAU * float(index) / 4.0
 				_add_box(details, Vector3(cos(angle) * 0.62, 0.68, sin(angle) * 0.62), Vector3(0.12, 0.16, 0.65), accent, angle)
 			_add_cylinder(details, Vector3(0.0, 1.0, 0.0), 0.28, 0.08, accent)
+			_add_sphere(details, Vector3(0.0, 1.23, 0.0), 0.16, Color("fff1a6"), true)
 		EnemyData.Archetype.HEAVY:
+			# Heavy armor plates and a raised command block distinguish the tank unit.
 			_add_box(details, Vector3(-0.48, 0.72, 0.0), Vector3(0.32, 0.72, 1.0), enemy_data.body_color.lightened(0.16))
 			_add_box(details, Vector3(0.48, 0.72, 0.0), Vector3(0.32, 0.72, 1.0), enemy_data.body_color.lightened(0.16))
 			_add_box(details, Vector3(0.0, 1.02, 0.18), Vector3(0.72, 0.24, 0.62), accent.darkened(0.25))
+			_add_box(details, Vector3(0.0, 1.18, -0.28), Vector3(0.38, 0.26, 0.3), enemy_data.body_color.lightened(0.22))
 		EnemyData.Archetype.REPAIR:
+			# A hovering repair halo and cross-shaped emitter identify the support unit.
 			_add_cylinder(details, Vector3(0.0, 0.92, 0.0), 0.68, 0.08, accent)
 			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.12, 0.42, 0.12), accent)
 			_add_box(details, Vector3(0.0, 1.18, 0.0), Vector3(0.42, 0.12, 0.12), accent)
 		EnemyData.Archetype.MAGE:
+			# Tall spire, floating crown and side pylons signal area-control attacks.
 			_add_cylinder(details, Vector3(0.0, 1.28, 0.0), 0.62, 0.08, accent)
 			_add_box(details, Vector3(0.0, 1.52, 0.0), Vector3(0.16, 0.65, 0.16), accent)
 			_add_box(details, Vector3(-0.42, 1.04, 0.0), Vector3(0.12, 0.45, 0.12), accent, 0.25)
 			_add_box(details, Vector3(0.42, 1.04, 0.0), Vector3(0.12, 0.45, 0.12), accent, -0.25)
+			_add_sphere(details, Vector3(0.0, 1.76, 0.0), 0.14, accent, true)
 	if enemy_data.elite:
 		_add_cylinder(details, Vector3(0.0, 1.2, 0.0), 0.68, 0.08, accent)
 
@@ -426,6 +436,19 @@ func _add_cylinder(parent: Node3D, at: Vector3, radius: float, height: float, co
 	visual.mesh = mesh
 	visual.position = at
 	visual.material_override = _detail_material(color, true)
+	parent.add_child(visual)
+
+
+func _add_sphere(parent: Node3D, at: Vector3, radius: float, color: Color, emissive: bool = false) -> void:
+	var visual := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = radius
+	mesh.height = radius * 2.0
+	mesh.radial_segments = 12
+	mesh.rings = 6
+	visual.mesh = mesh
+	visual.position = at
+	visual.material_override = _detail_material(color, emissive)
 	parent.add_child(visual)
 
 

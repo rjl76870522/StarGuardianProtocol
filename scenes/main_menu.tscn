@@ -7,33 +7,33 @@
 bg_color = Color(0.004, 0.009, 0.028, 1)
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
-bg_color = Color(0.025, 0.065, 0.12, 0.94)
+bg_color = Color(0.018, 0.075, 0.16, 0.96)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.16, 0.74, 0.94, 0.88)
+border_color = Color(0.24, 0.82, 1, 0.94)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-shadow_color = Color(0.0, 0.45, 0.9, 0.16)
-shadow_size = 18
+shadow_color = Color(0.0, 0.55, 1, 0.28)
+shadow_size = 24
 
 [sub_resource type="StyleBoxFlat" id="ButtonNormal"]
-bg_color = Color(0.035, 0.12, 0.21, 0.98)
+bg_color = Color(0.025, 0.14, 0.28, 0.98)
 border_width_left = 3
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.22, 0.74, 0.96, 0.9)
+border_color = Color(0.25, 0.78, 1, 0.94)
 corner_radius_top_left = 7
 corner_radius_top_right = 7
 corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
 
 [sub_resource type="StyleBoxFlat" id="ButtonHover"]
-bg_color = Color(0.065, 0.28, 0.42, 1)
+bg_color = Color(0.055, 0.34, 0.56, 1)
 border_width_left = 4
 border_width_top = 2
 border_width_right = 2
@@ -163,7 +163,7 @@ color = Color(0.26, 0.8, 1, 0.84)
 
 [node name="Subtitle" type="Label" parent="Layout/IdentityCard/Identity"]
 layout_mode = 2
-text = "深空守望协议已部署\n清除异星威胁  //  SECTOR 01"
+text = "十区星域战役已部署\n清除异星威胁  //  FINAL PROTOCOL"
 theme_override_colors/font_color = Color(0.53, 0.72, 0.88, 1)
 theme_override_font_sizes/font_size = 18
 
@@ -185,7 +185,7 @@ stretch_mode = 5
 
 [node name="Status" type="Label" parent="Layout/Panel/Buttons"]
 layout_mode = 2
-text = "作战单元在线\n第 07 区  //  威胁活跃"
+text = "作战单元在线\n十区防线  //  信号稳定"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.48, 0.73, 0.9, 1)
 theme_override_font_sizes/font_size = 13

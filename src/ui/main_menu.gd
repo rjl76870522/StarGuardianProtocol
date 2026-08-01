@@ -16,6 +16,7 @@ var _archive_dialog: AcceptDialog
 
 
 func _ready() -> void:
+	_build_starfield()
 	$Layout/Panel/Buttons/StartButton.grab_focus()
 	var continue_button: Button = $Layout/Panel/Buttons/ContinueButton
 	continue_button.disabled = not SaveManager.has_campaign()
@@ -59,7 +60,7 @@ func _on_garden_pressed() -> void:
 
 
 func _on_skin_pressed() -> void:
-	var skins: Array[StringName] = [&"verdant_scout", &"ember_raider", &"azure_sentinel"]
+	var skins: Array[StringName] = [&"prism_guardian", &"verdant_scout", &"ember_raider", &"azure_sentinel"]
 	var current := skins.find(GameState.equipped_skin)
 	GameState.equipped_skin = skins[posmod(current + 1, skins.size())]
 	GameState.unlock_achievement(&"first_skin_change")
@@ -78,6 +79,20 @@ func _create_archive_dialog() -> void:
 		return
 	_archive_dialog = AcceptDialog.new()
 	_archive_dialog.title = "星港档案"
+	_archive_dialog.add_theme_color_override("title_color", Color("9eeaff"))
+	_archive_dialog.add_theme_color_override("font_color", Color("d9f4ff"))
+	var dialog_panel := StyleBoxFlat.new()
+	dialog_panel.bg_color = Color("06172d")
+	dialog_panel.border_width_left = 2
+	dialog_panel.border_width_top = 2
+	dialog_panel.border_width_right = 2
+	dialog_panel.border_width_bottom = 2
+	dialog_panel.border_color = Color("2fb9ed")
+	dialog_panel.corner_radius_top_left = 12
+	dialog_panel.corner_radius_top_right = 12
+	dialog_panel.corner_radius_bottom_left = 12
+	dialog_panel.corner_radius_bottom_right = 12
+	_archive_dialog.add_theme_stylebox_override("panel", dialog_panel)
 	_archive_dialog.min_size = Vector2i(700, 500)
 	_archive_dialog.ok_button_text = "关闭"
 	add_child(_archive_dialog)
@@ -103,7 +118,7 @@ func _add_archive_page(tabs: TabContainer, page_name: String, contents: String) 
 
 
 func _equipment_archive_text() -> String:
-	return """[font_size=22][color=#35e6b2]武器档案[/color][/font_size]
+	return """[font_size=22][color=#55dfff]武器档案[/color][/font_size]
 喷火器  ·  近距离持续灼烧，压制成群目标
 自动步枪  ·  稳定连射，适合持续推进
 霰弹炮  ·  近距离多弹丸爆发，贴近重装目标时效果显著
@@ -113,14 +128,14 @@ func _equipment_archive_text() -> String:
 狙击步枪  ·  远距离高伤害，优先处理精英单位
 攻城火炮  ·  慢射速大范围爆破，适合高密度敌群
 
-[font_size=22][color=#35e6b2]武器模块[/color][/font_size]
+[font_size=22][color=#55dfff]武器模块[/color][/font_size]
 超频射速  ·  缩短射击间隔
 冲击增幅  ·  提升单发伤害
 偏转反弹  ·  子弹命中敌人或墙体后继续折返
 追踪锁定  ·  子弹会修正方向追踪附近目标
 超距聚焦  ·  增加有效射程与存续时间
 
-[font_size=22][color=#35e6b2]人物主动技能[/color][/font_size]
+[font_size=22][color=#55dfff]人物主动技能[/color][/font_size]
 T 暴怒回路  ·  短时间提升射速
 G 治疗协议  ·  消耗冷却恢复生命
 Y 反弹校准  ·  临时提高子弹反弹次数
@@ -130,7 +145,7 @@ H 追踪校准  ·  临时获得更强的目标锁定
 
 
 func _enemy_archive_text() -> String:
-	return """[font_size=22][color=#35e6b2]颜色与职责[/color][/font_size]
+	return """[font_size=22][color=#55dfff]颜色与职责[/color][/font_size]
 [color=#ff7a59]橙红[/color] 战士  ·  攻防均衡，主动贴近作战
 [color=#55aaff]蓝色[/color] 射手  ·  保持距离持续射击
 [color=#ffcf4a]黄色[/color] 爆破者  ·  靠近后自毁，需优先处理
@@ -138,12 +153,12 @@ func _enemy_archive_text() -> String:
 [color=#65cf88]绿色[/color] 辅助  ·  为同伴修复、强化或召唤支援
 [color=#bc7cff]紫色[/color] 法师  ·  施放远程范围能量攻击
 
-[font_size=22][color=#35e6b2]精英单位[/color][/font_size]
+[font_size=22][color=#55dfff]精英单位[/color][/font_size]
 闪烁精英  ·  快速位移，血量较低但威胁范围大
 危险精英  ·  布设高伤害区域，避免停留
 哨卫精英  ·  远距离火力压制，需要利用掩体接近
 
-[font_size=22][color=#35e6b2]关底目标[/color][/font_size]
+[font_size=22][color=#55dfff]关底目标[/color][/font_size]
 异星母舰  ·  每关都会在战斗中段进入星区。拥有多阶段攻击、召唤支援与高额核心生命。战胜母舰后才能完成该关任务"""
 
 
@@ -155,7 +170,27 @@ func _refresh_camp(message: String = "") -> void:
 	$Layout/Panel/Buttons/UpgradeButton.text = "升级当前初始武器  ·  消耗 %d 合金" % cost_weapon
 	$Layout/Panel/Buttons/GardenButton.text = "升级初始生命  ·  消耗 %d 合金" % cost_health
 	$Layout/Panel/Buttons/SkinButton.text = "作战皮肤：%s  ‹ 点击切换 ›" % _skin_name(GameState.equipped_skin)
-	$Layout/Panel/Buttons/AchievementStatus.text = "成就档案  ·  已解锁 %d 项  ·  星域守望者：%s" % [GameState.achievements.size(), "已获得" if GameState.has_achievement(&"endless_2000") else "未获得"]
+	var final_status := "已完成" if GameState.has_achievement(&"campaign_complete") else "待部署"
+	$Layout/Panel/Buttons/AchievementStatus.text = "成就档案  ·  已解锁 %d 项  ·  十区战役：%s" % [GameState.achievements.size(), final_status]
+	$Layout/IdentityCard/Identity/Subtitle.text = "十区星域战役  //  第 %d 关待命\n%s" % [GameState.current_stage, "终焉记录已归档" if GameState.has_achievement(&"campaign_complete") else "完成第十关即可解锁终焉记录"]
+
+
+func _build_starfield() -> void:
+	var starfield := Control.new()
+	starfield.name = "BlueSignalField"
+	starfield.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	starfield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	starfield.z_index = 1
+	for index in 28:
+		var spark := ColorRect.new()
+		var x := float(posmod(index * 137, 1100) + 70)
+		var y := float(posmod(index * 79, 610) + 64)
+		spark.position = Vector2(x, y)
+		spark.size = Vector2(2.0 + float(index % 3), 2.0 + float(index % 3))
+		spark.color = Color(0.36, 0.84, 1.0, 0.22 + float(index % 4) * 0.1)
+		starfield.add_child(spark)
+	add_child(starfield)
+	move_child(starfield, 1)
 
 
 func _saved_stage() -> int:
@@ -164,6 +199,7 @@ func _saved_stage() -> int:
 
 func _skin_name(skin_id: StringName) -> String:
 	match skin_id:
+		&"prism_guardian": return "七彩棱镜守望者"
 		&"ember_raider": return "余烬突袭者"
 		&"azure_sentinel": return "湛蓝哨卫"
 		_: return "翠绿侦察者"

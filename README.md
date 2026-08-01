@@ -12,8 +12,11 @@
 - Campaign systems: in progress
 - Milestones 5-9: pending
 
-当前版本包含中文界面、十个随机防卫星域、八种武器、五格武器背包、局内主动
-人物技能、八类敌方单位、三阶段异星母舰，以及无尽关卡与持久化存档。
+当前版本包含中文界面、完整十关战役、八种武器、五格武器背包、局内主动人物
+技能、八类敌方单位、三阶段异星母舰、七彩棱镜作战服，以及持久化存档。
+
+第十关完成后会进入“终焉记录”：先显示星域校准标记，再播放关卡日志、作者寄语
+与感谢字幕。五秒后可以按任意键或点击跳过，结局会解锁“十区战役完成”成就。
 
 Campaign progress is saved automatically after stage advancement, skill
 upgrades, and weapon rewards. `Continue Campaign` restores the current stage,

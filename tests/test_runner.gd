@@ -62,6 +62,7 @@ func _run() -> void:
 	_test_generated_audio()
 	await _test_repeated_game_cleanup()
 	await _test_upgrade_offer_flow()
+	await _test_campaign_ending()
 	await _test_round_results()
 
 	if _failures.is_empty():
@@ -806,6 +807,29 @@ func _test_upgrade_offer_flow() -> void:
 	_check(game.player.skill_system._levels.size() == 1, "selected skill is applied to player")
 	game.queue_free()
 	await process_frame
+
+
+func _test_campaign_ending() -> void:
+	var state := root.get_node("GameState")
+	state.start_campaign()
+	state.current_stage = state.MAX_STAGE
+	var game_scene := load("res://scenes/game.tscn") as PackedScene
+	var game := game_scene.instantiate()
+	game.round_duration = 1.0
+	game.initial_spawn_interval = 99.0
+	game.required_kills = 0
+	root.add_child(game)
+	await process_frame
+	game._finish_round(true)
+	await process_frame
+	_check(game._ending_started, "stage ten victory starts the campaign ending")
+	_check(game.get_node_or_null("PauseLayer/EndCredits") != null, "stage ten creates the end credits layer")
+	_check(not game.result_panel.visible, "stage ten ending does not use the normal result panel")
+	_check(state.has_achievement(&"campaign_complete"), "stage ten records the campaign completion achievement")
+	paused = false
+	game.queue_free()
+	await process_frame
+	state.start_campaign()
 
 
 func _test_round_results() -> void:

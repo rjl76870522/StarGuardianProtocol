@@ -5,6 +5,7 @@ const IMPACT_SCENE := preload("res://scenes/impact_flash.tscn")
 const BOSS_SCENE := preload("res://scenes/boss.tscn")
 const SALVAGE_CACHE := preload("res://src/world/salvage_cache.gd")
 const WEAPON_PICKUP := preload("res://src/world/weapon_pickup.gd")
+const END_CREDITS := preload("res://src/ui/end_credits.gd")
 const ENEMY_CATALOG: Array[EnemyData] = [
 	preload("res://assets/data/enemies/chaser.tres"),
 	preload("res://assets/data/enemies/shooter.tres"),
@@ -55,6 +56,7 @@ var _pending_reward_weapon: WeaponData
 var _zone_cache_interval := 6
 var _zone_cache_scrap := 2
 var _next_cache_kills := 6
+var _ending_started := false
 
 @onready var player: WastelandPlayer = $Player
 @onready var hud: WastelandHUD = $HUD
@@ -336,6 +338,9 @@ func _finish_round(victory: bool, failure_title: String = "作战单元已损毁
 	if victory:
 		_auto_collect_stage_loot()
 	GameState.finish_run(round_duration - time_left, kills)
+	if victory and GameState.current_stage >= GameState.MAX_STAGE:
+		_show_campaign_ending()
+		return
 	result_panel.visible = true
 	result_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	var title := "区域已肃清" if victory else failure_title
@@ -350,13 +355,23 @@ func _finish_round(victory: bool, failure_title: String = "作战单元已损毁
 	var next_button: Button = $PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton
 	next_button.visible = victory and GameState.current_stage < GameState.MAX_STAGE
 	next_button.text = "领取武器，进入第 %d 关" % mini(GameState.current_stage + 1, GameState.MAX_STAGE)
-	if victory and GameState.current_stage >= GameState.MAX_STAGE:
-		$PauseLayer/ResultPanel/Panel/Content/Detail.text = detail + "\n已完成全部十个星区，终焉守望者成就已记录"
 	get_tree().paused = true
 	if victory:
 		next_button.grab_focus()
 	else:
 		$PauseLayer/ResultPanel/Panel/Content/Buttons/RestartButton.grab_focus()
+
+
+func _show_campaign_ending() -> void:
+	if _ending_started:
+		return
+	_ending_started = true
+	GameState.unlock_achievement(&"campaign_complete")
+	get_tree().paused = true
+	var credits := END_CREDITS.new() as Control
+	credits.name = "EndCredits"
+	$PauseLayer.add_child(credits)
+	credits.finished.connect(_return_to_menu)
 
 
 func _toggle_pause() -> void:

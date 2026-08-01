@@ -20,7 +20,7 @@ var garden_level: int = 0
 var home_skill_levels: Dictionary = {}
 var weapon_modules: Dictionary = {}
 var achievements: Dictionary = {}
-var equipped_skin: StringName = &"verdant_scout"
+var equipped_skin: StringName = &"prism_guardian"
 
 
 func start_campaign() -> void:
