@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION := 8
+const SAVE_VERSION := 9
 var save_path := "user://campaign_save.json"
 var temp_path := "user://campaign_save.tmp"
 var backup_path := "user://campaign_save.backup.json"
@@ -112,10 +112,11 @@ func apply_campaign(state: Node) -> bool:
 	state.weapon_modules = _validated_nested_levels(data.get("weapon_modules", {}), 5)
 	state.selected_zone = posmod(int(data.get("selected_zone", 0)), 10)
 	state.achievements = _validated_unlocks(data.get("achievements", {}))
-	# Version 8 introduces the campaign's prism guardian uniform. Existing
-	# saves receive it once; users can still select a different skin afterwards.
-	var legacy_uniform := int(data.get("version", 0)) < 8
-	state.equipped_skin = &"prism_guardian" if legacy_uniform else StringName(str(data.get("equipped_skin", "prism_guardian")))
+	# Version 9 replaces the former experimental skins with the fixed eight-skin
+	# roster. Existing saves receive the prism guardian instead of an invalid ID.
+	var legacy_uniform := int(data.get("version", 0)) < 9
+	var saved_skin := StringName(str(data.get("equipped_skin", "prism_guardian")))
+	state.equipped_skin = saved_skin if not legacy_uniform and state.PLAYABLE_SKINS.has(saved_skin) else &"prism_guardian"
 	if legacy_uniform:
 		state._autosave()
 	return true

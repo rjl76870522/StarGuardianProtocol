@@ -60,7 +60,7 @@ func _on_garden_pressed() -> void:
 
 
 func _on_skin_pressed() -> void:
-	var skins: Array[StringName] = [&"prism_guardian", &"verdant_scout", &"ember_raider", &"azure_sentinel"]
+	var skins: Array = GameState.PLAYABLE_SKINS
 	var current := skins.find(GameState.equipped_skin)
 	GameState.equipped_skin = skins[posmod(current + 1, skins.size())]
 	GameState.unlock_achievement(&"first_skin_change")
@@ -199,10 +199,15 @@ func _saved_stage() -> int:
 
 func _skin_name(skin_id: StringName) -> String:
 	match skin_id:
-		&"prism_guardian": return "七彩棱镜守望者"
-		&"ember_raider": return "余烬突袭者"
-		&"azure_sentinel": return "湛蓝哨卫"
-		_: return "翠绿侦察者"
+		&"prism_guardian": return "七彩棱镜"
+		&"red_guardian": return "赤红守望"
+		&"orange_guardian": return "橙焰守望"
+		&"yellow_guardian": return "曜黄守望"
+		&"green_guardian": return "翠绿守望"
+		&"cyan_guardian": return "青辉守望"
+		&"blue_guardian": return "深蓝守望"
+		&"violet_guardian": return "紫晶守望"
+		_: return "七彩棱镜"
 
 
 func _start_weapon_name(weapon_id: StringName) -> String:

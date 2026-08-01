@@ -36,6 +36,7 @@ func _run() -> void:
 	_test_combat_data_resources()
 	_test_critical_hits()
 	_test_skill_stacking_and_choices()
+	await _test_skin_roster_and_salvage_cache()
 	await _test_upgrade_card_and_campaign_progression()
 	await _test_weapon_reward_panel()
 	_test_enemy_data_catalog()
@@ -173,6 +174,21 @@ func _test_skill_stacking_and_choices() -> void:
 		ids[skill.skill_id] = true
 	_check(ids.size() == 3, "upgrade offer has no duplicate skills")
 	_check(not ids.has(&"rapid_fire"), "maxed skill is excluded from offers")
+
+
+func _test_skin_roster_and_salvage_cache() -> void:
+	var state := root.get_node("GameState")
+	var expected_skins: Array[StringName] = [&"prism_guardian", &"red_guardian", &"orange_guardian", &"yellow_guardian", &"green_guardian", &"cyan_guardian", &"blue_guardian", &"violet_guardian"]
+	_check(state.PLAYABLE_SKINS.size() == 8, "skin roster contains exactly eight skins")
+	_check(state.PLAYABLE_SKINS == expected_skins, "skin roster keeps prism and seven spectrum colors")
+	var cache := SalvageCache.new()
+	root.add_child(cache)
+	await process_frame
+	_check(cache.get_node_or_null("RareSalvageCore") != null, "salvage pickup builds a rare resource core")
+	_check(cache.get_node_or_null("Beacon") != null, "salvage pickup has a visible beacon")
+	_check(cache.get_node_or_null("RareSalvageCore/SignalBeam") != null, "salvage pickup includes a signal beam")
+	cache.queue_free()
+	await process_frame
 
 
 func _test_upgrade_card_and_campaign_progression() -> void:

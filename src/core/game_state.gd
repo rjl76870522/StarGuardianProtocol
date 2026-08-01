@@ -1,6 +1,16 @@
 extends Node
 
 const MAX_STAGE := 10
+const PLAYABLE_SKINS := [
+	&"prism_guardian",
+	&"red_guardian",
+	&"orange_guardian",
+	&"yellow_guardian",
+	&"green_guardian",
+	&"cyan_guardian",
+	&"blue_guardian",
+	&"violet_guardian",
+]
 
 var last_survival_time: float = 0.0
 var last_kills: int = 0

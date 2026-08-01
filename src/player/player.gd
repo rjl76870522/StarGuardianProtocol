@@ -83,11 +83,15 @@ func _apply_skin() -> void:
 	var skin_id: StringName = state.equipped_skin if state != null else &"prism_guardian"
 	var colors := {
 		&"prism_guardian": [Color("24365f"), Color("65e8ff")],
-		&"verdant_scout": [Color("0f4c4e"), Color("33e8b4")],
-		&"ember_raider": [Color("5a2017"), Color("ff7650")],
-		&"azure_sentinel": [Color("142c55"), Color("57b5ff")],
+		&"red_guardian": [Color("4b1024"), Color("ff466b")],
+		&"orange_guardian": [Color("4a2508"), Color("ff9f43")],
+		&"yellow_guardian": [Color("453a06"), Color("ffe66d")],
+		&"green_guardian": [Color("0d472f"), Color("55e69d")],
+		&"cyan_guardian": [Color("084550"), Color("4dd7ff")],
+		&"blue_guardian": [Color("142c64"), Color("628cff")],
+		&"violet_guardian": [Color("35185f"), Color("c77dff")],
 	}
-	var palette: Array = colors.get(skin_id, colors[&"verdant_scout"])
+	var palette: Array = colors.get(skin_id, colors[&"prism_guardian"])
 	var body_material := StandardMaterial3D.new()
 	body_material.albedo_color = palette[0]
 	body_material.metallic = 0.88
