@@ -13,9 +13,9 @@ signal interaction_hint(message: String)
 const PROJECTILE_SCENE := preload("res://scenes/projectile.tscn")
 const DRONE_SCENE := preload("res://scenes/orbit_drone.tscn")
 const WEAPON_PICKUP := preload("res://src/world/weapon_pickup.gd")
-const MOBILE_CONTROLS := preload("res://src/ui/mobile_controls.gd")
 const PLAYER_GADGET := preload("res://src/combat/player_gadget.gd")
 const WEAPON_CATALOG = [
+	preload("res://assets/data/weapons/flame_projector.tres"),
 	preload("res://assets/data/weapons/auto_rifle.tres"),
 	preload("res://assets/data/weapons/scatter_cannon.tres"),
 	preload("res://assets/data/weapons/rail_lance.tres"),
@@ -23,7 +23,6 @@ const WEAPON_CATALOG = [
 	preload("res://assets/data/weapons/sidearm.tres"),
 	preload("res://assets/data/weapons/sniper_rifle.tres"),
 	preload("res://assets/data/weapons/siege_cannon.tres"),
-	preload("res://assets/data/weapons/flame_projector.tres"),
 ]
 
 @export var move_speed: float = 8.0
@@ -72,8 +71,6 @@ func _ready() -> void:
 	_rng.randomize()
 	add_to_group("player")
 	dash_audio.stream = SoundSynth.tone(170.0, 0.13, 0.2)
-	if OS.has_feature("mobile"):
-		add_child(MOBILE_CONTROLS.new())
 	_apply_skin()
 	_restore_weapon_loadout()
 	equip_weapon(0)
@@ -299,7 +296,7 @@ func _activate_training_skill(skill_id: StringName) -> void:
 		&"bounce":
 			_active_bounce_remaining = 3.5 + level * 0.35
 			_active_skill_cooldowns[skill_id] = maxf(20.0 - level, 12.0)
-			action_message.emit("反弹协议启动  ·  接下来子弹获得额外弹射")
+			action_message.emit("反弹协议启动  ·  接下来子弹额外弹射 %d 次" % (level + 1))
 		&"tracking":
 			_active_tracking_remaining = 4.0 + level * 0.4
 			_active_skill_cooldowns[skill_id] = maxf(20.0 - level, 12.0)
@@ -374,7 +371,7 @@ func _try_fire() -> bool:
 			current_weapon,
 			weapon_multiplier * skill_damage_multiplier,
 			int(skill_system.get_value(&"penetration", 0.0)),
-			int(skill_system.get_value(&"ricochet", 0.0)) + _home_skill_level(&"bounce") + _weapon_module_level(current_weapon.weapon_id, &"ricochet") + (3 if _active_bounce_remaining > 0.0 else 0),
+			_ricochet_count_for_current_shot(),
 			int(skill_system.get_value(&"split_rounds", 0.0)),
 			skill_system.get_level(&"phase_rounds") > 0
 		)
@@ -391,10 +388,20 @@ func _try_fire() -> bool:
 	return true
 
 
+func _ricochet_count_for_current_shot() -> int:
+	# Three independent sources stack: level-up skill, weapon module, and the
+	# short manual protocol. Home training only strengthens the manual protocol.
+	var count := int(skill_system.get_value(&"ricochet", 0.0))
+	count += _weapon_module_level(current_weapon.weapon_id, &"ricochet")
+	if _active_bounce_remaining > 0.0:
+		count += 1 + _home_skill_level(&"bounce")
+	return clampi(count, 0, 12)
+
+
 func _restore_weapon_loadout() -> void:
 	weapon_loadout.clear()
 	var state := get_node_or_null("/root/GameState")
-	var requested: Array = [&"auto_rifle"]
+	var requested: Array = [&"flame_projector"]
 	if state != null:
 		requested = state.loadout_weapon_ids
 	for weapon_id in requested:
@@ -402,9 +409,9 @@ func _restore_weapon_loadout() -> void:
 		if weapon != null:
 			weapon_loadout.append(weapon)
 	if weapon_loadout.is_empty():
-		weapon_loadout.append(WEAPON_CATALOG[0] as WeaponData)
+		weapon_loadout.append(_weapon_by_id(&"flame_projector"))
 		if state != null:
-			state.loadout_weapon_ids = [&"auto_rifle"]
+			state.loadout_weapon_ids = [&"flame_projector"]
 
 
 func _weapon_by_id(weapon_id: StringName) -> WeaponData:
@@ -671,11 +678,11 @@ func _toggle_mount() -> void:
 		hull.material_override = material
 		_mount_visual.add_child(hull)
 		add_child(_mount_visual)
-		action_message.emit("废土悬浮坐骑启动，移动速度提升")
+		action_message.emit("星港悬浮坐骑启动，移动速度提升")
 	else:
 		if is_instance_valid(_mount_visual):
 			_mount_visual.queue_free()
-		action_message.emit("废土悬浮坐骑收纳")
+		action_message.emit("星港悬浮坐骑收纳")
 
 
 func _show_pulse_wave() -> void:

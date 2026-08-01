@@ -1,7 +1,7 @@
 class_name WastelandHome
 extends Node3D
 
-const ZONES := ["断裂装配线", "熔炉回廊", "电容十字", "冷却井阵", "坠落航站", "风蚀营地", "盐碱坟场", "深井泵站"]
+const ZONES := ["近地轨道平台", "日冕能源环", "量子交叉港", "冷星观测站", "失重航站", "星云补给带", "月面通信阵", "深空采矿区", "红移中继站", "极光防卫塔"]
 const OBSTACLE_LAYER := 16
 
 var _stations: Array[Dictionary] = []
@@ -96,7 +96,7 @@ func _create_spaceport_shell() -> void:
 func _create_stations() -> void:
 	_add_station(&"departure", "出发终端", "开始星际防卫任务", Vector3(0.0, 0.0, -6.8), Color("36e5ad"))
 	_add_station(&"workbench", "武器工作台", "升级当前初始武器", Vector3(-7.6, 0.0, -2.4), Color("ffb344"))
-	_add_station(&"health", "生命维护舱", "投入废料提升初始生命", Vector3(-7.6, 0.0, 5.2), Color("75d66a"))
+	_add_station(&"health", "生命维护舱", "投入合金提升初始生命", Vector3(-7.6, 0.0, 5.2), Color("75d66a"))
 	_add_station(&"training", "人物训练舱", "选择局内主动技能", Vector3(7.6, 0.0, -2.4), Color("ee6578"))
 	_add_station(&"exit", "返回终端", "返回主菜单", Vector3(7.6, 0.0, 5.2), Color("b490ef"))
 
@@ -234,12 +234,12 @@ func _interact(id: StringName) -> void:
 			if GameState.upgrade_starter_weapon():
 				_show_notice("初始步枪升级完成")
 			else:
-				_show_notice("废料不足，完成战役并回收补给箱可获得废料")
+				_show_notice("合金不足，完成战役并回收补给箱可获得合金")
 		&"health":
 			if GameState.upgrade_health_system():
 				_show_notice("生命维护完成，下一次开局生命值提高")
 			else:
-				_show_notice("废料不足，生命维护暂时无法执行")
+				_show_notice("合金不足，生命维护暂时无法执行")
 		&"training":
 			_open_training_panel()
 		&"exit":
@@ -354,14 +354,14 @@ func _refresh_training_panel() -> void:
 		return
 	if _training_status == null:
 		return
-	_training_status.text = "当前废料：%d  ·  已学习的能力可在战斗中按对应键启动" % GameState.scrap
+	_training_status.text = "当前合金：%d  ·  已学习的能力可在战斗中按对应键启动" % GameState.scrap
 	for spec in _training_specs():
 		var level := GameState.home_skill_level(spec["id"])
 		var cost := 5 + level * 4
 		var button := _training_buttons.get(spec["id"]) as Button
 		if button == null:
 			continue
-		button.text = "%s  %d/%d\n%s  ·  消耗 %d 废料" % [spec["name"], level, spec["max"], spec["effect"], cost]
+		button.text = "%s  %d/%d\n%s  ·  消耗 %d 合金" % [spec["name"], level, spec["max"], spec["effect"], cost]
 		button.disabled = level >= int(spec["max"])
 
 

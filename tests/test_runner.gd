@@ -218,7 +218,7 @@ func _test_weapon_reward_panel() -> void:
 	_check(panel.buttons[1].text.contains("解锁"), "locked weapon reward is shown as an unlock")
 	var selected: Array[WeaponData] = []
 	panel.weapon_selected.connect(func(weapon: WeaponData) -> void: selected.append(weapon))
-	panel._choose(1)
+	panel._choose(2)
 	_check(selected.size() == 1 and selected[0].weapon_id == &"scatter_cannon", "weapon reward emits the selected weapon")
 	var selected_id := selected[0].weapon_id if not selected.is_empty() else &""
 	_check(game_state.upgrade_weapon(selected_id), "selected weapon reward is applied")
@@ -397,7 +397,7 @@ func _test_debris_has_collision() -> void:
 	root.add_child(arena)
 	await physics_frame
 	var obstacles := get_nodes_in_group("obstacles")
-	_check(obstacles.size() == 8, "arena creates four debris blocks plus four physical boundary walls")
+	_check(obstacles.size() == arena.boundary_points.size() + 4, "arena creates internal cover plus the selected polygon boundary")
 	var debris_blocks: Array[StaticBody3D] = []
 	for obstacle in obstacles:
 		_check(obstacle is StaticBody3D, "debris obstacle is a static body")
@@ -529,7 +529,7 @@ func _test_fire_rate_limit() -> void:
 	_check(player._try_fire(), "weapon fires when cooldown is ready")
 	_check(not player._try_fire(), "weapon fire rate blocks immediate second shot")
 	player._fire_cooldown = 0.0
-	_check(player.equip_weapon(1), "shotgun can be equipped")
+	_check(player.equip_weapon(2), "shotgun can be equipped")
 	_check(player._try_fire(), "shotgun fires through data-driven weapon path")
 	_check(not player.equip_weapon(99), "invalid weapon index is rejected")
 	player.queue_free()

@@ -90,7 +90,7 @@ func apply_campaign(state: Node) -> bool:
 	state.carried_skill_levels = _validated_levels(data.get("skills", {}), 10)
 	state.weapon_levels = _validated_levels(data.get("weapons", {}), 20)
 	state.unlocked_weapons = _validated_unlocks(data.get("unlocked_weapons", {}))
-	state.unlocked_weapons[&"auto_rifle"] = true
+	state.unlocked_weapons[&"flame_projector"] = true
 	state.loadout_weapon_ids = _validated_loadout(data.get("loadout_weapons", []))
 	state.selected_start_weapon_id = StringName(str(data.get("selected_start_weapon", state.loadout_weapon_ids[0])))
 	state.pending_weapon_id = StringName(str(data.get("pending_weapon", "")))
@@ -171,5 +171,5 @@ func _validated_loadout(source: Array) -> Array[StringName]:
 		if result.size() >= 5:
 			break
 	if result.is_empty():
-		result.append(&"auto_rifle")
+		result.append(&"flame_projector")
 	return result

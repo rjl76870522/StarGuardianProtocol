@@ -130,10 +130,11 @@ func _on_body_entered(body: Node3D) -> void:
 
 
 func _apply_hit(body: Node3D) -> void:
-	var body_id := body.get_instance_id()
-	if _hit_ids.has(body_id):
+	var enemy_owner := _enemy_owner(body)
+	var hit_identity: int = enemy_owner.get_instance_id() if enemy_owner != null else body.get_instance_id()
+	if _hit_ids.has(hit_identity):
 		return
-	_hit_ids[body_id] = true
+	_hit_ids[hit_identity] = true
 	var damaged_enemy := body.has_method("take_damage")
 	if body.has_method("take_damage"):
 		var result := DamageRules.calculate_hit(
@@ -149,19 +150,22 @@ func _apply_hit(body: Node3D) -> void:
 			for effect in status_effects:
 				body.apply_status_effect(effect, direction)
 		_spawn_split_shots(body)
+	# A core hitbox and its parent body are two distinct colliders.  Exclude
+	# both after a hit so a ricochet can physically leave the original enemy.
+	_add_hit_colliders_to_exclude(body, enemy_owner)
 	if damaged_enemy and penetration_remaining > 0:
 		penetration_remaining -= 1
-		if body is CollisionObject3D:
-			_excluded_rids.append((body as CollisionObject3D).get_rid())
 		global_position += direction * 0.08
 		return
 	if damaged_enemy and ricochet_remaining > 0:
-		var target := _find_ricochet_target(body)
+		var target := _find_ricochet_target(enemy_owner if enemy_owner != null else body)
 		if target != null:
 			ricochet_remaining -= 1
+			var previous_position := global_position
 			direction = (target.global_position - global_position).normalized()
 			direction.y = 0.0
 			global_position += direction * 0.08
+			_show_ricochet_link(previous_position, target.global_position)
 			return
 	queue_free()
 
@@ -192,6 +196,23 @@ func _spawn_split_shots(hit_body: Node3D) -> void:
 		shard._hit_ids = _hit_ids.duplicate()
 
 
+func _enemy_owner(node: Node3D) -> Node3D:
+	var current: Node = node
+	while current != null:
+		if current.is_in_group("enemies") and current is Node3D:
+			return current as Node3D
+		current = current.get_parent()
+	return null
+
+
+func _add_hit_colliders_to_exclude(body: Node3D, owner: Node3D) -> void:
+	for candidate in [body, owner]:
+		if candidate is CollisionObject3D:
+			var rid := (candidate as CollisionObject3D).get_rid()
+			if not _excluded_rids.has(rid):
+				_excluded_rids.append(rid)
+
+
 func _find_ricochet_target(current: Node3D) -> Node3D:
 	var nearest: Node3D
 	var nearest_distance := 12.0
@@ -204,6 +225,31 @@ func _find_ricochet_target(current: Node3D) -> Node3D:
 			nearest = candidate_node
 			nearest_distance = distance
 	return nearest
+
+
+func _show_ricochet_link(from: Vector3, to: Vector3) -> void:
+	var link := MeshInstance3D.new()
+	var length := from.distance_to(to)
+	if length <= 0.1:
+		return
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.028
+	mesh.bottom_radius = 0.045
+	mesh.height = length
+	link.mesh = mesh
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color("8ef4ff")
+	material.emission_enabled = true
+	material.emission = Color("49cfff")
+	material.emission_energy_multiplier = 5.0
+	link.material_override = material
+	get_parent().add_child(link)
+	link.global_position = from.lerp(to, 0.5)
+	link.look_at(to, Vector3.UP)
+	link.rotate_object_local(Vector3.RIGHT, PI * 0.5)
+	var tween := link.create_tween()
+	tween.tween_property(link, "scale", Vector3(1.7, 0.08, 1.7), 0.12)
+	tween.tween_callback(link.queue_free)
 
 
 func _find_tracking_target() -> Node3D:

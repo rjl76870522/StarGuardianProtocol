@@ -57,7 +57,7 @@ theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
 theme_override_font_sizes/font_size = 30
 [node name="Subtitle" type="Label" parent="Overlay/Panel/Content"]
 layout_mode = 2
-text = "路线会改变下一关的废土地形与掩体布局"
+text = "路线会改变下一关的星际战区形态与防御设施布局"
 horizontal_alignment = 1
 [node name="Routes" type="HBoxContainer" parent="Overlay/Panel/Content"]
 layout_mode = 2

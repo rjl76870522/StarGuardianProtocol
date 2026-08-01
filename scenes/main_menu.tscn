@@ -136,7 +136,7 @@ theme_override_font_sizes/font_size = 13
 
 [node name="CampStatus" type="Label" parent="Layout/Panel/Buttons"]
 layout_mode = 2
-text = "营地补给  |  废料 12  |  初始步枪 1级"
+text = "星港补给  |  合金 12  |  喷火器 1级"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.78, 0.64, 0.32, 1)
 theme_override_font_sizes/font_size = 13
@@ -183,7 +183,7 @@ theme_override_font_sizes/font_size = 12
 [node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
-text = "开始游戏  ·  进入营地"
+text = "开始任务  ·  进入星港"
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")

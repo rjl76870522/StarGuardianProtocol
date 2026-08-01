@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 skill_id = &"scrap_familiar"
-display_name = "废料跟班"
+display_name = "合金伴随机"
 description = "唤醒跟班无人机，提高自动火力覆盖范围"
 max_level = 4
 level_values = PackedFloat32Array(1, 2, 3, 4)

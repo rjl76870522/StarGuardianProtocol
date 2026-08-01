@@ -2,6 +2,7 @@ extends Control
 
 const ZONES := ["近地轨道平台", "日冕能源环", "量子交叉港", "冷星观测站", "失重航站", "星云补给带", "月面通信阵", "深空采矿区", "红移中继站", "极光防卫塔"]
 const START_WEAPONS: Array[Dictionary] = [
+	{"id": &"flame_projector", "name": "喷火器"},
 	{"id": &"auto_rifle", "name": "自动步枪"},
 	{"id": &"scatter_cannon", "name": "霰弹炮"},
 	{"id": &"rail_lance", "name": "轨道枪"},
@@ -9,7 +10,6 @@ const START_WEAPONS: Array[Dictionary] = [
 	{"id": &"sidearm", "name": "脉冲手枪"},
 	{"id": &"sniper_rifle", "name": "狙击步枪"},
 	{"id": &"siege_cannon", "name": "攻城火炮"},
-	{"id": &"flame_projector", "name": "喷火器"},
 ]
 
 
@@ -43,16 +43,16 @@ func _on_zone_pressed() -> void:
 
 func _on_upgrade_pressed() -> void:
 	if GameState.upgrade_starter_weapon():
-		_refresh_camp("初始步枪已升级")
+		_refresh_camp("初始武器已升级")
 	else:
-		_refresh_camp("废料不足")
+		_refresh_camp("合金不足")
 
 
 func _on_garden_pressed() -> void:
 	if GameState.upgrade_health_system():
 		_refresh_camp("初始生命已提升")
 	else:
-		_refresh_camp("废料不足")
+		_refresh_camp("合金不足")
 
 
 func _on_skin_pressed() -> void:
@@ -69,8 +69,8 @@ func _refresh_camp(message: String = "") -> void:
 	var cost_health := 4 + GameState.garden_level * 3
 	$Layout/Panel/Buttons/CampStatus.text = "%s\n合金 %d  |  初始生命 %d  |  当前开局武器 %s" % [message if not message.is_empty() else "星港中枢补给", GameState.scrap, 160 + GameState.garden_level * 18, _start_weapon_name(GameState.selected_start_weapon_id)]
 	$Layout/Panel/Buttons/ZoneButton.text = "初始武器：%s  ‹ 点击切换 ›" % _start_weapon_name(GameState.selected_start_weapon_id)
-	$Layout/Panel/Buttons/UpgradeButton.text = "升级当前初始武器  ·  消耗 %d 废料" % cost_weapon
-	$Layout/Panel/Buttons/GardenButton.text = "升级初始生命  ·  消耗 %d 废料" % cost_health
+	$Layout/Panel/Buttons/UpgradeButton.text = "升级当前初始武器  ·  消耗 %d 合金" % cost_weapon
+	$Layout/Panel/Buttons/GardenButton.text = "升级初始生命  ·  消耗 %d 合金" % cost_health
 	$Layout/Panel/Buttons/SkinButton.text = "作战皮肤：%s  ‹ 点击切换 ›" % _skin_name(GameState.equipped_skin)
 	$Layout/Panel/Buttons/AchievementStatus.text = "成就档案  ·  已解锁 %d 项  ·  终焉守望者：%s" % [GameState.achievements.size(), "已获得" if GameState.has_achievement(&"endless_2000") else "未获得"]
 
@@ -90,7 +90,7 @@ func _start_weapon_name(weapon_id: StringName) -> String:
 	for entry in START_WEAPONS:
 		if entry["id"] == weapon_id:
 			return str(entry["name"])
-	return "自动步枪"
+	return "喷火器"
 
 
 func _on_quit_pressed() -> void:

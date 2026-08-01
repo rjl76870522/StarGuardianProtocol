@@ -3,7 +3,7 @@
 [resource]
 script = ExtResource("1")
 health_threshold = 0.66
-display_name = "第二阶段 熔炉过载"
+display_name = "第二阶段 日冕过载"
 move_speed = 2.8
 attack_interval = 1.1
 projectile_count = 12

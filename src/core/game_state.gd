@@ -6,10 +6,10 @@ var runs_started: int = 0
 var current_stage: int = 1
 var carried_skill_levels: Dictionary = {}
 var campaign_seed: int = 1
-var weapon_levels: Dictionary = {&"auto_rifle": 1}
-var unlocked_weapons: Dictionary = {&"auto_rifle": true}
-var loadout_weapon_ids: Array[StringName] = [&"auto_rifle"]
-var selected_start_weapon_id: StringName = &"auto_rifle"
+var weapon_levels: Dictionary = {&"flame_projector": 1}
+var unlocked_weapons: Dictionary = {&"flame_projector": true}
+var loadout_weapon_ids: Array[StringName] = [&"flame_projector"]
+var selected_start_weapon_id: StringName = &"flame_projector"
 var pending_weapon_id: StringName = &""
 var show_combat_telemetry: bool = true
 var selected_zone: int = 0
@@ -100,7 +100,7 @@ func learn_next_home_skill() -> Dictionary:
 			continue
 		var cost := 5 + level * 4
 		if scrap < cost:
-			return {"ok": false, "reason": "废料不足，需要 %d 废料学习%s" % [cost, entry["name"]]}
+			return {"ok": false, "reason": "合金不足，需要 %d 合金学习%s" % [cost, entry["name"]]}
 		scrap -= cost
 		home_skill_levels[skill_id] = level + 1
 		_autosave()
@@ -123,7 +123,7 @@ func learn_home_skill(skill_id: StringName) -> Dictionary:
 		return {"ok": false, "reason": "%s 已满级" % entry["name"]}
 	var cost := 5 + level * 4
 	if scrap < cost:
-		return {"ok": false, "reason": "废料不足，需要 %d 废料" % cost}
+		return {"ok": false, "reason": "合金不足，需要 %d 合金" % cost}
 	scrap -= cost
 	home_skill_levels[skill_id] = level + 1
 	_autosave()
