@@ -184,7 +184,7 @@ func _spawn_boss() -> void:
 		boss.max_health = minf(boss.max_health, 460.0)
 		boss.health = boss.max_health
 	boss.health_changed.connect(func(current: float, maximum: float) -> void: hud.show_boss(current, maximum))
-	boss.phase_changed.connect(func(_index: int, phase: BossPhaseData) -> void: hud.show_boss(boss.health, boss.max_health, phase.display_name))
+	boss.phase_changed.connect(_on_boss_phase_changed)
 	boss.summon_requested.connect(_summon_enemies)
 	boss.died.connect(_on_boss_died)
 	boss_debug_panel.bind_boss(boss)
@@ -231,6 +231,15 @@ func _on_boss_died() -> void:
 	hud.hide_boss()
 	hud.show_message("核心摧毁", "异星母舰已停止运行")
 	get_tree().create_timer(2.0).timeout.connect(hud.hide_message)
+
+
+func _on_boss_phase_changed(index: int, phase: BossPhaseData) -> void:
+	if not is_instance_valid(_active_boss):
+		return
+	hud.show_boss(_active_boss.health, _active_boss.max_health, phase.display_name)
+	if index > 0:
+		hud.show_message("异星母舰过载", "%s\n攻击节奏已提升" % phase.display_name)
+		get_tree().create_timer(1.7).timeout.connect(hud.hide_message)
 
 
 func _on_enemy_died(enemy: ScrapChaser) -> void:

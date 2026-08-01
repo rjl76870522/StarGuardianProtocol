@@ -613,11 +613,19 @@ func _test_boss_phases_and_debug() -> void:
 	root.add_child(boss)
 	await process_frame
 
-
 	_check(WastelandBoss.PHASES.size() == 3, "boss has three data-driven phases")
 	for phase in WastelandBoss.PHASES:
 		_check(phase.is_valid(), "boss phase resource is valid: %s" % phase.display_name)
 	_check(boss.phase_index == 0, "boss begins in phase one")
+	boss._physics_process(0.5)
+	_check(boss.current_state == &"追击", "boss completes its visible arrival state before fighting")
+	var body_health := boss.health
+	boss.take_damage(20.0)
+	_check(is_equal_approx(boss.health, body_health - 20.0), "boss body reliably receives direct damage")
+	var core := boss.get_node("CoreHitbox") as EnemyCoreHitbox
+	var core_health := boss.health
+	core.take_damage(10.0)
+	_check(is_equal_approx(boss.health, core_health - 17.5), "boss core weak point applies its configured damage multiplier")
 	boss.take_damage(boss.max_health * 0.4)
 	_check(boss.phase_index == 1, "boss health threshold enters phase two")
 	boss.take_damage(boss.max_health * 0.35)
@@ -628,6 +636,22 @@ func _test_boss_phases_and_debug() -> void:
 	_check(is_equal_approx(boss.health, boss.max_health * 0.5), "debug control sets boss health")
 	boss.reset_battle()
 	_check(boss.phase_index == 0 and is_equal_approx(boss.health, boss.max_health), "debug reset restores boss battle")
+	var transitions: Array[int] = []
+	boss.phase_changed.connect(func(index: int, _phase: BossPhaseData) -> void: transitions.append(index))
+	boss.take_damage(boss.max_health * 0.76)
+	_check(transitions == [1, 2], "large hits enter every skipped boss phase in order")
+	_check(boss.current_state == &"阶段切换", "boss visibly pauses during a phase transition")
+	boss._physics_process(0.5)
+	_check(boss.current_state == &"追击", "boss resumes combat after a phase transition")
+	boss._start_laser()
+	_check(boss.laser.visible and boss.current_state == &"核心光束", "boss laser enters a bounded sweeping state")
+	boss._physics_process(2.0)
+	_check(not boss.laser.visible and boss.current_state == &"追击", "boss laser always returns to combat after its duration")
+	var death_events: Array[bool] = []
+	boss.died.connect(func() -> void: death_events.append(true))
+	boss.take_damage(boss.max_health * 2.0)
+	boss.take_damage(10.0)
+	_check(death_events.size() == 1, "boss death event is emitted exactly once")
 	player.queue_free()
 	boss.queue_free()
 	await process_frame
