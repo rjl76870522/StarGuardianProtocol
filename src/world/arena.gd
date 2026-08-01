@@ -1,7 +1,8 @@
 extends Node3D
 
-const WIDTH := 34.0
-const DEPTH := 22.0
+const WIDTH := 40.0
+const DEPTH := 26.0
+const ARENA_SCALE := 1.15
 const OBSTACLE_LAYER := 16
 const BOUNDARY_LAYER := 32
 
@@ -39,7 +40,9 @@ func _ready() -> void:
 	variant = posmod(int(game_state.selected_zone) + stage - 1, MAP_NAMES.size()) if game_state != null else abs(map_seed + stage) % MAP_NAMES.size()
 	map_display_name = MAP_NAMES[variant]
 	_apply_palette()
-	boundary_points = _boundary_for_variant()
+	boundary_points.clear()
+	for point in _boundary_for_variant():
+		boundary_points.append(point * ARENA_SCALE)
 	_create_floor()
 	_create_bounds()
 	_create_debris()
@@ -74,9 +77,12 @@ func _create_floor() -> void:
 	mesh_instance.mesh = mesh
 	mesh_instance.position.y = -0.2
 	var material := StandardMaterial3D.new()
-	material.albedo_color = _floor_color.darkened(0.62)
+	material.albedo_color = _floor_color.darkened(0.28)
 	material.metallic = 0.65
 	material.roughness = 0.82
+	material.emission_enabled = true
+	material.emission = _floor_color.lightened(0.08)
+	material.emission_energy_multiplier = 0.32
 	mesh_instance.material_override = material
 	floor_body.add_child(mesh_instance)
 	var collision := CollisionShape3D.new()
@@ -89,9 +95,9 @@ func _create_floor() -> void:
 	_create_deck_polygon()
 
 	var spacing := 2 if variant % 2 == 0 else 3
-	for x in range(-16, 17, spacing):
+	for x in range(-19, 20, spacing):
 		_create_strip(Vector3(float(x), 0.005, 0.0), Vector3(0.025, 0.01, DEPTH - 0.5), _grid_color)
-	for z in range(-10, 11, spacing):
+	for z in range(-12, 13, spacing):
 		_create_strip(Vector3(0.0, 0.006, float(z)), Vector3(WIDTH - 0.5, 0.01, 0.025), _grid_color)
 	var accent_size := Vector3(0.055, 0.015, DEPTH - 0.5) if variant % 4 < 2 else Vector3(WIDTH - 0.5, 0.015, 0.055)
 	_create_strip(Vector3.ZERO, accent_size, _accent_color)
@@ -131,7 +137,7 @@ func _create_boundary_light(start: Vector2, finish: Vector2) -> void:
 	material.albedo_color = _accent_color
 	material.emission_enabled = true
 	material.emission = _accent_color
-	material.emission_energy_multiplier = 2.4
+	material.emission_energy_multiplier = 4.0
 	light.material_override = material
 	add_child(light)
 
@@ -146,7 +152,7 @@ func _create_strip(position_value: Vector3, size: Vector3, color: Color) -> void
 	material.albedo_color = color
 	material.emission_enabled = true
 	material.emission = color
-	material.emission_energy_multiplier = 0.35
+	material.emission_energy_multiplier = 1.05
 	line.material_override = material
 	add_child(line)
 
@@ -208,23 +214,20 @@ func _create_debris() -> void:
 
 		var visual := MeshInstance3D.new()
 		visual.name = "Visual"
-		var mesh: PrimitiveMesh
-		if (index + variant) % 3 == 0:
-			var prism := CylinderMesh.new()
-			prism.radial_segments = 6
-			prism.top_radius = maxf(size.x, size.z) * 0.38
-			prism.bottom_radius = maxf(size.x, size.z) * 0.48
-			prism.height = size.y
-			mesh = prism
-		else:
-			var block := BoxMesh.new()
-			block.size = size
-			mesh = block
+		# Internal cover is intentionally rectangular. The visual mesh and the
+		# BoxShape3D beneath it have identical dimensions, so movement and
+		# reflected shots always match what is visible on screen.
+		var block := BoxMesh.new()
+		block.size = size
+		var mesh: PrimitiveMesh = block
 		visual.mesh = mesh
 		var material := StandardMaterial3D.new()
-		material.albedo_color = _grid_color.lightened(0.18)
+		material.albedo_color = _grid_color.lightened(0.32)
 		material.metallic = 0.55
-		material.roughness = 0.9
+		material.roughness = 0.58
+		material.emission_enabled = true
+		material.emission = _grid_color.lightened(0.08)
+		material.emission_energy_multiplier = 0.34
 		visual.material_override = material
 		debris.add_child(visual)
 
