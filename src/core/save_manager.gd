@@ -1,13 +1,18 @@
 extends Node
 
 const SAVE_VERSION := 10
+const MAX_CAMPAIGN_STAGE := 10
+const VALID_WEAPON_IDS: Array[StringName] = [
+	&"flame_projector", &"auto_rifle", &"scatter_cannon", &"rail_lance",
+	&"arc_blade", &"sidearm", &"sniper_rifle", &"siege_cannon",
+]
 var save_path := "user://campaign_save.json"
 var temp_path := "user://campaign_save.tmp"
 var backup_path := "user://campaign_save.backup.json"
 
 
 func has_campaign() -> bool:
-	return FileAccess.file_exists(save_path) and not load_campaign().is_empty()
+	return not load_campaign().is_empty()
 
 
 func save_campaign(state: Node) -> bool:
@@ -75,9 +80,18 @@ func _load_file(path: String) -> Dictionary:
 	var version := int(data.get("version", -1))
 	if version < 5 or version > SAVE_VERSION:
 		return {}
-	if int(data.get("stage", 0)) < 1 or int(data.get("stage", 0)) > 2000:
+	if int(data.get("stage", 0)) < 1 or int(data.get("stage", 0)) > MAX_CAMPAIGN_STAGE:
 		return {}
-	if not data.get("skills", {}) is Dictionary or not data.get("weapons", {}) is Dictionary or not data.get("loadout_weapons", []) is Array:
+	if not data.get("skills", {}) is Dictionary or not data.get("weapons", {}) is Dictionary or not data.get("unlocked_weapons", {}) is Dictionary or not data.get("loadout_weapons", []) is Array:
+		return {}
+	var loadout: Array = data.get("loadout_weapons", [])
+	if loadout.is_empty():
+		return {}
+	for entry in loadout:
+		if not VALID_WEAPON_IDS.has(StringName(str(entry))):
+			return {}
+	var selected := StringName(str(data.get("selected_start_weapon", "")))
+	if selected.is_empty() or not loadout.has(str(selected)):
 		return {}
 	return data
 
@@ -95,7 +109,11 @@ func apply_campaign(state: Node) -> bool:
 	state.unlocked_weapons = _validated_unlocks(data.get("unlocked_weapons", {}))
 	state.unlocked_weapons[&"flame_projector"] = true
 	state.loadout_weapon_ids = _validated_loadout(data.get("loadout_weapons", []))
+	if state.loadout_weapon_ids.is_empty():
+		return false
 	state.selected_start_weapon_id = StringName(str(data.get("selected_start_weapon", state.loadout_weapon_ids[0])))
+	if not state.loadout_weapon_ids.has(state.selected_start_weapon_id):
+		state.selected_start_weapon_id = state.loadout_weapon_ids[0]
 	# Version 7 changes the default starter from the former automatic rifle to
 	# the flame projector. Migrate only legacy saves; choices made afterwards
 	# remain the player's own selection.
@@ -185,7 +203,7 @@ func _validated_loadout(source: Array) -> Array[StringName]:
 	var result: Array[StringName] = []
 	for item in source:
 		var weapon_id := StringName(str(item))
-		if weapon_id.is_empty() or result.has(weapon_id):
+		if weapon_id.is_empty() or not VALID_WEAPON_IDS.has(weapon_id) or result.has(weapon_id):
 			continue
 		result.append(weapon_id)
 		if result.size() >= 5:

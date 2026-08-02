@@ -107,6 +107,7 @@ func _update_hunting(_delta: float) -> void:
 		look_at(global_position + move_direction, Vector3.UP)
 		move_and_slide()
 		_confine_to_combat_sector()
+		_recover_from_terrain()
 	else:
 		velocity = Vector3.ZERO
 		_try_contact_damage(distance)
@@ -195,6 +196,7 @@ func _update_charge(delta: float) -> void:
 	velocity = _charge_velocity
 	move_and_slide()
 	_confine_to_combat_sector()
+	_recover_from_terrain()
 	if global_position.distance_to(target.global_position) < MIN_TARGET_DISTANCE:
 		target.take_damage(18.0 + float(phase_index) * 5.0)
 		# The boss must damage by contact without ever occupying or physically
@@ -375,3 +377,13 @@ func _confine_to_combat_sector() -> void:
 	var arena := game.get_node_or_null("Arena")
 	if arena != null and arena.has_method("confine_to_combat_area"):
 		global_position = arena.confine_to_combat_area(global_position, 1.65)
+
+
+func _recover_from_terrain() -> void:
+	var game := get_tree().current_scene
+	if game == null:
+		return
+	var arena := game.get_node_or_null("Arena")
+	if arena != null and arena.has_method("is_clear_for_boss") and not arena.is_clear_for_boss(global_position, 1.65):
+		global_position = arena.nearest_clear_actor_position(global_position, 1.65)
+		velocity = Vector3.ZERO

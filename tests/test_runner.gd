@@ -48,6 +48,7 @@ func _run() -> void:
 	await _test_boss_phases_and_debug()
 	await _test_stage_one_boss_spawn_and_hud()
 	await _test_all_stage_player_and_boss_spawns()
+	await _test_all_stage_enemy_spawn_safety()
 	await _test_fire_rate_limit()
 	await _test_penetration()
 	await _test_status_duration_and_ticks()
@@ -129,6 +130,13 @@ func _test_save_round_trip_and_corruption() -> void:
 	file.store_string(JSON.stringify({"version": 1, "stage": 3, "skills": {}, "weapons": {}}))
 	file.close()
 	_check(manager.load_campaign().is_empty(), "campaign saves from the previous version are discarded")
+	file = FileAccess.open(manager.save_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({
+		"version": 10, "stage": 3, "skills": {}, "weapons": {}, "unlocked_weapons": {},
+		"loadout_weapons": ["missing_weapon"], "selected_start_weapon": "missing_weapon",
+	}))
+	file.close()
+	_check(manager.load_campaign().is_empty() and not manager.has_campaign(), "unloadable weapon saves do not appear as resumable campaigns")
 	state.start_campaign()
 
 
@@ -286,7 +294,7 @@ func _test_enemy_data_catalog() -> void:
 	var ids: Dictionary = {}
 	var archetypes: Dictionary = {}
 	var elite_count := 0
-	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "mage", "elite_blink", "elite_hazard"]:
+	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "mage", "elite_hazard", "elite_sentinel"]:
 		var data := load("res://assets/data/enemies/%s.tres" % enemy_id) as EnemyData
 		_check(data != null and data.is_valid(), "valid enemy data: %s" % enemy_id)
 		ids[data.enemy_id] = true
@@ -296,16 +304,14 @@ func _test_enemy_data_catalog() -> void:
 	_check(ids.size() == 8, "enemy catalog has eight unique definitions")
 	_check(archetypes.size() == 6, "enemy catalog covers six normal archetypes")
 	_check(elite_count == 2, "enemy catalog contains two elite variants")
-	var blink := load("res://assets/data/enemies/elite_blink.tres") as EnemyData
 	var hazard := load("res://assets/data/enemies/elite_hazard.tres") as EnemyData
-	_check(blink.teleport_on_hit, "phase elite changes position when hit")
 	_check(hazard.leaves_hazard, "corrosion elite creates a projectile hazard pattern")
 	_check(not EnemyData.new().is_valid(), "invalid enemy configuration is rejected")
 
 
 func _test_enemy_visual_profiles() -> void:
 	var profiles: Dictionary = {}
-	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "mage", "elite_blink", "elite_hazard"]:
+	for enemy_id in ["chaser", "shooter", "bomber", "heavy", "repair", "mage", "elite_hazard", "elite_sentinel"]:
 		var enemy := (load("res://scenes/chaser.tscn") as PackedScene).instantiate() as ScrapChaser
 		enemy.enemy_data = load("res://assets/data/enemies/%s.tres" % enemy_id) as EnemyData
 		root.add_child(enemy)
@@ -715,6 +721,25 @@ func _test_all_stage_player_and_boss_spawns() -> void:
 			_check(arena.is_clear_for_boss(boss.global_position, 2.05), "stage %d boss never spawns inside cover" % stage)
 			_check(not game.camera.is_position_behind(boss.global_position + Vector3.UP * 0.9), "stage %d boss is in front of camera" % stage)
 			_check(game.get_node("HUD/Margin/BossBar").visible, "stage %d boss health bar is visible" % stage)
+		game.queue_free()
+		await process_frame
+	state.start_campaign()
+
+
+func _test_all_stage_enemy_spawn_safety() -> void:
+	var state := root.get_node("GameState")
+	for stage in range(1, state.MAX_STAGE + 1):
+		state.start_campaign()
+		state.select_zone(0)
+		state.current_stage = stage
+		var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
+		game.initial_spawn_interval = 99.0
+		root.add_child(game)
+		await process_frame
+		var arena := game.get_node("Arena")
+		for _spawn in 20:
+			var point: Vector3 = arena.combat_spawn_position(game._rng)
+			_check(arena.is_clear_for_actor(point, 0.72), "stage %d enemy spawn avoids cover" % stage)
 		game.queue_free()
 		await process_frame
 	state.start_campaign()

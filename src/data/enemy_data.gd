@@ -18,7 +18,6 @@ enum Archetype { CHASER, SHOOTER, BOMBER, HEAVY, REPAIR, MAGE }
 @export var core_color: Color = Color("ff5b2e")
 @export var scale_multiplier: float = 1.0
 @export var elite: bool = false
-@export var teleport_on_hit: bool = false
 @export var leaves_hazard: bool = false
 @export var role_summary: String = ""
 

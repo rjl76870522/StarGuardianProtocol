@@ -29,7 +29,10 @@ var _knockback_velocity := Vector3.ZERO
 var _desired_direction := Vector3.ZERO
 var _hazard_cooldown: float = 1.0
 var _last_position := Vector3.ZERO
+var _last_clear_position := Vector3.ZERO
 var _stuck_time: float = 0.0
+var _reroute_remaining: float = 0.0
+var _reroute_direction := Vector3.ZERO
 var _slow_multiplier := 1.0
 var _slow_remaining := 0.0
 
@@ -45,6 +48,8 @@ func _ready() -> void:
 	hit_audio.stream = SoundSynth.tone(105.0, 0.075, 0.18)
 	_decision_cooldown = fmod(float(get_instance_id()) * 0.037, decision_interval)
 	_last_position = global_position
+	_last_clear_position = global_position
+	call_deferred("_recover_from_terrain")
 	_set_state(State.SPAWN)
 	_update_telemetry()
 
@@ -137,6 +142,7 @@ func _physics_process(delta: float) -> void:
 		velocity = _knockback_velocity
 		move_and_slide()
 		_confine_to_combat_sector()
+		_recover_from_terrain()
 		_knockback_velocity = _knockback_velocity.move_toward(Vector3.ZERO, 24.0 * delta)
 		return
 	if not is_instance_valid(target) or target.is_dead:
@@ -154,6 +160,11 @@ func _update_decision() -> void:
 	var offset := target.global_position - global_position
 	offset.y = 0.0
 	var distance := offset.length()
+	if _reroute_remaining > 0.0:
+		_reroute_remaining = maxf(_reroute_remaining - decision_interval, 0.0)
+		_set_state(State.CHASE)
+		_desired_direction = _reroute_direction
+		return
 	if distance > (enemy_data.detection_range if enemy_data != null else 24.0):
 		_set_state(State.SEARCH)
 		_desired_direction = offset.normalized()
@@ -168,7 +179,7 @@ func _update_decision() -> void:
 		_stuck_time = 0.0
 	_last_position = global_position
 	if _stuck_time > 0.7:
-		_desired_direction = _desired_direction.rotated(Vector3.UP, PI * 0.45)
+		_set_reroute_direction()
 		_stuck_time = 0.0
 
 
@@ -179,6 +190,8 @@ func _execute_behavior(delta: float) -> void:
 			look_at(global_position + _desired_direction, Vector3.UP)
 		move_and_slide()
 		_confine_to_combat_sector()
+		_register_slide_reroute()
+		_recover_from_terrain()
 		return
 	velocity = Vector3.ZERO
 	if state != State.ATTACK or _attack_cooldown > 0.0:
@@ -300,9 +313,6 @@ func take_damage(amount: float) -> void:
 	hit_audio.play()
 	$Core.scale = Vector3.ONE * 1.7
 	create_tween().tween_property($Core, "scale", Vector3.ONE, 0.1)
-	if enemy_data != null and enemy_data.teleport_on_hit and health > 0.0:
-		var angle := fmod(float(get_instance_id() + Time.get_ticks_msec()), 628.0) * 0.01
-		_try_teleport(Vector3(cos(angle), 0.0, sin(angle)) * 2.6)
 	if health <= 0.0:
 		_die()
 
@@ -344,18 +354,6 @@ func _set_state(next_state: State) -> void:
 	state_changed.emit(get_state_name())
 
 
-func _try_teleport(offset: Vector3) -> bool:
-	var motion := Vector3(offset.x, 0.0, offset.z)
-	if motion.is_zero_approx():
-		return false
-	var collision := move_and_collide(motion, true)
-	if collision != null:
-		return false
-	global_position += motion
-	_confine_to_combat_sector()
-	return true
-
-
 func _confine_to_combat_sector() -> void:
 	var game := get_tree().current_scene
 	if game == null:
@@ -363,6 +361,54 @@ func _confine_to_combat_sector() -> void:
 	var arena := game.get_node_or_null("Arena")
 	if arena != null and arena.has_method("confine_to_combat_area"):
 		global_position = arena.confine_to_combat_area(global_position, 0.58 * maxf(scale.x, 0.8))
+
+
+func _register_slide_reroute() -> void:
+	if get_slide_collision_count() <= 0:
+		return
+	var collision := get_slide_collision(0)
+	var normal := collision.get_normal()
+	var tangent := Vector3(-normal.z, 0.0, normal.x).normalized()
+	if tangent.length_squared() <= 0.001:
+		return
+	if is_instance_valid(target):
+		var toward_target := target.global_position - global_position
+		toward_target.y = 0.0
+		if tangent.dot(toward_target) < 0.0:
+			tangent *= -1.0
+	_reroute_direction = tangent
+	_reroute_remaining = maxf(_reroute_remaining, 0.55)
+
+
+func _set_reroute_direction() -> void:
+	var base := _desired_direction
+	if base.length_squared() <= 0.001 and is_instance_valid(target):
+		base = target.global_position - global_position
+		base.y = 0.0
+	if base.length_squared() <= 0.001:
+		base = Vector3.FORWARD
+	var sign := -1.0 if get_instance_id() % 2 == 0 else 1.0
+	_reroute_direction = base.normalized().rotated(Vector3.UP, sign * PI * 0.5)
+	_reroute_remaining = 0.8
+
+
+func _recover_from_terrain() -> void:
+	var game := get_tree().current_scene
+	if game == null:
+		return
+	var arena := game.get_node_or_null("Arena")
+	if arena == null or not arena.has_method("is_clear_for_actor"):
+		return
+	var clearance := 0.58 * maxf(scale.x, 0.8)
+	if arena.is_clear_for_actor(global_position, clearance):
+		_last_clear_position = global_position
+		return
+	var recovered := _last_clear_position
+	if not arena.is_clear_for_actor(recovered, clearance):
+		recovered = arena.nearest_clear_actor_position(global_position, clearance)
+	global_position = recovered
+	velocity = Vector3.ZERO
+	_set_reroute_direction()
 
 
 func _build_archetype_visual() -> void:

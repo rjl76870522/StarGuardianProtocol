@@ -17,7 +17,6 @@ const ENEMY_CATALOG: Array[EnemyData] = [
 	preload("res://assets/data/enemies/heavy.tres"),
 	preload("res://assets/data/enemies/repair.tres"),
 	preload("res://assets/data/enemies/mage.tres"),
-	preload("res://assets/data/enemies/elite_blink.tres"),
 	preload("res://assets/data/enemies/elite_hazard.tres"),
 	preload("res://assets/data/enemies/elite_sentinel.tres"),
 ]
@@ -176,7 +175,7 @@ func _choose_enemy_data() -> EnemyData:
 	if elapsed >= 20.0:
 		maximum_index = 4
 	if elapsed >= 34.0:
-		maximum_index = 8
+		maximum_index = ENEMY_CATALOG.size() - 1
 	return ENEMY_CATALOG[_rng.randi_range(0, maximum_index)]
 
 

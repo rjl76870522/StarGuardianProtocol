@@ -18,9 +18,7 @@ var _archive_dialog: AcceptDialog
 func _ready() -> void:
 	_build_starfield()
 	$Layout/Panel/Buttons/StartButton.grab_focus()
-	var continue_button: Button = $Layout/Panel/Buttons/ContinueButton
-	continue_button.disabled = not SaveManager.has_campaign()
-	continue_button.text = "继续战役  第 %d 关" % _saved_stage() if not continue_button.disabled else "继续战役  暂无存档"
+	_refresh_continue_button()
 	_refresh_camp()
 	_create_archive_dialog()
 
@@ -32,6 +30,8 @@ func _on_start_pressed() -> void:
 func _on_continue_pressed() -> void:
 	if GameState.continue_campaign():
 		get_tree().change_scene_to_file("res://scenes/game.tscn")
+	else:
+		_refresh_continue_button()
 
 
 func _on_zone_pressed() -> void:
@@ -154,7 +154,6 @@ func _enemy_archive_text() -> String:
 [color=#bc7cff]紫色[/color] 法师  ·  施放远程范围能量攻击
 
 [font_size=22][color=#55dfff]精英单位[/color][/font_size]
-闪烁精英  ·  快速位移，血量较低但威胁范围大
 危险精英  ·  布设高伤害区域，避免停留
 哨卫精英  ·  远距离火力压制，需要利用掩体接近
 
@@ -194,7 +193,15 @@ func _build_starfield() -> void:
 
 
 func _saved_stage() -> int:
-	return int(SaveManager.load_campaign().get("stage", 1))
+	var data := SaveManager.load_campaign()
+	return int(data.get("stage", 1)) if not data.is_empty() else 1
+
+
+func _refresh_continue_button() -> void:
+	var continue_button: Button = $Layout/Panel/Buttons/ContinueButton
+	var has_campaign := SaveManager.has_campaign()
+	continue_button.disabled = not has_campaign
+	continue_button.text = "继续战役  第 %d 关" % _saved_stage() if has_campaign else "继续战役  暂无可用存档"
 
 
 func _skin_name(skin_id: StringName) -> String:

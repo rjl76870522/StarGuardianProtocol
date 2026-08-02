@@ -468,11 +468,19 @@ func _is_inside_boundary(point: Vector2) -> bool:
 
 
 func combat_spawn_position(rng: RandomNumberGenerator) -> Vector3:
-	var edge := rng.randi_range(0, boundary_points.size() - 1)
-	var start := boundary_points[edge]
-	var finish := boundary_points[(edge + 1) % boundary_points.size()]
-	var point := start.lerp(finish, rng.randf_range(0.16, 0.84)) * 0.9
-	return Vector3(point.x, 0.65, point.y)
+	# Spawn from the perimeter, then pull candidates inwards and reject cover.
+	# This prevents enemies from being created inside a wall on concave sectors.
+	var center := _boundary_center()
+	for _attempt in 32:
+		var edge := rng.randi_range(0, boundary_points.size() - 1)
+		var start := boundary_points[edge]
+		var finish := boundary_points[(edge + 1) % boundary_points.size()]
+		var edge_point := start.lerp(finish, rng.randf_range(0.14, 0.86))
+		var point := edge_point.lerp(center, rng.randf_range(0.10, 0.30))
+		var candidate := confine_to_combat_area(Vector3(point.x, 0.65, point.y), 0.92)
+		if is_clear_for_actor(candidate, 0.72):
+			return candidate
+	return nearest_clear_actor_position(Vector3(center.x, 0.65, center.y), 0.72)
 
 
 func keep_inside_combat_area(position_value: Vector3) -> Vector3:
@@ -501,6 +509,34 @@ func is_clear_for_actor(position_value: Vector3, clearance: float = 0.72) -> boo
 		if absf(local.x) <= half_size.x + clearance and absf(local.z) <= half_size.z + clearance:
 			return false
 	return true
+
+
+func nearest_clear_actor_position(position_value: Vector3, clearance: float = 0.72) -> Vector3:
+	var confined := confine_to_combat_area(position_value, clearance + 0.12)
+	if is_clear_for_actor(confined, clearance):
+		return confined
+	var center := _boundary_center()
+	for radius in [0.8, 1.6, 2.5, 3.6, 5.0, 6.8, 8.8, 11.0]:
+		for index in 16:
+			var angle := TAU * float(index) / 16.0
+			var candidate := confined + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			candidate = confine_to_combat_area(candidate, clearance + 0.12)
+			if is_clear_for_actor(candidate, clearance):
+				return candidate
+	# If a candidate was pushed into a concave boundary, scan toward the centre.
+	for step in range(1, 12):
+		var candidate := confined.lerp(Vector3(center.x, confined.y, center.y), float(step) / 12.0)
+		candidate = confine_to_combat_area(candidate, clearance + 0.12)
+		if is_clear_for_actor(candidate, clearance):
+			return candidate
+	return confined
+
+
+func _boundary_center() -> Vector2:
+	var center := Vector2.ZERO
+	for point in boundary_points:
+		center += point
+	return center / maxf(float(boundary_points.size()), 1.0)
 
 
 func safe_player_spawn_position() -> Vector3:
@@ -544,10 +580,7 @@ func confine_to_combat_area(position_value: Vector3, margin: float = 0.36) -> Ve
 		if distance < nearest_distance:
 			nearest_distance = distance
 			nearest = candidate
-	var center := Vector2.ZERO
-	for vertex in boundary_points:
-		center += vertex
-	center /= maxf(float(boundary_points.size()), 1.0)
+	var center := _boundary_center()
 	var inward := (center - nearest).normalized()
 	var corrected := nearest + inward * maxf(margin, 0.08)
 	# Concave sectors can require more than one inward step. Interpolate toward
