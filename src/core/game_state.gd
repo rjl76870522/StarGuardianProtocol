@@ -33,10 +33,12 @@ var weapon_modules: Dictionary = {}
 var achievements: Dictionary = {}
 var equipped_skin: StringName = &"prism_guardian"
 var carried_health: float = -1.0
+var campaign_active: bool = false
 var _pending_resume_stage: int = 0
 
 
 func start_campaign() -> void:
+	campaign_active = true
 	current_stage = 1
 	_pending_resume_stage = 0
 	carried_skill_levels.clear()
@@ -67,6 +69,22 @@ func consume_resume_stage() -> int:
 
 func advance_stage() -> void:
 	current_stage = mini(current_stage + 1, MAX_STAGE)
+	campaign_active = true
+	_autosave()
+
+
+func complete_campaign() -> void:
+	# Archive the successful campaign without leaving a resumable stage ten run.
+	achievements[&"campaign_complete"] = true
+	campaign_active = false
+	current_stage = 1
+	_pending_resume_stage = 0
+	carried_skill_levels.clear()
+	weapon_levels = {selected_start_weapon_id: 1}
+	unlocked_weapons = {selected_start_weapon_id: true}
+	loadout_weapon_ids = [selected_start_weapon_id]
+	pending_weapon_id = &""
+	carried_health = -1.0
 	_autosave()
 
 

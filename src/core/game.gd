@@ -52,6 +52,8 @@ var _camera_shake: float = 0.0
 var _camera_base_position: Vector3
 var _next_upgrade_kills: int
 var _upgrade_ready: bool = false
+var _queued_upgrade_choices: int = 0
+var _settlement_after_extraction: bool = false
 var _boss_spawned: bool = false
 var _boss_defeated: bool = false
 var _active_boss: WastelandBoss
@@ -263,7 +265,10 @@ func _on_enemy_died(enemy: ScrapChaser) -> void:
 	hud.set_kills(kills, required_kills)
 	_spawn_impact(enemy.global_position, Color("ffb340"))
 	_camera_shake = maxf(_camera_shake, 0.12)
-	if kills >= _next_upgrade_kills and not _round_finished and not _upgrade_ready:
+	if not _round_finished:
+		while kills >= _next_upgrade_kills:
+			_queued_upgrade_choices += 1
+			_next_upgrade_kills += upgrade_kill_interval
 		_mark_upgrade_ready()
 	if kills >= _next_cache_kills and not _round_finished:
 		_spawn_salvage_cache(enemy.global_position)
@@ -347,20 +352,25 @@ func _is_boss_position_visible(position_value: Vector3) -> bool:
 func _mark_upgrade_ready() -> void:
 	_upgrade_ready = true
 	hud.show_upgrade_ready()
-	hud.show_message("强化模块就绪", "按 E 打开强化选择，当前战斗不会中断")
+	hud.show_message("强化模块就绪", "按 E 选择强化，当前待选 %d 项" % _queued_upgrade_choices)
 	get_tree().create_timer(2.4).timeout.connect(hud.hide_message)
 
 
 func _offer_upgrade(force: bool = false) -> void:
-	if _round_finished or upgrade_panel.overlay.visible or (not _upgrade_ready and not force):
+	if upgrade_panel.overlay.visible or (not _upgrade_ready and not force):
+		return
+	if _round_finished and not _settlement_after_extraction:
 		return
 	var choices := player.skill_system.available_choices(SKILL_CATALOG, 3, _rng)
 	if choices.is_empty():
 		_next_upgrade_kills = 1 << 30
 		_upgrade_ready = false
+		_queued_upgrade_choices = 0
 		hud.show_all_skills_maxed()
+		if _settlement_after_extraction:
+			call_deferred("_finish_stage_settlement")
 		return
-	_upgrade_ready = false
+	_upgrade_ready = _queued_upgrade_choices > 1
 	hud.clear_upgrade_ready()
 	_paused = true
 	get_tree().paused = true
@@ -370,7 +380,16 @@ func _offer_upgrade(force: bool = false) -> void:
 func _on_skill_selected(skill: SkillData) -> void:
 	if not player.apply_skill(skill):
 		return
-	_next_upgrade_kills += upgrade_kill_interval
+	_queued_upgrade_choices = maxi(_queued_upgrade_choices - 1, 0)
+	_upgrade_ready = _queued_upgrade_choices > 0
+	if _queued_upgrade_choices > 0:
+		hud.show_upgrade_ready()
+		call_deferred("_offer_upgrade")
+		return
+	hud.clear_upgrade_ready()
+	if _settlement_after_extraction:
+		call_deferred("_finish_stage_settlement")
+		return
 	_paused = false
 	get_tree().paused = false
 
@@ -524,11 +543,25 @@ func _on_extraction_portal_entered(_operator: WastelandPlayer) -> void:
 	_extraction_active = false
 	GameState.set_carried_health(player.health)
 	GameState.finish_run(round_duration, kills)
+	# Experience earned before extraction must be spent before the route and
+	# weapon reward are allowed to move the player to the next stage.
+	_settlement_after_extraction = true
+	_paused = true
+	get_tree().paused = true
+	call_deferred("_finish_stage_settlement")
+
+
+func _finish_stage_settlement() -> void:
+	if not _settlement_after_extraction:
+		return
+	if _queued_upgrade_choices > 0:
+		_upgrade_ready = true
+		_offer_upgrade()
+		return
+	_settlement_after_extraction = false
 	if GameState.current_stage >= GameState.MAX_STAGE:
 		_show_campaign_ending()
 		return
-	_paused = true
-	get_tree().paused = true
 	_next_stage()
 
 
@@ -536,7 +569,7 @@ func _show_campaign_ending() -> void:
 	if _ending_started:
 		return
 	_ending_started = true
-	GameState.unlock_achievement(&"campaign_complete")
+	GameState.complete_campaign()
 	get_tree().paused = true
 	var credits := END_CREDITS.new() as Control
 	credits.name = "EndCredits"

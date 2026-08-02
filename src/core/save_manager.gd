@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION := 10
+const SAVE_VERSION := 11
 const MAX_CAMPAIGN_STAGE := 10
 const VALID_WEAPON_IDS: Array[StringName] = [
 	&"flame_projector", &"auto_rifle", &"scatter_cannon", &"rail_lance",
@@ -12,7 +12,8 @@ var backup_path := "user://campaign_save.backup.json"
 
 
 func has_campaign() -> bool:
-	return not load_campaign().is_empty()
+	var data := load_campaign()
+	return not data.is_empty() and bool(data.get("campaign_active", true))
 
 
 func save_campaign(state: Node) -> bool:
@@ -20,6 +21,7 @@ func save_campaign(state: Node) -> bool:
 		return false
 	var payload := {
 		"version": SAVE_VERSION,
+		"campaign_active": bool(state.campaign_active),
 		"stage": int(state.current_stage),
 		"seed": int(state.campaign_seed),
 		"skills": _string_key_dictionary(state.carried_skill_levels),
@@ -96,9 +98,9 @@ func _load_file(path: String) -> Dictionary:
 	return data
 
 
-func apply_campaign(state: Node) -> bool:
+func apply_campaign(state: Node, allow_inactive: bool = false) -> bool:
 	var data := load_campaign()
-	if data.is_empty() or state == null:
+	if data.is_empty() or state == null or (not allow_inactive and not bool(data.get("campaign_active", true))):
 		return false
 	# Older endless-mode saves remain loadable, but the current campaign ends at
 	# stage 10. Clamp rather than discard a valid older save.
@@ -137,9 +139,16 @@ func apply_campaign(state: Node) -> bool:
 	var saved_skin := StringName(str(data.get("equipped_skin", "prism_guardian")))
 	state.equipped_skin = saved_skin if not legacy_uniform and state.PLAYABLE_SKINS.has(saved_skin) else &"prism_guardian"
 	state.carried_health = clampf(float(data.get("carried_health", -1.0)), -1.0, 10000.0)
+	state.campaign_active = bool(data.get("campaign_active", true))
 	if legacy_uniform:
 		state._autosave()
 	return true
+
+
+func apply_profile(state: Node) -> bool:
+	# Profile fields live beside the active run for migration compatibility. This
+	# loads them even after a completed campaign is deliberately marked inactive.
+	return apply_campaign(state, true)
 
 
 func delete_campaign() -> void:

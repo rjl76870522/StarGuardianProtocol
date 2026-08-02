@@ -13,6 +13,8 @@ var split_remaining: int = 0
 var phase_through_obstacles: bool = false
 var tracking_strength: float = 0.0
 var status_effects: Array[StatusEffectData] = []
+var acceleration: float = 0.0
+var maximum_speed: float = 30.0
 
 var direction: Vector3 = Vector3.FORWARD
 var traveled: float = 0.0
@@ -43,6 +45,8 @@ func configure(
 		return false
 	damage = weapon.damage * damage_multiplier
 	speed = weapon.projectile_speed
+	acceleration = maxf(7.0, speed * 0.34)
+	maximum_speed = speed * 1.55
 	max_distance = weapon.projectile_range
 	critical_chance = weapon.critical_chance
 	critical_multiplier = weapon.critical_multiplier
@@ -87,12 +91,22 @@ func _add_tech_trail(color: Color) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Projectiles gain speed gradually. This makes long shots feel energetic
+	# while keeping close-range weapons controllable at the muzzle.
+	speed = minf(speed + acceleration * delta, maximum_speed)
 	if tracking_strength > 0.0:
 		var tracking_target := _find_tracking_target()
 		if tracking_target != null:
-			var desired := (tracking_target.global_position - global_position).normalized()
+			var target_position := tracking_target.global_position
+			if tracking_target is CharacterBody3D:
+				var target_velocity := (tracking_target as CharacterBody3D).velocity
+				target_position += target_velocity * clampf(global_position.distance_to(target_position) / maxf(speed, 1.0), 0.0, 0.42)
+			var desired := (target_position - global_position).normalized()
 			desired.y = 0.0
-			direction = direction.slerp(desired.normalized(), clampf(tracking_strength * delta, 0.0, 1.0)).normalized()
+			if desired.length_squared() > 0.001:
+				# Keep a homing round from snapping around and immediately striking
+				# geometry behind its current flight line.
+				direction = direction.slerp(desired.normalized(), clampf(tracking_strength * delta, 0.0, 0.42)).normalized()
 	var step := speed * delta
 	var start := global_position
 	var destination := start + direction * step
@@ -282,6 +296,18 @@ func _find_tracking_target() -> Node3D:
 		if not candidate is Node3D or _hit_ids.has(candidate.get_instance_id()):
 			continue
 		var node := candidate as Node3D
+		if not is_instance_valid(node) or node.is_queued_for_deletion():
+			continue
+		if node.get("is_dead") == true:
+			continue
+		var to_target := node.global_position - global_position
+		to_target.y = 0.0
+		if to_target.length_squared() < 0.001:
+			continue
+		# At least a shallow forward cone prevents a homing bullet from doing a
+		# visually jarring U-turn after it has already passed a target.
+		if direction.dot(to_target.normalized()) < -0.22:
+			continue
 		var distance := global_position.distance_to(node.global_position)
 		if distance < nearest_distance:
 			nearest = node

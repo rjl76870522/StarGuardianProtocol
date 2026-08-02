@@ -16,6 +16,7 @@ var _archive_dialog: AcceptDialog
 
 
 func _ready() -> void:
+	SaveManager.apply_profile(GameState)
 	_build_starfield()
 	$Layout/Panel/Buttons/StartButton.grab_focus()
 	_refresh_continue_button()
@@ -175,19 +176,8 @@ func _refresh_camp(message: String = "") -> void:
 
 
 func _build_starfield() -> void:
-	var starfield := Control.new()
+	var starfield := preload("res://src/ui/menu_particle_display.gd").new()
 	starfield.name = "BlueSignalField"
-	starfield.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	starfield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	starfield.z_index = 1
-	for index in 28:
-		var spark := ColorRect.new()
-		var x := float(posmod(index * 137, 1100) + 70)
-		var y := float(posmod(index * 79, 610) + 64)
-		spark.position = Vector2(x, y)
-		spark.size = Vector2(2.0 + float(index % 3), 2.0 + float(index % 3))
-		spark.color = Color(0.36, 0.84, 1.0, 0.22 + float(index % 4) * 0.1)
-		starfield.add_child(spark)
 	add_child(starfield)
 	move_child(starfield, 1)
 
@@ -201,7 +191,7 @@ func _refresh_continue_button() -> void:
 	var continue_button: Button = $Layout/Panel/Buttons/ContinueButton
 	var has_campaign := SaveManager.has_campaign()
 	continue_button.disabled = not has_campaign
-	continue_button.text = "继续战役  第 %d 关" % _saved_stage() if has_campaign else "继续战役  暂无可用存档"
+	continue_button.text = "继续战役  第 %d 关重新部署" % _saved_stage() if has_campaign else "开始新的战役"
 
 
 func _skin_name(skin_id: StringName) -> String:

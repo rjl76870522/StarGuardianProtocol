@@ -32,6 +32,7 @@ func _run() -> void:
 	save_manager.delete_campaign()
 	root.get_node("GameState").start_campaign()
 	_test_save_round_trip_and_corruption()
+	_test_completed_campaign_keeps_profile_but_not_resume()
 	await _test_continue_loads_saved_stage()
 	_test_damage_rules()
 	_test_combat_data_resources()
@@ -137,6 +138,27 @@ func _test_save_round_trip_and_corruption() -> void:
 	}))
 	file.close()
 	_check(manager.load_campaign().is_empty() and not manager.has_campaign(), "unloadable weapon saves do not appear as resumable campaigns")
+	state.start_campaign()
+
+
+func _test_completed_campaign_keeps_profile_but_not_resume() -> void:
+	var manager := root.get_node("SaveManager")
+	var state := root.get_node("GameState")
+	state.start_campaign()
+	state.scrap = 87
+	state.garden_level = 3
+	state.achievements = {&"campaign_complete": true, &"first_skin_change": true}
+	state.equipped_skin = &"cyan_guardian"
+	state.complete_campaign()
+	_check(not manager.has_campaign(), "completed tenth-zone campaign is not resumable")
+	state.scrap = 0
+	state.garden_level = 0
+	state.achievements.clear()
+	state.equipped_skin = &"prism_guardian"
+	_check(manager.apply_profile(state), "completed campaign profile reloads at menu startup")
+	_check(state.scrap == 87 and state.garden_level == 3, "completed campaign keeps permanent starport progress")
+	_check(state.has_achievement(&"campaign_complete") and state.has_achievement(&"first_skin_change"), "completed campaign keeps achievements after process restart")
+	_check(state.equipped_skin == &"cyan_guardian" and not state.campaign_active, "completed campaign keeps skin while clearing active run")
 	state.start_campaign()
 
 
@@ -935,6 +957,7 @@ func _test_campaign_ending() -> void:
 	_check(game.get_node_or_null("PauseLayer/EndCredits") != null, "stage ten creates the end credits layer")
 	_check(not game.result_panel.visible, "stage ten ending does not use the normal result panel")
 	_check(state.has_achievement(&"campaign_complete"), "stage ten records the campaign completion achievement")
+	_check(not root.get_node("SaveManager").has_campaign(), "stage ten ending clears the resumable campaign slot")
 	paused = false
 	game.queue_free()
 	await process_frame
