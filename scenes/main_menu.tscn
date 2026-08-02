@@ -221,6 +221,14 @@ theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
+[node name="SkillButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "人物技能矩阵  ·  查看局内技能"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
 [node name="SkinButton" type="Button" parent="Layout/Panel/Buttons"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
@@ -274,6 +282,7 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [connection signal="pressed" from="Layout/Panel/Buttons/ZoneButton" to="." method="_on_zone_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/UpgradeButton" to="." method="_on_upgrade_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/GardenButton" to="." method="_on_garden_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/SkillButton" to="." method="_on_skills_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/SkinButton" to="." method="_on_skin_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/ArchiveButton" to="." method="_on_archive_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/ContinueButton" to="." method="_on_continue_pressed"]

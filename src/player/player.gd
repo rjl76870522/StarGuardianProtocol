@@ -856,12 +856,17 @@ func _weapon_level(weapon_id: StringName) -> int:
 func _safe_muzzle_origin(direction: Vector3) -> Vector3:
 	# A long weapon mesh can extend through a wall. Raycast from the chassis to
 	# the muzzle, so the projectile always starts on the player's side of cover.
+	# Keep the fallback near the chassis instead of almost touching the wall: a
+	# player squeezed against cover must still be able to turn and fire away from
+	# it on the following frame.
 	var origin := global_position + Vector3.UP * 0.5
 	var target := muzzle.global_position
-	var query := PhysicsRayQueryParameters3D.create(origin, target, 16, [get_rid()])
+	var query := PhysicsRayQueryParameters3D.create(origin, target, 16 | 32, [get_rid()])
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
-		return (hit["position"] as Vector3) - direction.normalized() * 0.1
+		var hit_distance := origin.distance_to(hit["position"] as Vector3)
+		var safe_distance := clampf(hit_distance - 0.18, 0.0, 0.34)
+		return origin + direction.normalized() * safe_distance
 	return target
 
 

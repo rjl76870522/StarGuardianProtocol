@@ -13,6 +13,7 @@ const START_WEAPONS: Array[Dictionary] = [
 ]
 
 var _archive_dialog: AcceptDialog
+var _skill_dialog: AcceptDialog
 
 
 func _ready() -> void:
@@ -22,6 +23,7 @@ func _ready() -> void:
 	_refresh_continue_button()
 	_refresh_camp()
 	_create_archive_dialog()
+	_create_skill_dialog()
 
 
 func _on_start_pressed() -> void:
@@ -73,6 +75,64 @@ func _on_archive_pressed() -> void:
 	if _archive_dialog == null:
 		_create_archive_dialog()
 	_archive_dialog.popup_centered(Vector2i(820, 590))
+
+
+func _on_skills_pressed() -> void:
+	if _skill_dialog == null:
+		_create_skill_dialog()
+	_refresh_skill_dialog()
+	_skill_dialog.popup_centered(Vector2i(700, 500))
+
+
+func _create_skill_dialog() -> void:
+	if _skill_dialog != null:
+		return
+	_skill_dialog = AcceptDialog.new()
+	_skill_dialog.title = "人物技能矩阵"
+	_skill_dialog.add_theme_color_override("title_color", Color("9eeaff"))
+	_skill_dialog.add_theme_color_override("font_color", Color("d9f4ff"))
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("06172d")
+	panel_style.border_color = Color("2fb9ed")
+	panel_style.set_border_width_all(2)
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	_skill_dialog.add_theme_stylebox_override("panel", panel_style)
+	_skill_dialog.ok_button_text = "关闭"
+	add_child(_skill_dialog)
+	var contents := RichTextLabel.new()
+	contents.name = "Contents"
+	contents.bbcode_enabled = true
+	contents.fit_content = false
+	contents.scroll_active = true
+	contents.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	contents.offset_left = 24.0
+	contents.offset_top = 18.0
+	contents.offset_right = -24.0
+	contents.offset_bottom = -58.0
+	_skill_dialog.add_child(contents)
+
+
+func _refresh_skill_dialog() -> void:
+	if _skill_dialog == null:
+		return
+	var contents := _skill_dialog.get_node_or_null("Contents") as RichTextLabel
+	if contents == null:
+		return
+	var specs := [
+		[&"fury", "暴怒回路", "T", "短时间提升射速"],
+		[&"recovery", "治疗协议", "G", "即时修复生命"],
+		[&"bounce", "反弹校准", "Y", "子弹额外反弹"],
+		[&"tracking", "追踪校准", "H", "子弹锁定附近目标"],
+	]
+	var text := "[font_size=24][color=#55dfff]局内人物技能[/color][/font_size]\n在星港人物训练舱消耗合金升级，进入战斗后按对应按键启动\n\n"
+	for spec in specs:
+		var level := GameState.home_skill_level(spec[0] as StringName)
+		text += "[font_size=20][color=#9eeaff]%s  %d级[/color][/font_size]\n%s  ·  %s\n\n" % [spec[1], level, spec[2], spec[3]]
+	contents.clear()
+	contents.append_text(text)
 
 
 func _create_archive_dialog() -> void:
@@ -169,6 +229,7 @@ func _refresh_camp(message: String = "") -> void:
 	$Layout/Panel/Buttons/ZoneButton.text = "初始武器：%s  ‹ 点击切换 ›" % _start_weapon_name(GameState.selected_start_weapon_id)
 	$Layout/Panel/Buttons/UpgradeButton.text = "升级当前初始武器  ·  消耗 %d 合金" % cost_weapon
 	$Layout/Panel/Buttons/GardenButton.text = "升级初始生命  ·  消耗 %d 合金" % cost_health
+	$Layout/Panel/Buttons/SkillButton.text = "人物技能矩阵  ·  已训练 %d 项" % GameState.home_skill_levels.size()
 	$Layout/Panel/Buttons/SkinButton.text = "作战皮肤：%s  ‹ 点击切换 ›" % _skin_name(GameState.equipped_skin)
 	var final_status := "已完成" if GameState.has_achievement(&"campaign_complete") else "待部署"
 	$Layout/Panel/Buttons/AchievementStatus.text = "成就档案  ·  已解锁 %d 项  ·  十区战役：%s" % [GameState.achievements.size(), final_status]

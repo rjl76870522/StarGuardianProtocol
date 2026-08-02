@@ -44,6 +44,7 @@ func _run() -> void:
 	_test_enemy_data_catalog()
 	await _test_enemy_visual_profiles()
 	await _test_scene_smoke()
+	_test_actor_collision_layers_keep_cover_without_enemy_jams()
 	await _test_enemy_state_machine()
 	await _test_repair_enemy()
 	await _test_boss_phases_and_debug()
@@ -352,6 +353,7 @@ func _test_enemy_visual_profiles() -> void:
 func _test_scene_smoke() -> void:
 	for path in [
 		"res://scenes/main_menu.tscn",
+		"res://scenes/home.tscn",
 		"res://scenes/player.tscn",
 		"res://scenes/chaser.tscn",
 		"res://scenes/projectile.tscn",
@@ -375,8 +377,27 @@ func _test_scene_smoke() -> void:
 		_check(instance != null, "scene instantiates: %s" % path)
 		root.add_child(instance)
 		await process_frame
+		if path == "res://scenes/main_menu.tscn":
+			_check(instance.get_node_or_null("Layout/Panel/Buttons/SkillButton") != null, "main menu exposes the tactical skill matrix")
+		if path == "res://scenes/home.tscn":
+			_check(instance.get_node_or_null("HolographicCommandCore") != null, "starport camp creates the holographic command core")
 		instance.queue_free()
 		await process_frame
+
+
+func _test_actor_collision_layers_keep_cover_without_enemy_jams() -> void:
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var enemy_scene := load("res://scenes/chaser.tscn") as PackedScene
+	var player := player_scene.instantiate() as CharacterBody3D
+	var enemy := enemy_scene.instantiate() as CharacterBody3D
+
+	_check((player.collision_mask & 4) == 0, "player does not physically jam against enemy bodies")
+	_check((enemy.collision_mask & 2) == 0, "enemy does not physically jam against player body")
+	_check((player.collision_mask & 16) != 0 and (player.collision_mask & 32) != 0, "player still respects cover and arena boundary")
+	_check((enemy.collision_mask & 16) != 0 and (enemy.collision_mask & 32) != 0, "enemy still respects cover and arena boundary")
+
+	player.free()
+	enemy.free()
 
 
 func _test_player_damage_and_invulnerability() -> void:

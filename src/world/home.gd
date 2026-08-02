@@ -49,7 +49,7 @@ func _create_floor() -> void:
 	mesh.size = Vector3(30.0, 0.35, 22.0)
 	mesh_node.mesh = mesh
 	mesh_node.position.y = -0.18
-	mesh_node.material_override = _material(Color("17211f"), 0.35)
+	mesh_node.material_override = _material(Color("071a36"), 0.62, Color("138de8"))
 	floor.add_child(mesh_node)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -59,9 +59,57 @@ func _create_floor() -> void:
 	floor.add_child(collision)
 	add_child(floor)
 	for x in range(-14, 15, 2):
-		_create_strip(Vector3(x, 0.01, 0.0), Vector3(0.02, 0.01, 21.0), Color("28413a"))
+		_create_strip(Vector3(x, 0.01, 0.0), Vector3(0.02, 0.01, 21.0), Color("1b5f9d"))
 	for z in range(-10, 11, 2):
-		_create_strip(Vector3(0.0, 0.012, z), Vector3(29.0, 0.01, 0.02), Color("28413a"))
+		_create_strip(Vector3(0.0, 0.012, z), Vector3(29.0, 0.01, 0.02), Color("1b5f9d"))
+	_create_holographic_command_core()
+	_create_orbital_markers()
+
+
+func _create_holographic_command_core() -> void:
+	# The central projection is visual-only, keeping every terminal reachable.
+	var core := Node3D.new()
+	core.name = "HolographicCommandCore"
+	core.position = Vector3(0.0, 0.03, 0.0)
+	add_child(core)
+	for index in 3:
+		var ring := MeshInstance3D.new()
+		var mesh := TorusMesh.new()
+		mesh.inner_radius = 1.45 + index * 0.34
+		mesh.outer_radius = 1.5 + index * 0.34
+		ring.mesh = mesh
+		ring.position.y = 0.06 + index * 0.18
+		ring.rotation.x = PI * 0.5 + (0.10 if index % 2 == 0 else -0.10)
+		ring.material_override = _material(Color("167fc8"), 2.2, Color("56dfff"))
+		core.add_child(ring)
+	var beacon := MeshInstance3D.new()
+	var beacon_mesh := CylinderMesh.new()
+	beacon_mesh.top_radius = 0.18
+	beacon_mesh.bottom_radius = 0.46
+	beacon_mesh.height = 2.2
+	beacon.mesh = beacon_mesh
+	beacon.position.y = 1.08
+	beacon.material_override = _material(Color("0b4f8d"), 2.7, Color("63ecff"))
+	core.add_child(beacon)
+	var light := OmniLight3D.new()
+	light.light_color = Color("54dfff")
+	light.light_energy = 1.25
+	light.omni_range = 6.4
+	light.position.y = 1.5
+	core.add_child(light)
+
+
+func _create_orbital_markers() -> void:
+	for index in 8:
+		var marker := MeshInstance3D.new()
+		var mesh := SphereMesh.new()
+		mesh.radius = 0.07 + float(index % 3) * 0.025
+		mesh.height = mesh.radius * 2.0
+		marker.mesh = mesh
+		var angle := TAU * float(index) / 8.0
+		marker.position = Vector3(cos(angle) * 10.8, 0.22 + float(index % 2) * 0.15, sin(angle) * 7.3)
+		marker.material_override = _material(Color("91efff"), 3.2, Color("6edfff"))
+		add_child(marker)
 
 
 func _create_boundary() -> void:
@@ -82,23 +130,23 @@ func _create_spaceport_shell() -> void:
 		var side := -1.0 if index % 2 == 0 else 1.0
 		pile.position = Vector3(side * (11.2 + float(index % 3)), mesh.height * 0.5, -8.6 + float(index) * 1.1)
 		pile.rotation = Vector3(0.2 * float(index % 2), float(index) * 0.63, 0.18 * side)
-		pile.material_override = _material(Color("1d3650").darkened(float(index % 3) * 0.08), 0.35, Color("45b9f3"))
+		pile.material_override = _material(Color("0a284b").lightened(float(index % 3) * 0.04), 0.66, Color("41b9ff"))
 		add_child(pile)
 	for index in 5:
 		var lamp := OmniLight3D.new()
-		lamp.light_color = Color("4ca9ff") if index % 2 == 0 else Color("56f1c5")
-		lamp.light_energy = 0.55
+		lamp.light_color = Color("4ca9ff") if index % 2 == 0 else Color("6be8ff")
+		lamp.light_energy = 0.8
 		lamp.omni_range = 4.0
 		lamp.position = Vector3(-10.5 + index * 5.2, 2.0, -8.7)
 		add_child(lamp)
 
 
 func _create_stations() -> void:
-	_add_station(&"departure", "出发终端", _station_description(&"departure"), Vector3(0.0, 0.0, -6.8), Color("36e5ad"))
-	_add_station(&"workbench", "武器工作台", _station_description(&"workbench"), Vector3(-7.6, 0.0, -2.4), Color("ffb344"))
-	_add_station(&"health", "生命维护舱", _station_description(&"health"), Vector3(-7.6, 0.0, 5.2), Color("75d66a"))
-	_add_station(&"training", "人物训练舱", _station_description(&"training"), Vector3(7.6, 0.0, -2.4), Color("ee6578"))
-	_add_station(&"exit", "返回终端", _station_description(&"exit"), Vector3(7.6, 0.0, 5.2), Color("b490ef"))
+	_add_station(&"departure", "出发终端", _station_description(&"departure"), Vector3(0.0, 0.0, -6.8), Color("51e6ff"))
+	_add_station(&"workbench", "武器工作台", _station_description(&"workbench"), Vector3(-7.6, 0.0, -2.4), Color("4ca9ff"))
+	_add_station(&"health", "生命维护舱", _station_description(&"health"), Vector3(-7.6, 0.0, 5.2), Color("72d9ff"))
+	_add_station(&"training", "人物训练舱", _station_description(&"training"), Vector3(7.6, 0.0, -2.4), Color("6d8cff"))
+	_add_station(&"exit", "返回终端", _station_description(&"exit"), Vector3(7.6, 0.0, 5.2), Color("93b6ff"))
 
 
 func _add_station(id: StringName, title: String, description: String, at: Vector3, color: Color) -> void:
@@ -113,7 +161,7 @@ func _add_station(id: StringName, title: String, description: String, at: Vector
 	pedestal_mesh.height = 0.58
 	pedestal.mesh = pedestal_mesh
 	pedestal.position.y = 0.29
-	pedestal.material_override = _material(Color("293836"), 0.0)
+	pedestal.material_override = _material(Color("0a2444"), 0.34, Color("277ec2"))
 	body.add_child(pedestal)
 	var console := MeshInstance3D.new()
 	var console_mesh := BoxMesh.new()
@@ -122,6 +170,15 @@ func _add_station(id: StringName, title: String, description: String, at: Vector
 	console.position = Vector3(0.0, 1.02, 0.0)
 	console.material_override = _material(color.darkened(0.4), 0.65, color)
 	body.add_child(console)
+	var halo := MeshInstance3D.new()
+	var halo_mesh := TorusMesh.new()
+	halo_mesh.inner_radius = 0.88
+	halo_mesh.outer_radius = 0.93
+	halo.mesh = halo_mesh
+	halo.position.y = 0.09
+	halo.rotation.x = PI * 0.5
+	halo.material_override = _material(color, 2.3, color)
+	body.add_child(halo)
 	var collision := CollisionShape3D.new()
 	var shape := CylinderShape3D.new()
 	shape.radius = 1.0
@@ -203,7 +260,7 @@ func _create_wall(at: Vector3, size: Vector3) -> void:
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	mesh_node.mesh = mesh
-	mesh_node.material_override = _material(Color("27332f"), 0.0)
+	mesh_node.material_override = _material(Color("0a2747"), 0.28, Color("277ec2"))
 	body.add_child(mesh_node)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -322,8 +379,8 @@ func _create_training_panel() -> void:
 	frame.offset_bottom = 272.0
 	frame.mouse_filter = Control.MOUSE_FILTER_STOP
 	var frame_style := StyleBoxFlat.new()
-	frame_style.bg_color = Color("10211f")
-	frame_style.border_color = Color("ee6578")
+	frame_style.bg_color = Color("061a33")
+	frame_style.border_color = Color("53cfff")
 	frame_style.set_border_width_all(2)
 	frame_style.corner_radius_top_left = 12
 	frame_style.corner_radius_top_right = 12

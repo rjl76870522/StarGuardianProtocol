@@ -5,13 +5,13 @@
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
-background_color = Color(0.008, 0.022, 0.065, 1)
+background_color = Color(0.004, 0.018, 0.07, 1)
 ambient_light_source = 3
-ambient_light_color = Color(0.22, 0.42, 0.7, 1)
-ambient_light_energy = 0.72
+ambient_light_color = Color(0.18, 0.46, 0.82, 1)
+ambient_light_energy = 0.9
 fog_enabled = true
-fog_light_color = Color(0.08, 0.2, 0.42, 1)
-fog_light_energy = 0.65
+fog_light_color = Color(0.04, 0.22, 0.52, 1)
+fog_light_energy = 0.78
 fog_density = 0.012
 
 [sub_resource type="StyleBoxFlat" id="PromptPanel"]
