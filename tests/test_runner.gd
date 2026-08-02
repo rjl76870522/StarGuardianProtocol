@@ -1053,6 +1053,28 @@ func _test_round_results() -> void:
 	victory_game.queue_free()
 	await process_frame
 
+	var wall_game := game_scene.instantiate()
+	wall_game.initial_spawn_interval = 99.0
+	root.add_child(wall_game)
+	await process_frame
+	var wall_arena := wall_game.get_node("Arena")
+	# Simulate facing out of the top wall at point-blank range, which used to
+	# place the portal outside the playable polygon.
+	wall_game.player.global_position = wall_arena.confine_to_combat_area(Vector3(0.0, 0.0, -999.0), 0.12)
+	wall_game.player.rotation.y = 0.0
+	wall_game._extraction_active = true
+	wall_game._round_finished = true
+	wall_game._spawn_extraction_portal()
+	await process_frame
+	var wall_portal := wall_game.get_tree().get_nodes_in_group("combat_interactables")[0] as Node3D
+	_check(
+		wall_arena.confine_to_combat_area(wall_portal.global_position, 1.35).distance_to(wall_portal.global_position) < 0.02,
+		"portal remains inside the arena when deployed from a perimeter wall"
+	)
+	_check(wall_arena.is_clear_for_actor(wall_portal.global_position, 1.35), "portal avoids cover when deployed from a perimeter wall")
+	wall_game.queue_free()
+	await process_frame
+
 	var quota_game := game_scene.instantiate()
 	quota_game.round_duration = 1.0
 	quota_game.initial_spawn_interval = 99.0

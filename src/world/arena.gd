@@ -610,8 +610,6 @@ func safe_player_spawn_position() -> Vector3:
 
 func confine_to_combat_area(position_value: Vector3, margin: float = 0.36) -> Vector3:
 	var point := Vector2(position_value.x, position_value.z)
-	if _is_inside_boundary(point):
-		return position_value
 	var nearest := Vector2.ZERO
 	var nearest_distance := INF
 	for index in boundary_points.size():
@@ -627,6 +625,11 @@ func confine_to_combat_area(position_value: Vector3, margin: float = 0.36) -> Ve
 		if distance < nearest_distance:
 			nearest_distance = distance
 			nearest = candidate
+	# Interior coordinates close to a perimeter wall are not safe for larger
+	# interactables.  This matters most for extraction portals: a player facing
+	# outward while pressed against a wall must never deploy one beyond reach.
+	if _is_inside_boundary(point) and sqrt(nearest_distance) >= margin:
+		return position_value
 	var center := _boundary_center()
 	var inward := (center - nearest).normalized()
 	var corrected := nearest + inward * maxf(margin, 0.08)

@@ -547,7 +547,11 @@ func _spawn_extraction_portal() -> void:
 		return
 	_extraction_portal = EXTRACTION_PORTAL.new() as Node3D
 	var forward := -player.global_transform.basis.z
-	var spawn_position := player.global_position + forward.normalized() * 3.0
+	var preferred_position := player.global_position + forward.normalized() * 3.0
+	# The portal is wider than an operator.  Use the same collision-aware
+	# fallback as boss spawning, including perimeter clearance, rather than
+	# trusting the raw point in front of a player standing against a wall.
+	var spawn_position: Vector3 = $Arena.nearest_clear_actor_position(preferred_position, 1.35)
 	spawn_position.y = 0.0
 	add_child(_extraction_portal)
 	_extraction_portal.global_position = spawn_position
