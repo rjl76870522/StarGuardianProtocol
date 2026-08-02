@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://src/ui/upgrade_panel.gd" id="1"]
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
-bg_color = Color(0.008, 0.027, 0.075, 0.98)
+bg_color = Color(0.008, 0.027, 0.075, 0.84)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -61,7 +61,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.82)
+color = Color(0, 0, 0, 0.42)
 
 [node name="Panel" type="PanelContainer" parent="Overlay"]
 layout_mode = 1

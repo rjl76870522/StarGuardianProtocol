@@ -8,6 +8,7 @@ const WEAPON_PICKUP := preload("res://src/world/weapon_pickup.gd")
 const END_CREDITS := preload("res://src/ui/end_credits.gd")
 const BOSS_SPAWN_DISTANCE := 5.8
 const BOSS_SPAWN_CLEARANCE := 2.05
+const BOSS_MINIMUM_PLAYER_DISTANCE := 4.5
 const ENEMY_CATALOG: Array[EnemyData] = [
 	preload("res://assets/data/enemies/chaser.tres"),
 	preload("res://assets/data/enemies/shooter.tres"),
@@ -110,6 +111,7 @@ func _ready() -> void:
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/RestartButton.pressed.connect(_restart)
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton.pressed.connect(_next_stage)
 	$PauseLayer/ResultPanel/Panel/Content/Buttons/MenuButton.pressed.connect(_return_to_menu)
+	call_deferred("_restore_player_combat_presence")
 
 
 func _process(delta: float) -> void:
@@ -123,6 +125,7 @@ func _process(delta: float) -> void:
 		_offer_upgrade(true)
 	if _paused or _round_finished:
 		return
+	_restore_player_combat_presence()
 	time_left = maxf(time_left - delta, 0.0)
 	_spawn_cooldown -= delta
 	hud.set_time(time_left)
@@ -179,6 +182,7 @@ func _spawn_boss() -> void:
 	_active_boss = boss
 	_boss_spawned = true
 	boss.global_position = _boss_spawn_position()
+	_restore_player_combat_presence()
 	boss.apply_difficulty(_stage_multiplier())
 	if GameState.current_stage == 1:
 		boss.max_health = minf(boss.max_health, 460.0)
@@ -212,8 +216,9 @@ func _verify_boss_spawn(boss: WastelandBoss) -> void:
 	if _boss_defeated or not is_instance_valid(boss) or boss != _active_boss:
 		return
 	var arena := $Arena
-	if not arena.is_clear_for_boss(boss.global_position, BOSS_SPAWN_CLEARANCE) or not _is_boss_position_visible(boss.global_position):
+	if not arena.is_clear_for_boss(boss.global_position, BOSS_SPAWN_CLEARANCE) or not _is_boss_position_visible(boss.global_position) or boss.global_position.distance_to(player.global_position) < BOSS_MINIMUM_PLAYER_DISTANCE:
 		boss.global_position = _boss_spawn_position()
+	_restore_player_combat_presence()
 	# A Boss health bar must remain visible even while its entrance animation is playing.
 	hud.show_boss(boss.health, boss.max_health, WastelandBoss.PHASES[boss.phase_index].display_name)
 
@@ -289,11 +294,24 @@ func _boss_spawn_position() -> Vector3:
 		var candidate: Vector3 = player.global_position + direction * BOSS_SPAWN_DISTANCE
 		candidate.y = 0.0
 		candidate = $Arena.confine_to_combat_area(candidate, 2.2)
-		if $Arena.is_clear_for_boss(candidate, BOSS_SPAWN_CLEARANCE) and _is_boss_position_visible(candidate):
+		if candidate.distance_to(player.global_position) >= BOSS_MINIMUM_PLAYER_DISTANCE and $Arena.is_clear_for_boss(candidate, BOSS_SPAWN_CLEARANCE) and _is_boss_position_visible(candidate):
 			return candidate
-	var fallback: Vector3 = $Arena.confine_to_combat_area(player.global_position + Vector3(0.0, 0.0, 3.6), 2.2)
-	fallback.y = 0.0
-	return fallback
+	# Prefer a clear but off-centre point over a near fallback that could cover
+	# the player.  Camera visibility is checked again after insertion.
+	for direction in directions:
+		var fallback: Vector3 = player.global_position + direction * BOSS_MINIMUM_PLAYER_DISTANCE
+		fallback.y = 0.0
+		fallback = $Arena.confine_to_combat_area(fallback, 2.2)
+		if $Arena.is_clear_for_boss(fallback, BOSS_SPAWN_CLEARANCE):
+			return fallback
+	return $Arena.confine_to_combat_area(Vector3(0.0, 0.0, -5.0), 2.2)
+
+
+func _restore_player_combat_presence() -> void:
+	if not is_instance_valid(player) or player.is_dead:
+		return
+	player.ensure_combat_presence()
+	player.global_position = $Arena.confine_to_combat_area(player.global_position, 0.7)
 
 
 func _is_boss_position_visible(position_value: Vector3) -> bool:

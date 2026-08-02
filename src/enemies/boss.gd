@@ -10,6 +10,7 @@ signal hit_received(amount: float, critical: bool)
 
 const ENEMY_PROJECTILE := preload("res://scenes/enemy_projectile.tscn")
 const HAZARD := preload("res://scenes/ground_hazard.tscn")
+const MIN_TARGET_DISTANCE := 3.1
 const PHASES: Array[BossPhaseData] = [
 	preload("res://assets/data/boss/phase_1.tres"),
 	preload("res://assets/data/boss/phase_2.tres"),
@@ -194,8 +195,17 @@ func _update_charge(delta: float) -> void:
 	velocity = _charge_velocity
 	move_and_slide()
 	_confine_to_combat_sector()
-	if global_position.distance_to(target.global_position) < 1.9:
+	if global_position.distance_to(target.global_position) < MIN_TARGET_DISTANCE:
 		target.take_damage(18.0 + float(phase_index) * 5.0)
+		# The boss must damage by contact without ever occupying or physically
+		# pushing the player model out of view.
+		var retreat := global_position - target.global_position
+		retreat.y = 0.0
+		if retreat.length_squared() <= 0.001:
+			retreat = Vector3.BACK
+		global_position = target.global_position + retreat.normalized() * MIN_TARGET_DISTANCE
+		_confine_to_combat_sector()
+		velocity = Vector3.ZERO
 		_state_remaining = 0.0
 	if _state_remaining <= 0.0:
 		_enter_state(State.HUNTING)
@@ -343,7 +353,9 @@ func reset_battle() -> void:
 	health = max_health
 	_dead = false
 	collision_layer = 4
-	collision_mask = 51
+	# Ignore the player collision layer.  Player movement still treats the boss
+	# as solid, while the boss cannot shove the player below cover or off camera.
+	collision_mask = 49
 	laser.visible = false
 	_apply_phase_visuals(0, false)
 	_enter_state(State.HUNTING)

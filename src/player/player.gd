@@ -76,6 +76,29 @@ func _ready() -> void:
 	equip_weapon(0)
 	_restore_campaign_skills()
 	health_changed.emit(health, max_health)
+	# The player is rebuilt when every stage scene loads.  Keep the generated
+	# starfighter frame explicit so a deferred mesh cleanup can never leave the
+	# controllable unit without a visible model on later stages.
+	call_deferred("ensure_combat_presence")
+
+
+func ensure_combat_presence() -> void:
+	if is_dead:
+		return
+	visible = true
+	$Body.visible = true
+	var frame := $Body.get_node_or_null("StarfighterFrame") as Node3D
+	if frame == null or not is_instance_valid(frame):
+		_apply_skin()
+		frame = $Body.get_node_or_null("StarfighterFrame") as Node3D
+	if frame != null:
+		frame.visible = true
+		for child in frame.get_children():
+			if child is VisualInstance3D:
+				(child as VisualInstance3D).visible = true
+	var accents := $Body.get_node_or_null("SkinAccents") as Node3D
+	if accents != null:
+		accents.visible = true
 
 
 func _apply_skin() -> void:

@@ -674,7 +674,10 @@ func _test_stage_two_boss_spawn() -> void:
 	var boss := game.get_node_or_null("Enemies/WastelandBoss") as WastelandBoss
 	_check(boss != null, "stage two spawns a boss after twelve seconds")
 	if boss != null:
+		_check(game.player.is_visible_in_tree(), "stage two keeps the player node visible when the boss enters")
+		_check(game.player.get_node("Body/StarfighterFrame").is_visible_in_tree(), "stage two keeps the generated player model visible when the boss enters")
 		_check(boss.global_position.distance_to(game.player.global_position) <= 7.2, "stage two boss spawns in visible combat range")
+		_check(boss.global_position.distance_to(game.player.global_position) >= 4.45, "stage two boss keeps a safe visual distance from the player")
 		_check(game.get_node("Arena").is_clear_for_boss(boss.global_position, 2.05), "stage two boss never spawns inside cover")
 		_check(not game.camera.is_position_behind(boss.global_position + Vector3.UP * 0.9), "stage two boss is in front of the combat camera")
 		var screen_position: Vector2 = game.camera.unproject_position(boss.global_position + Vector3.UP * 0.9)
