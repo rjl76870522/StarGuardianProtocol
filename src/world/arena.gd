@@ -482,6 +482,13 @@ func keep_inside_combat_area(position_value: Vector3) -> Vector3:
 func is_clear_for_boss(position_value: Vector3, clearance: float = 1.8) -> bool:
 	# Bosses are much wider than normal enemies.  Do not place one inside cover,
 	# where it can look like it failed to spawn or become trapped immediately.
+	return is_clear_for_actor(position_value, clearance)
+
+
+func is_clear_for_actor(position_value: Vector3, clearance: float = 0.72) -> bool:
+	# This is the single spawn validity rule for players and bosses.  Several
+	# later sector layouts intentionally place cover at world centre, so a fixed
+	# (0, 0, 0) player spawn is not valid on every map.
 	for child in get_children():
 		if not (child is StaticBody3D) or not String(child.name).begins_with("Obstacle"):
 			continue
@@ -494,6 +501,28 @@ func is_clear_for_boss(position_value: Vector3, clearance: float = 1.8) -> bool:
 		if absf(local.x) <= half_size.x + clearance and absf(local.z) <= half_size.z + clearance:
 			return false
 	return true
+
+
+func safe_player_spawn_position() -> Vector3:
+	# Start near the centre for a familiar opening, then fan out through safe
+	# locations for every irregular arena.  The same set is deterministic and
+	# works for all ten sector shapes.
+	var candidates := [
+		Vector3.ZERO,
+		Vector3(0.0, 0.0, -3.8),
+		Vector3(0.0, 0.0, 3.8),
+		Vector3(-4.8, 0.0, 0.0),
+		Vector3(4.8, 0.0, 0.0),
+		Vector3(-5.0, 0.0, -3.6),
+		Vector3(5.0, 0.0, 3.6),
+	]
+	for candidate in candidates:
+		var confined := confine_to_combat_area(candidate, 1.05)
+		if is_clear_for_actor(confined, 0.88):
+			return confined
+	# A valid arena always has an interior point.  The fallback preserves a
+	# playable position even if a future map accidentally fills every candidate.
+	return confine_to_combat_area(Vector3(0.0, 0.0, -5.8), 1.05)
 
 
 func confine_to_combat_area(position_value: Vector3, margin: float = 0.36) -> Vector3:

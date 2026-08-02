@@ -31,10 +31,8 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
 [sub_resource type="StyleBoxFlat" id="MessageStyle"]
-bg_color = Color(0.008, 0.025, 0.065, 0.66)
-border_width_left = 2
-border_width_right = 2
-border_color = Color(0.2, 0.77, 1, 0.72)
+bg_color = Color(0.008, 0.025, 0.065, 0.12)
+border_color = Color(0.2, 0.77, 1, 0.0)
 
 [sub_resource type="StyleBoxFlat" id="BottomPanelStyle"]
 bg_color = Color(0.008, 0.036, 0.09, 0.94)
@@ -51,7 +49,7 @@ shadow_color = Color(0.03, 0.45, 0.9, 0.3)
 shadow_size = 10
 
 [sub_resource type="LabelSettings" id="TitleSettings"]
-font_size = 24
+font_size = 21
 font_color = Color(0.84, 0.95, 1, 1)
 outline_size = 8
 outline_color = Color(0, 0, 0, 0.65)
@@ -260,13 +258,13 @@ theme_override_font_sizes/font_size = 14
 [node name="CenterMessage" type="PanelContainer" parent="."]
 anchors_preset = 8
 anchor_left = 0.5
-anchor_top = 0.13
+anchor_top = 0.16
 anchor_right = 0.5
-anchor_bottom = 0.13
-offset_left = -235.0
+anchor_bottom = 0.16
+offset_left = -205.0
 offset_top = 0.0
-offset_right = 235.0
-offset_bottom = 66.0
+offset_right = 205.0
+offset_bottom = 54.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("MessageStyle")

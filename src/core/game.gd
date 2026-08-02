@@ -81,6 +81,7 @@ func _ready() -> void:
 	_rng.randomize()
 	_camera_base_position = camera.position
 	_next_upgrade_kills = upgrade_kill_interval
+	_place_player_for_stage()
 	player.health_changed.connect(hud.set_health)
 	player.died.connect(_on_player_died)
 	player.fired.connect(_on_player_fired)
@@ -312,6 +313,16 @@ func _restore_player_combat_presence() -> void:
 		return
 	player.ensure_combat_presence()
 	player.global_position = $Arena.confine_to_combat_area(player.global_position, 0.7)
+	if not $Arena.is_clear_for_actor(player.global_position, 0.72):
+		_place_player_for_stage()
+
+
+func _place_player_for_stage() -> void:
+	if not is_instance_valid(player):
+		return
+	player.global_position = $Arena.safe_player_spawn_position()
+	player.velocity = Vector3.ZERO
+	player.ensure_combat_presence()
 
 
 func _is_boss_position_visible(position_value: Vector3) -> bool:

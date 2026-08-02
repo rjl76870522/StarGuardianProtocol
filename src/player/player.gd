@@ -384,7 +384,9 @@ func _handle_active_skill_input() -> void:
 
 
 func _activate_training_skill(skill_id: StringName) -> void:
-	var level := _home_skill_level(skill_id)
+	# The four tactical skills are part of the standard combat kit.  Base level
+	# one is available in every new run; home research raises the same skill.
+	var level := _active_skill_level(skill_id)
 	if level <= 0 or float(_active_skill_cooldowns.get(skill_id, 0.0)) > 0.0:
 		return
 	match skill_id:
@@ -850,6 +852,12 @@ func _safe_muzzle_origin(direction: Vector3) -> Vector3:
 func _home_skill_level(skill_id: StringName) -> int:
 	var state := get_node_or_null("/root/GameState")
 	return state.home_skill_level(skill_id) if state != null else 0
+
+
+func _active_skill_level(skill_id: StringName) -> int:
+	if skill_id in [&"fury", &"recovery", &"bounce", &"tracking"]:
+		return maxi(1, _home_skill_level(skill_id))
+	return _home_skill_level(skill_id)
 
 
 func _weapon_module_level(weapon_id: StringName, module_id: StringName) -> int:

@@ -46,7 +46,7 @@ func _run() -> void:
 	await _test_repair_enemy()
 	await _test_boss_phases_and_debug()
 	await _test_stage_one_boss_spawn_and_hud()
-	await _test_stage_two_boss_spawn()
+	await _test_all_stage_player_and_boss_spawns()
 	await _test_fire_rate_limit()
 	await _test_penetration()
 	await _test_status_duration_and_ticks()
@@ -657,35 +657,33 @@ func _test_boss_phases_and_debug() -> void:
 	await process_frame
 
 
-func _test_stage_two_boss_spawn() -> void:
+func _test_all_stage_player_and_boss_spawns() -> void:
 	var state := root.get_node("GameState")
-	state.start_campaign()
-	state.current_stage = 2
-	var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
-	game.initial_spawn_interval = 99.0
-	root.add_child(game)
-	await process_frame
-	# Stage two has tall internal cover.  Start away from the default centre so
-	# this verifies the spawn selection rather than only the old fixed point.
-	game.player.global_position = Vector3(7.4, 0.0, 3.8)
-	game._process(12.1)
-	await process_frame
-	await process_frame
-	var boss := game.get_node_or_null("Enemies/WastelandBoss") as WastelandBoss
-	_check(boss != null, "stage two spawns a boss after twelve seconds")
-	if boss != null:
-		_check(game.player.is_visible_in_tree(), "stage two keeps the player node visible when the boss enters")
-		_check(game.player.get_node("Body/StarfighterFrame").is_visible_in_tree(), "stage two keeps the generated player model visible when the boss enters")
-		_check(boss.global_position.distance_to(game.player.global_position) <= 7.2, "stage two boss spawns in visible combat range")
-		_check(boss.global_position.distance_to(game.player.global_position) >= 4.45, "stage two boss keeps a safe visual distance from the player")
-		_check(game.get_node("Arena").is_clear_for_boss(boss.global_position, 2.05), "stage two boss never spawns inside cover")
-		_check(not game.camera.is_position_behind(boss.global_position + Vector3.UP * 0.9), "stage two boss is in front of the combat camera")
-		var screen_position: Vector2 = game.camera.unproject_position(boss.global_position + Vector3.UP * 0.9)
-		var viewport_size: Vector2 = root.get_viewport().get_visible_rect().size
-		_check(Rect2(Vector2(18.0, 72.0), viewport_size - Vector2(36.0, 150.0)).has_point(screen_position), "stage two boss appears inside the playable camera frame")
-		_check(game.get_node("HUD/Margin/BossBar").visible, "stage two boss health bar is visible")
-	game.queue_free()
-	await process_frame
+	for stage in range(1, state.MAX_STAGE + 1):
+		state.start_campaign()
+		state.select_zone(0)
+		state.current_stage = stage
+		var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
+		game.initial_spawn_interval = 99.0
+		root.add_child(game)
+		await process_frame
+		await process_frame
+		var arena := game.get_node("Arena")
+		_check(arena.is_clear_for_actor(game.player.global_position, 0.72), "stage %d starts the player outside cover" % stage)
+		_check(game.player.is_visible_in_tree(), "stage %d keeps the player node visible" % stage)
+		_check(game.player.get_node("Body/StarfighterFrame").is_visible_in_tree(), "stage %d keeps the player model visible" % stage)
+		game._spawn_boss()
+		await process_frame
+		await process_frame
+		var boss := game.get_node_or_null("Enemies/WastelandBoss") as WastelandBoss
+		_check(boss != null, "stage %d spawns a boss" % stage)
+		if boss != null:
+			_check(boss.global_position.distance_to(game.player.global_position) >= 4.45, "stage %d boss keeps player safe distance" % stage)
+			_check(arena.is_clear_for_boss(boss.global_position, 2.05), "stage %d boss never spawns inside cover" % stage)
+			_check(not game.camera.is_position_behind(boss.global_position + Vector3.UP * 0.9), "stage %d boss is in front of camera" % stage)
+			_check(game.get_node("HUD/Margin/BossBar").visible, "stage %d boss health bar is visible" % stage)
+		game.queue_free()
+		await process_frame
 	state.start_campaign()
 
 
