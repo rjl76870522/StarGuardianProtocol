@@ -1,7 +1,7 @@
 class_name WastelandHome
 extends Node3D
 
-const ZONES := ["近地轨道平台", "日冕能源环", "量子交叉港", "冷星观测站", "失重航站", "星云补给带", "月面通信阵", "深空采矿区", "红移中继站", "极光防卫塔"]
+const ZONES := ["近地轨道平台", "日冕能源环", "量子交叉港", "冷星观测站", "失重航站", "星云补给带", "月面通信阵", "深空采矿区", "红移中继站", "极光防卫塔", "磁暴前哨", "天穹研究站", "星环货运港", "彗尾观测站", "静海浮岛", "银河栖息区", "虚空接驳站", "蓝移船坞", "极夜补给站", "天琴防御链", "裂隙巡航区", "曙光通讯塔", "星尘反应堆", "终焉守望台"]
 const OBSTACLE_LAYER := 16
 
 var _stations: Array[Dictionary] = []
@@ -15,7 +15,6 @@ var _training_buttons: Dictionary = {}
 @onready var summary: Label = $Interface/Margin/Top/Summary
 @onready var prompt: Label = $Interface/Margin/PromptPanel/Prompt
 @onready var notice: Label = $Interface/Margin/Notice
-@onready var facility_guide: Label = $Interface/Margin/FacilityGuide
 
 
 func _ready() -> void:
@@ -347,7 +346,6 @@ func _refresh_interface() -> void:
 		160 + GameState.garden_level * 18,
 		GameState.home_skill_levels.size(),
 	]
-	facility_guide.text = "星港设施\n绿色终端  生命维护舱  ·  提升初始生命\n黄色终端  武器工作台  ·  升级\n红色终端  人物训练舱  ·  解锁局内能力\n青色终端  出发终端  ·  开始防卫任务"
 
 
 func _show_notice(message: String) -> void:

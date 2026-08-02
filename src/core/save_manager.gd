@@ -1,7 +1,7 @@
 extends Node
 
-const SAVE_VERSION := 11
-const MAX_CAMPAIGN_STAGE := 10
+const SAVE_VERSION := 12
+const MAX_CAMPAIGN_STAGE := 24
 const VALID_WEAPON_IDS: Array[StringName] = [
 	&"flame_projector", &"auto_rifle", &"scatter_cannon", &"rail_lance",
 	&"arc_blade", &"sidearm", &"sniper_rifle", &"siege_cannon",
@@ -102,9 +102,9 @@ func apply_campaign(state: Node, allow_inactive: bool = false) -> bool:
 	var data := load_campaign()
 	if data.is_empty() or state == null or (not allow_inactive and not bool(data.get("campaign_active", true))):
 		return false
-	# Older endless-mode saves remain loadable, but the current campaign ends at
-	# stage 10. Clamp rather than discard a valid older save.
-	state.current_stage = clampi(int(data["stage"]), 1, 10)
+	# Older campaign saves remain loadable. Clamp rather than discard them when
+	# the campaign's final stage changes.
+	state.current_stage = clampi(int(data["stage"]), 1, MAX_CAMPAIGN_STAGE)
 	state.campaign_seed = int(data.get("seed", 1))
 	state.carried_skill_levels = _validated_levels(data.get("skills", {}), 10)
 	state.weapon_levels = _validated_levels(data.get("weapons", {}), 20)
@@ -131,7 +131,7 @@ func apply_campaign(state: Node, allow_inactive: bool = false) -> bool:
 	state.garden_level = clampi(int(data.get("garden_level", 0)), 0, 30)
 	state.home_skill_levels = _validated_levels(data.get("home_skills", {}), 5)
 	state.weapon_modules = _validated_nested_levels(data.get("weapon_modules", {}), 5)
-	state.selected_zone = posmod(int(data.get("selected_zone", 0)), 10)
+	state.selected_zone = posmod(int(data.get("selected_zone", 0)), MAX_CAMPAIGN_STAGE)
 	state.achievements = _validated_unlocks(data.get("achievements", {}))
 	# Version 9 replaces the former experimental skins with the fixed eight-skin
 	# roster. Existing saves receive the prism guardian instead of an invalid ID.

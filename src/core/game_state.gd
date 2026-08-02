@@ -1,6 +1,6 @@
 extends Node
 
-const MAX_STAGE := 10
+const MAX_STAGE := 24
 const PLAYABLE_SKINS := [
 	&"prism_guardian",
 	&"red_guardian",
@@ -69,13 +69,22 @@ func consume_resume_stage() -> int:
 
 func advance_stage() -> void:
 	current_stage = mini(current_stage + 1, MAX_STAGE)
+	if current_stage >= 6:
+		unlock_achievement(&"sector_6_reached")
+	if current_stage >= 12:
+		unlock_achievement(&"sector_12_reached")
+	if current_stage >= 18:
+		unlock_achievement(&"sector_18_reached")
+	if current_stage >= MAX_STAGE:
+		unlock_achievement(&"sector_24_reached")
 	campaign_active = true
 	_autosave()
 
 
 func complete_campaign() -> void:
-	# Archive the successful campaign without leaving a resumable stage ten run.
+	# Archive the successful campaign without leaving a resumable final-stage run.
 	achievements[&"campaign_complete"] = true
+	achievements[&"campaign_24_complete"] = true
 	campaign_active = false
 	current_stage = 1
 	_pending_resume_stage = 0
@@ -184,6 +193,23 @@ func learn_home_skill(skill_id: StringName) -> Dictionary:
 	return {"ok": true, "name": entry["name"], "level": level + 1, "cost": cost}
 
 
+func home_skill_reset_refund() -> int:
+	var refund := 0
+	for skill_id in BASE_TACTICAL_SKILLS:
+		var saved_level := int(home_skill_levels.get(skill_id, 0))
+		for level in range(1, saved_level):
+			refund += 5 + level * 4
+	return refund
+
+
+func reset_home_skills() -> int:
+	var refund := home_skill_reset_refund()
+	home_skill_levels.clear()
+	scrap = clampi(scrap + refund, 0, 99999)
+	_autosave()
+	return refund
+
+
 func clear_pending_weapon(weapon_id: StringName) -> void:
 	if pending_weapon_id == weapon_id:
 		pending_weapon_id = &""
@@ -251,7 +277,7 @@ func add_scrap(amount: int) -> void:
 
 
 func select_zone(zone: int) -> void:
-	selected_zone = posmod(zone, 10)
+	selected_zone = posmod(zone, MAX_STAGE)
 	_autosave()
 
 

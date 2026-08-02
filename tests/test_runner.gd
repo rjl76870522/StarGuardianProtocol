@@ -115,6 +115,11 @@ func _test_save_round_trip_and_corruption() -> void:
 		state.home_skill_level(&"fury") == 1 and state.home_skill_level(&"recovery") == 1 and state.home_skill_level(&"bounce") == 1 and state.home_skill_level(&"tracking") == 1,
 		"four tactical skills begin at level one"
 	)
+	state.scrap = 100
+	var skill_upgrade: Dictionary = state.learn_home_skill(&"fury")
+	_check(bool(skill_upgrade.get("ok", false)) and state.home_skill_level(&"fury") == 2, "home skill matrix upgrades a chosen tactical skill")
+	var skill_refund: int = state.reset_home_skills()
+	_check(skill_refund == 9 and state.home_skill_level(&"fury") == 1, "home skill reset refunds upgrades and restores the baseline")
 	state.current_stage = 7
 	_check(manager.save_campaign(state), "late-stage campaign save is written")
 	state.current_stage = 1

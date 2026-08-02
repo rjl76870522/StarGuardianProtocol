@@ -12,19 +12,19 @@
 - Campaign systems: in progress
 - Milestones 5-9: pending
 
-当前版本包含中文界面、完整十关战役、八种武器、五格武器背包、局内主动人物
+当前版本包含中文界面、完整二十四关战役、八种武器、五格武器背包、局内主动人物
 技能、八类敌方单位、三阶段异星母舰、七彩棱镜作战服，以及持久化存档。
 
-第十关完成后会进入“终焉记录”：先显示星域校准标记，再播放关卡日志、作者寄语
-与感谢字幕。五秒后可以按任意键或点击跳过，结局会解锁“十区战役完成”成就。
+第二十四关完成后会进入“终焉记录”：先显示星域校准标记，再播放关卡日志、作者寄语
+与感谢字幕。五秒后可以按任意键或点击跳过，结局会解锁“二十四区战役完成”成就。
 
 Campaign progress is saved automatically after stage advancement, skill
 upgrades, and weapon rewards. `Continue Campaign` restores the current stage,
 campaign seed, skill levels, weapon unlocks, and weapon levels. Resuming starts
 the current stage from its beginning rather than restoring enemies mid-combat.
 
-Each stage deterministically changes the arena palette, floor grid, and physical
-obstacle layout. Ten map patterns use distinct lanes and cover placement.
+Each stage deterministically changes the arena palette, floor grid, boundary geometry,
+and physical obstacle layout. Twenty-four map patterns use distinct lanes and cover placement.
 Obstacle bodies are on a dedicated physics layer: they block the player,
 enemies, player projectiles, and enemy projectiles. Enemy health, damage, spawn pressure, and objective quota rise
 with the stage. Clearing a stage opens a choice of weapon unlocks or permanent

@@ -6,6 +6,7 @@ const PARTICLE_COUNT := 72
 var _particles: Array[Dictionary] = []
 var _elapsed := 0.0
 var _rng := RandomNumberGenerator.new()
+var center_ratio := Vector2(0.40, 0.34)
 
 
 func _ready() -> void:
@@ -32,7 +33,9 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if size.x < 1.0 or size.y < 1.0:
 		return
-	var center := Vector2(size.x * 0.79, size.y * 0.45)
+	# Keep the holographic rings in the title card's open space rather than
+	# over the right-side menu actions.
+	var center := Vector2(size.x * center_ratio.x, size.y * center_ratio.y)
 	var pulse := 0.55 + sin(_elapsed * 1.15) * 0.18
 	for radius_factor in [0.10, 0.17, 0.26]:
 		var radius: float = minf(size.x, size.y) * radius_factor

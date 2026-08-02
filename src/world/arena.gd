@@ -1,8 +1,8 @@
 extends Node3D
 
-const WIDTH := 40.0
-const DEPTH := 26.0
-const ARENA_SCALE := 1.15
+const WIDTH := 48.0
+const DEPTH := 32.0
+const ARENA_SCALE := 1.28
 const OBSTACLE_LAYER := 16
 const BOUNDARY_LAYER := 32
 
@@ -17,6 +17,20 @@ const MAP_NAMES := [
 	"深空采矿区",
 	"红移中继站",
 	"极光防卫塔",
+	"磁暴前哨",
+	"天穹研究站",
+	"星环货运港",
+	"彗尾观测站",
+	"静海浮岛",
+	"银河栖息区",
+	"虚空接驳站",
+	"蓝移船坞",
+	"极夜补给站",
+	"天琴防御链",
+	"裂隙巡航区",
+	"曙光通讯塔",
+	"星尘反应堆",
+	"终焉守望台",
 ]
 
 var map_seed: int = 1
@@ -63,9 +77,10 @@ func _apply_palette() -> void:
 		[Color("142b47"), Color("649bca"), Color("9ce4ff")],
 		[Color("0d284c"), Color("5a9bd4"), Color("b6edff")],
 	]
-	_floor_color = palettes[variant][0]
-	_grid_color = palettes[variant][1]
-	_accent_color = palettes[variant][2]
+	var palette: Array = palettes[posmod(variant, palettes.size())]
+	_floor_color = palette[0]
+	_grid_color = palette[1]
+	_accent_color = palette[2]
 
 
 func _create_floor() -> void:
@@ -95,9 +110,9 @@ func _create_floor() -> void:
 	_create_deck_polygon()
 
 	var spacing := 2 if variant % 2 == 0 else 3
-	for x in range(-19, 20, spacing):
+	for x in range(-int(WIDTH * 0.5) + 1, int(WIDTH * 0.5), spacing):
 		_create_strip(Vector3(float(x), 0.005, 0.0), Vector3(0.025, 0.01, DEPTH - 0.5), _grid_color)
-	for z in range(-12, 13, spacing):
+	for z in range(-int(DEPTH * 0.5) + 1, int(DEPTH * 0.5), spacing):
 		_create_strip(Vector3(0.0, 0.006, float(z)), Vector3(WIDTH - 0.5, 0.01, 0.025), _grid_color)
 	var accent_size := Vector3(0.055, 0.015, DEPTH - 0.5) if variant % 4 < 2 else Vector3(WIDTH - 0.5, 0.015, 0.055)
 	_create_strip(Vector3.ZERO, accent_size, _accent_color)
@@ -197,8 +212,12 @@ func _create_wall(at: Vector3, size: Vector3, rotation_y: float = 0.0) -> void:
 
 
 func _create_debris() -> void:
-	var specs := _base_obstacle_specs()
-	var extra_count := mini(stage / 2, 3)
+	var specs: Array[Dictionary] = []
+	for raw_spec in _base_obstacle_specs():
+		specs.append(_transform_obstacle_spec(raw_spec))
+	# Preserve the gradual combat-density curve while the ten base layouts and
+	# their transformed late-sector versions provide the visual variety.
+	var extra_count := mini(stage / 2 + variant / 10, 6)
 	for extra_index in extra_count:
 		specs.append(_random_obstacle_spec(specs))
 	layout_signature = "%d:" % variant
@@ -335,7 +354,8 @@ func _tech_material(color: Color, emissive: bool = false) -> StandardMaterial3D:
 
 
 func _base_obstacle_specs() -> Array[Dictionary]:
-	match variant:
+	var profile := posmod(variant, 10)
+	match profile:
 		0:
 			return [
 				_spec(-10.5, -4.8, 4.8, 1.0, 0.8, 0.0),
@@ -357,46 +377,45 @@ func _base_obstacle_specs() -> Array[Dictionary]:
 				_spec(0.0, -5.4, 0.9, 4.2, 0.8, 0.0),
 				_spec(0.0, 5.4, 0.9, 4.2, 0.8, 0.0),
 			]
-		_:
-			if variant == 4:
-				return [
-					_spec(-9.5, -4.5, 7.0, 0.8, 1.1, 0.1),
-					_spec(9.5, 4.5, 7.0, 0.8, 1.1, -0.1),
-					_spec(0.0, 0.0, 2.4, 2.4, 1.1, 0.78),
-				]
-			if variant == 5:
-				return [
-					_spec(-11.5, 0.0, 2.0, 1.2, 0.7, 0.25),
-					_spec(11.5, 0.0, 2.0, 1.2, 0.7, -0.25),
-					_spec(-2.0, -6.2, 1.6, 1.6, 0.8, 0.55),
-					_spec(2.0, 6.2, 1.6, 1.6, 0.8, 0.55),
-				]
-			if variant == 6:
-				return [
-					_spec(-8.5, -4.6, 1.1, 4.6, 0.8, 0.08),
-					_spec(-2.8, 4.6, 1.1, 4.6, 0.8, -0.08),
-					_spec(2.8, -4.6, 1.1, 4.6, 0.8, 0.08),
-					_spec(8.5, 4.6, 1.1, 4.6, 0.8, -0.08),
-				]
-			if variant == 7:
-				return [
-					_spec(-6.0, -4.5, 2.1, 2.1, 1.0, 0.3),
-					_spec(6.0, -4.5, 2.1, 2.1, 1.0, -0.3),
-					_spec(-6.0, 4.5, 2.1, 2.1, 1.0, -0.3),
-					_spec(6.0, 4.5, 2.1, 2.1, 1.0, 0.3),
-					_spec(0.0, 0.0, 1.4, 5.5, 1.0, 0.0),
-				]
-			return [
-				_spec(-9.5, -5.2, 1.8, 1.8, 1.0, 0.2),
-				_spec(9.5, -5.2, 1.8, 1.8, 1.0, -0.2),
-				_spec(-9.5, 5.2, 1.8, 1.8, 1.0, -0.2),
-				_spec(9.5, 5.2, 1.8, 1.8, 1.0, 0.2),
-			]
+	if profile == 4:
+		return [
+			_spec(-9.5, -4.5, 7.0, 0.8, 1.1, 0.1),
+			_spec(9.5, 4.5, 7.0, 0.8, 1.1, -0.1),
+			_spec(0.0, 0.0, 2.4, 2.4, 1.1, 0.78),
+		]
+	if profile == 5:
+		return [
+			_spec(-11.5, 0.0, 2.0, 1.2, 0.7, 0.25),
+			_spec(11.5, 0.0, 2.0, 1.2, 0.7, -0.25),
+			_spec(-2.0, -6.2, 1.6, 1.6, 0.8, 0.55),
+			_spec(2.0, 6.2, 1.6, 1.6, 0.8, 0.55),
+		]
+	if profile == 6:
+		return [
+			_spec(-8.5, -4.6, 1.1, 4.6, 0.8, 0.08),
+			_spec(-2.8, 4.6, 1.1, 4.6, 0.8, -0.08),
+			_spec(2.8, -4.6, 1.1, 4.6, 0.8, 0.08),
+			_spec(8.5, 4.6, 1.1, 4.6, 0.8, -0.08),
+		]
+	if profile == 7:
+		return [
+			_spec(-6.0, -4.5, 2.1, 2.1, 1.0, 0.3),
+			_spec(6.0, -4.5, 2.1, 2.1, 1.0, -0.3),
+			_spec(-6.0, 4.5, 2.1, 2.1, 1.0, -0.3),
+			_spec(6.0, 4.5, 2.1, 2.1, 1.0, 0.3),
+			_spec(0.0, 0.0, 1.4, 5.5, 1.0, 0.0),
+		]
+	return [
+		_spec(-9.5, -5.2, 1.8, 1.8, 1.0, 0.2),
+		_spec(9.5, -5.2, 1.8, 1.8, 1.0, -0.2),
+		_spec(-9.5, 5.2, 1.8, 1.8, 1.0, -0.2),
+		_spec(9.5, 5.2, 1.8, 1.8, 1.0, 0.2),
+	]
 
 
 func _random_obstacle_spec(existing_specs: Array[Dictionary]) -> Dictionary:
 	for attempt in 60:
-		var position := Vector3(_rng.randf_range(-13.0, 13.0), 0.42, _rng.randf_range(-7.8, 7.8))
+		var position := Vector3(_rng.randf_range(-17.0, 17.0), 0.42, _rng.randf_range(-10.5, 10.5))
 		if not _is_inside_boundary(Vector2(position.x, position.z)):
 			continue
 		if Vector2(position.x, position.z).length() < 4.4:
@@ -416,7 +435,23 @@ func _random_obstacle_spec(existing_specs: Array[Dictionary]) -> Dictionary:
 				_rng.randf_range(0.55, 1.0),
 				_rng.randf_range(0.0, PI)
 			)
-	return _spec(12.0, 7.0, 1.5, 1.0, 0.7, 0.0)
+	return _spec(15.0, 8.5, 1.5, 1.0, 0.7, 0.0)
+
+
+func _transform_obstacle_spec(source: Dictionary) -> Dictionary:
+	var result := source.duplicate(true)
+	var point := result["position"] as Vector3
+	var cycle := variant / 10
+	if cycle == 1:
+		point.x = -point.x
+		result["rotation"] = -float(result["rotation"])
+	elif cycle >= 2:
+		var rotated := Vector2(point.z * 1.06, -point.x * 0.92)
+		point.x = rotated.x
+		point.z = rotated.y
+		result["rotation"] = float(result["rotation"]) + PI * 0.5
+	result["position"] = point
+	return result
 
 
 func _spec(x: float, z: float, width: float, depth: float, height: float, rotation_y: float) -> Dictionary:
@@ -431,27 +466,39 @@ func _spec(x: float, z: float, width: float, depth: float, height: float, rotati
 
 
 func _boundary_for_variant() -> Array[Vector2]:
-	match variant:
+	var profile := posmod(variant, 10)
+	var points: Array[Vector2] = []
+	match profile:
 		0:
-			return [Vector2(-14.0, -9.5), Vector2(10.5, -9.5), Vector2(15.8, -5.8), Vector2(15.8, 5.8), Vector2(10.5, 9.5), Vector2(-14.0, 9.5), Vector2(-15.8, 5.8), Vector2(-15.8, -5.8)]
+			points = [Vector2(-14.0, -9.5), Vector2(10.5, -9.5), Vector2(15.8, -5.8), Vector2(15.8, 5.8), Vector2(10.5, 9.5), Vector2(-14.0, 9.5), Vector2(-15.8, 5.8), Vector2(-15.8, -5.8)]
 		1:
-			return [Vector2(-10.0, -9.2), Vector2(9.0, -9.2), Vector2(15.8, 0.0), Vector2(9.0, 9.2), Vector2(-10.0, 9.2), Vector2(-15.8, 0.0)]
+			points = [Vector2(-10.0, -9.2), Vector2(9.0, -9.2), Vector2(15.8, 0.0), Vector2(9.0, 9.2), Vector2(-10.0, 9.2), Vector2(-15.8, 0.0)]
 		2:
-			return [Vector2(0.0, -10.0), Vector2(15.8, 0.0), Vector2(0.0, 10.0), Vector2(-15.8, 0.0)]
+			points = [Vector2(0.0, -10.0), Vector2(15.8, 0.0), Vector2(0.0, 10.0), Vector2(-15.8, 0.0)]
 		3:
-			return [Vector2(-11.0, -9.5), Vector2(15.8, -7.2), Vector2(12.8, 9.5), Vector2(-15.8, 7.2)]
+			points = [Vector2(-11.0, -9.5), Vector2(15.8, -7.2), Vector2(12.8, 9.5), Vector2(-15.8, 7.2)]
 		4:
-			return [Vector2(-13.5, -7.4), Vector2(1.5, -10.0), Vector2(15.8, -2.2), Vector2(10.2, 9.8), Vector2(-13.8, 8.6)]
+			points = [Vector2(-13.5, -7.4), Vector2(1.5, -10.0), Vector2(15.8, -2.2), Vector2(10.2, 9.8), Vector2(-13.8, 8.6)]
 		5:
-			return [Vector2(-15.8, -7.8), Vector2(-5.0, -10.0), Vector2(15.8, -5.2), Vector2(15.8, 7.8), Vector2(5.0, 10.0), Vector2(-15.8, 5.2)]
+			points = [Vector2(-15.8, -7.8), Vector2(-5.0, -10.0), Vector2(15.8, -5.2), Vector2(15.8, 7.8), Vector2(5.0, 10.0), Vector2(-15.8, 5.2)]
 		6:
-			return [Vector2(-15.8, -9.6), Vector2(-4.0, -9.6), Vector2(-4.0, -4.2), Vector2(5.0, -4.2), Vector2(5.0, -9.6), Vector2(15.8, -9.6), Vector2(15.8, 9.6), Vector2(4.0, 9.6), Vector2(4.0, 4.2), Vector2(-5.0, 4.2), Vector2(-5.0, 9.6), Vector2(-15.8, 9.6)]
+			points = [Vector2(-15.8, -9.6), Vector2(-4.0, -9.6), Vector2(-4.0, -4.2), Vector2(5.0, -4.2), Vector2(5.0, -9.6), Vector2(15.8, -9.6), Vector2(15.8, 9.6), Vector2(4.0, 9.6), Vector2(4.0, 4.2), Vector2(-5.0, 4.2), Vector2(-5.0, 9.6), Vector2(-15.8, 9.6)]
 		7:
-			return [Vector2(-15.8, -7.0), Vector2(11.0, -10.0), Vector2(15.8, 7.0), Vector2(-11.0, 10.0)]
+			points = [Vector2(-15.8, -7.0), Vector2(11.0, -10.0), Vector2(15.8, 7.0), Vector2(-11.0, 10.0)]
 		8:
-			return [Vector2(-12.0, -9.8), Vector2(8.0, -9.8), Vector2(15.8, -4.0), Vector2(15.8, 4.0), Vector2(8.0, 9.8), Vector2(-12.0, 9.8), Vector2(-15.8, 4.0), Vector2(-15.8, -4.0)]
+			points = [Vector2(-12.0, -9.8), Vector2(8.0, -9.8), Vector2(15.8, -4.0), Vector2(15.8, 4.0), Vector2(8.0, 9.8), Vector2(-12.0, 9.8), Vector2(-15.8, 4.0), Vector2(-15.8, -4.0)]
 		_:
-			return [Vector2(-15.8, -9.8), Vector2(15.8, 0.0), Vector2(-15.8, 9.8)]
+			points = [Vector2(-15.8, -9.8), Vector2(15.8, 0.0), Vector2(-15.8, 9.8)]
+	var cycle := variant / 10
+	var transformed: Array[Vector2] = []
+	for point in points:
+		if cycle == 1:
+			transformed.append(Vector2(-point.x, point.y))
+		elif cycle >= 2:
+			transformed.append(Vector2(point.y * 1.06, -point.x * 0.92))
+		else:
+			transformed.append(point)
+	return transformed
 
 
 func _is_inside_boundary(point: Vector2) -> bool:
@@ -542,7 +589,7 @@ func _boundary_center() -> Vector2:
 func safe_player_spawn_position() -> Vector3:
 	# Start near the centre for a familiar opening, then fan out through safe
 	# locations for every irregular arena.  The same set is deterministic and
-	# works for all ten sector shapes.
+	# Works for every sector shape, including transformed late-sector layouts.
 	var candidates := [
 		Vector3.ZERO,
 		Vector3(0.0, 0.0, -3.8),

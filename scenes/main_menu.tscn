@@ -125,23 +125,23 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 120.0
-offset_top = 52.0
-offset_right = -120.0
-offset_bottom = -52.0
+offset_left = 104.0
+offset_top = 34.0
+offset_right = -104.0
+offset_bottom = -34.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 36
+theme_override_constants/separation = 28
 
 [node name="IdentityCard" type="PanelContainer" parent="Layout"]
-custom_minimum_size = Vector2(480, 0)
+custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("Panel")
 
 [node name="Identity" type="VBoxContainer" parent="Layout/IdentityCard"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 alignment = 1
 
 [node name="Protocol" type="Label" parent="Layout/IdentityCard/Identity"]
@@ -163,21 +163,21 @@ color = Color(0.26, 0.8, 1, 0.84)
 
 [node name="Subtitle" type="Label" parent="Layout/IdentityCard/Identity"]
 layout_mode = 2
-text = "十区星域战役已部署\n清除异星威胁  //  FINAL PROTOCOL"
+text = "二十四区星域战役已部署\n清除异星威胁  //  FINAL PROTOCOL"
 theme_override_colors/font_color = Color(0.53, 0.72, 0.88, 1)
 theme_override_font_sizes/font_size = 18
 
 [node name="Panel" type="PanelContainer" parent="Layout"]
-custom_minimum_size = Vector2(440, 0)
+custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
 
 [node name="Buttons" type="VBoxContainer" parent="Layout/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 11
+theme_override_constants/separation = 6
 
 [node name="Icon" type="TextureRect" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(92, 92)
+custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 texture = ExtResource("2")
 expand_mode = 3
@@ -185,7 +185,7 @@ stretch_mode = 5
 
 [node name="Status" type="Label" parent="Layout/Panel/Buttons"]
 layout_mode = 2
-text = "作战单元在线\n十区防线  //  信号稳定"
+text = "作战单元在线  //  二十四区防线信号稳定"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.48, 0.73, 0.9, 1)
 theme_override_font_sizes/font_size = 13
@@ -198,7 +198,7 @@ theme_override_colors/font_color = Color(0.56, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 13
 
 [node name="ZoneButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 text = "初始武器：喷火器  ‹ 点击切换 ›"
 theme_override_styles/normal = SubResource("ButtonNormal")
@@ -206,7 +206,7 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [node name="UpgradeButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "升级当前初始武器"
 theme_override_styles/normal = SubResource("ButtonNormal")
@@ -214,7 +214,7 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [node name="GardenButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "升级初始生命"
 theme_override_styles/normal = SubResource("ButtonNormal")
@@ -222,7 +222,7 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [node name="SkillButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "人物技能矩阵  ·  查看局内技能"
 theme_override_styles/normal = SubResource("ButtonNormal")
@@ -230,7 +230,7 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [node name="SkinButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "作战皮肤：翠绿侦察者  ‹ 点击切换 ›"
 theme_override_styles/normal = SubResource("ButtonNormal")
@@ -238,7 +238,7 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [node name="ArchiveButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "星港档案  ·  武器 / 技能 / 敌人"
 theme_override_styles/normal = SubResource("ButtonNormal")
@@ -253,7 +253,7 @@ theme_override_colors/font_color = Color(0.55, 0.78, 0.96, 1)
 theme_override_font_sizes/font_size = 12
 
 [node name="StartButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 62)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "部署作战单元  ·  进入星港"
 theme_override_font_sizes/font_size = 18
@@ -262,7 +262,7 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [node name="ContinueButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "继续战役"
 theme_override_font_sizes/font_size = 17
@@ -271,7 +271,7 @@ theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
 [node name="QuitButton" type="Button" parent="Layout/Panel/Buttons"]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 text = "退出游戏"
 theme_override_styles/normal = SubResource("ButtonNormal")

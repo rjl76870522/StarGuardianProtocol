@@ -1,6 +1,6 @@
 extends Control
 
-const ZONES := ["近地轨道平台", "日冕能源环", "量子交叉港", "冷星观测站", "失重航站", "星云补给带", "月面通信阵", "深空采矿区", "红移中继站", "极光防卫塔"]
+const ZONES := ["近地轨道平台", "日冕能源环", "量子交叉港", "冷星观测站", "失重航站", "星云补给带", "月面通信阵", "深空采矿区", "红移中继站", "极光防卫塔", "磁暴前哨", "天穹研究站", "星环货运港", "彗尾观测站", "静海浮岛", "银河栖息区", "虚空接驳站", "蓝移船坞", "极夜补给站", "天琴防御链", "裂隙巡航区", "曙光通讯塔", "星尘反应堆", "终焉守望台"]
 const START_WEAPONS: Array[Dictionary] = [
 	{"id": &"flame_projector", "name": "喷火器"},
 	{"id": &"auto_rifle", "name": "自动步枪"},
@@ -14,6 +14,9 @@ const START_WEAPONS: Array[Dictionary] = [
 
 var _archive_dialog: AcceptDialog
 var _skill_dialog: AcceptDialog
+var _skill_status: Label
+var _skill_buttons: Dictionary = {}
+var _skill_notice := ""
 
 
 func _ready() -> void:
@@ -81,7 +84,7 @@ func _on_skills_pressed() -> void:
 	if _skill_dialog == null:
 		_create_skill_dialog()
 	_refresh_skill_dialog()
-	_skill_dialog.popup_centered(Vector2i(700, 500))
+	_skill_dialog.popup_centered(Vector2i(720, 610))
 
 
 func _create_skill_dialog() -> void:
@@ -101,38 +104,98 @@ func _create_skill_dialog() -> void:
 	panel_style.corner_radius_bottom_right = 12
 	_skill_dialog.add_theme_stylebox_override("panel", panel_style)
 	_skill_dialog.ok_button_text = "关闭"
+	_skill_dialog.min_size = Vector2i(640, 560)
 	add_child(_skill_dialog)
+	var layout := VBoxContainer.new()
+	layout.name = "SkillLayout"
+	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layout.offset_left = 24.0
+	layout.offset_top = 18.0
+	layout.offset_right = -24.0
+	layout.offset_bottom = -56.0
+	layout.add_theme_constant_override("separation", 9)
+	_skill_dialog.add_child(layout)
 	var contents := RichTextLabel.new()
 	contents.name = "Contents"
 	contents.bbcode_enabled = true
-	contents.fit_content = false
+	contents.custom_minimum_size = Vector2(0.0, 180.0)
+	contents.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	contents.scroll_active = true
-	contents.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	contents.offset_left = 24.0
-	contents.offset_top = 18.0
-	contents.offset_right = -24.0
-	contents.offset_bottom = -58.0
-	_skill_dialog.add_child(contents)
+	layout.add_child(contents)
+	_skill_status = Label.new()
+	_skill_status.name = "SkillStatus"
+	_skill_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_skill_status.add_theme_color_override("font_color", Color("8edfff"))
+	layout.add_child(_skill_status)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 8)
+	layout.add_child(grid)
+	for spec in _skill_specs():
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(0.0, 54.0)
+		button.add_theme_font_size_override("font_size", 15)
+		button.pressed.connect(_learn_skill_from_menu.bind(spec["id"]))
+		grid.add_child(button)
+		_skill_buttons[spec["id"]] = button
+	var reset := Button.new()
+	reset.name = "ResetSkills"
+	reset.custom_minimum_size = Vector2(0.0, 38.0)
+	reset.add_theme_color_override("font_color", Color("bcefff"))
+	reset.pressed.connect(_reset_skills_from_menu)
+	layout.add_child(reset)
 
 
 func _refresh_skill_dialog() -> void:
 	if _skill_dialog == null:
 		return
-	var contents := _skill_dialog.get_node_or_null("Contents") as RichTextLabel
+	var contents := _skill_dialog.get_node_or_null("SkillLayout/Contents") as RichTextLabel
 	if contents == null:
 		return
-	var specs := [
-		[&"fury", "暴怒回路", "T", "短时间提升射速"],
-		[&"recovery", "治疗协议", "G", "即时修复生命"],
-		[&"bounce", "反弹校准", "Y", "子弹额外反弹"],
-		[&"tracking", "追踪校准", "H", "子弹锁定附近目标"],
-	]
-	var text := "[font_size=24][color=#55dfff]局内人物技能[/color][/font_size]\n在星港人物训练舱消耗合金升级，进入战斗后按对应按键启动\n\n"
-	for spec in specs:
-		var level := GameState.home_skill_level(spec[0] as StringName)
-		text += "[font_size=20][color=#9eeaff]%s  %d级[/color][/font_size]\n%s  ·  %s\n\n" % [spec[1], level, spec[2], spec[3]]
+	var text := "[font_size=23][color=#55dfff]局内人物技能[/color][/font_size]\n在首页直接训练，进入战斗后按对应按键启动\n\n"
+	for spec in _skill_specs():
+		var level := GameState.home_skill_level(spec["id"] as StringName)
+		text += "[font_size=18][color=#9eeaff]%s  %d/%d级[/color][/font_size]\n按 %s  ·  %s\n\n" % [spec["name"], level, spec["max"], spec["key"], spec["effect"]]
+		var button := _skill_buttons.get(spec["id"]) as Button
+		if button != null:
+			var cost := 5 + level * 4
+			button.text = "%s  %d/%d级\n%s" % [spec["name"], level, spec["max"], "已满级" if level >= int(spec["max"]) else "升级  ·  %d 合金" % cost]
+			button.disabled = level >= int(spec["max"])
 	contents.clear()
 	contents.append_text(text)
+	if _skill_status != null:
+		_skill_status.text = _skill_notice if not _skill_notice.is_empty() else "当前合金：%d  ·  所有技能初始为 1 级" % GameState.scrap
+	var reset := _skill_dialog.get_node_or_null("SkillLayout/ResetSkills") as Button
+	if reset != null:
+		var refund := GameState.home_skill_reset_refund()
+		reset.text = "重置人物技能  ·  返还 %d 合金" % refund
+		reset.disabled = refund <= 0
+
+
+func _skill_specs() -> Array[Dictionary]:
+	return [
+		{"id": &"fury", "name": "暴怒回路", "key": "T", "effect": "短时间提升射速", "max": 5},
+		{"id": &"recovery", "name": "治疗协议", "key": "G", "effect": "即时修复生命", "max": 5},
+		{"id": &"bounce", "name": "反弹校准", "key": "Y", "effect": "子弹额外反弹", "max": 4},
+		{"id": &"tracking", "name": "追踪校准", "key": "H", "effect": "子弹锁定附近目标", "max": 4},
+	]
+
+
+func _learn_skill_from_menu(skill_id: StringName) -> void:
+	var result := GameState.learn_home_skill(skill_id)
+	if _skill_status != null:
+		_skill_notice = "%s" % ("%s 已升级至 %d 级" % [result["name"], result["level"]] if bool(result.get("ok", false)) else str(result.get("reason", "训练失败")))
+	_refresh_skill_dialog()
+	_refresh_camp()
+
+
+func _reset_skills_from_menu() -> void:
+	var refund := GameState.reset_home_skills()
+	if _skill_status != null:
+		_skill_notice = "人物技能已重置，返还 %d 合金" % refund
+	_refresh_skill_dialog()
+	_refresh_camp()
 
 
 func _create_archive_dialog() -> void:
@@ -232,8 +295,8 @@ func _refresh_camp(message: String = "") -> void:
 	$Layout/Panel/Buttons/SkillButton.text = "人物技能矩阵  ·  已训练 %d 项" % GameState.home_skill_levels.size()
 	$Layout/Panel/Buttons/SkinButton.text = "作战皮肤：%s  ‹ 点击切换 ›" % _skin_name(GameState.equipped_skin)
 	var final_status := "已完成" if GameState.has_achievement(&"campaign_complete") else "待部署"
-	$Layout/Panel/Buttons/AchievementStatus.text = "成就档案  ·  已解锁 %d 项  ·  十区战役：%s" % [GameState.achievements.size(), final_status]
-	$Layout/IdentityCard/Identity/Subtitle.text = "十区星域战役  //  第 %d 关待命\n%s" % [GameState.current_stage, "终焉记录已归档" if GameState.has_achievement(&"campaign_complete") else "完成第十关即可解锁终焉记录"]
+	$Layout/Panel/Buttons/AchievementStatus.text = "成就档案  ·  已解锁 %d 项  ·  二十四区战役：%s" % [GameState.achievements.size(), final_status]
+	$Layout/IdentityCard/Identity/Subtitle.text = "二十四区星域战役  //  第 %d 关待命\n%s" % [GameState.current_stage, "终焉记录已归档" if GameState.has_achievement(&"campaign_complete") else "完成第二十四关即可解锁终焉记录"]
 
 
 func _build_starfield() -> void:
