@@ -14,6 +14,8 @@ const START_WEAPONS: Array[Dictionary] = [
 
 var _archive_dialog: AcceptDialog
 var _skill_dialog: AcceptDialog
+var _statistics_dialog: AcceptDialog
+var _audio_dialog: AcceptDialog
 var _skill_status: Label
 var _skill_buttons: Dictionary = {}
 var _skill_notice := ""
@@ -27,6 +29,8 @@ func _ready() -> void:
 	_refresh_camp()
 	_create_archive_dialog()
 	_create_skill_dialog()
+	_create_statistics_dialog()
+	_create_audio_dialog()
 
 
 func _on_start_pressed() -> void:
@@ -85,6 +89,143 @@ func _on_skills_pressed() -> void:
 		_create_skill_dialog()
 	_refresh_skill_dialog()
 	_skill_dialog.popup_centered(Vector2i(720, 610))
+
+
+func _on_statistics_pressed() -> void:
+	if _statistics_dialog == null:
+		_create_statistics_dialog()
+	_refresh_statistics_dialog()
+	_statistics_dialog.popup_centered(Vector2i(560, 430))
+
+
+func _on_audio_pressed() -> void:
+	if _audio_dialog == null:
+		_create_audio_dialog()
+	_refresh_audio_dialog()
+	_audio_dialog.popup_centered(Vector2i(520, 320))
+
+
+func _dialog_style(dialog: AcceptDialog) -> void:
+	dialog.add_theme_color_override("title_color", Color("9eeaff"))
+	dialog.add_theme_color_override("font_color", Color("d9f4ff"))
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("06172d")
+	panel_style.border_color = Color("2fb9ed")
+	panel_style.set_border_width_all(2)
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	dialog.add_theme_stylebox_override("panel", panel_style)
+	dialog.ok_button_text = "关闭"
+
+
+func _create_statistics_dialog() -> void:
+	if _statistics_dialog != null:
+		return
+	_statistics_dialog = AcceptDialog.new()
+	_statistics_dialog.title = "本地作战统计"
+	_dialog_style(_statistics_dialog)
+	_statistics_dialog.min_size = Vector2i(520, 390)
+	add_child(_statistics_dialog)
+	var contents := RichTextLabel.new()
+	contents.name = "Contents"
+	contents.bbcode_enabled = true
+	contents.fit_content = false
+	contents.scroll_active = false
+	contents.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	contents.offset_left = 28.0
+	contents.offset_top = 20.0
+	contents.offset_right = -28.0
+	contents.offset_bottom = -58.0
+	_statistics_dialog.add_child(contents)
+
+
+func _refresh_statistics_dialog() -> void:
+	if _statistics_dialog == null:
+		return
+	var contents := _statistics_dialog.get_node_or_null("Contents") as RichTextLabel
+	if contents == null:
+		return
+	var completed := GameState.achievement_count()
+	var total := GameState.ACHIEVEMENT_IDS.size()
+	var progress := int(round(float(completed) / float(maxi(total, 1)) * 100.0))
+	var favorite := _start_weapon_name(GameState.favorite_weapon_id())
+	var favorite_uses := GameState.favorite_weapon_uses()
+	contents.clear()
+	contents.append_text("[center][font_size=24][color=#55dfff]本地作战统计[/color][/font_size]\n[color=#8edfff]数据仅保存在当前电脑，不会上传网络[/color][/center]\n\n[font_size=20]最高关卡[/font_size]  [color=#d9f4ff]第 %d / %d 关[/color]\n\n[font_size=20]总击毁[/font_size]  [color=#d9f4ff]%d[/color]\n\n[font_size=20]常用武器[/font_size]  [color=#d9f4ff]%s[/color]  [color=#8edfff]累计开火 %d 次[/color]\n\n[font_size=20]成就完成度[/font_size]  [color=#d9f4ff]%d / %d[/color]  [color=#8edfff]%d%%[/color]\n\n[color=#6fa9c9]累计部署 %d 次[/color]" % [GameState.highest_stage, GameState.MAX_STAGE, GameState.total_kills, favorite, favorite_uses, completed, total, progress, GameState.total_runs])
+
+
+func _create_audio_dialog() -> void:
+	if _audio_dialog != null:
+		return
+	_audio_dialog = AcceptDialog.new()
+	_audio_dialog.title = "声音设置"
+	_dialog_style(_audio_dialog)
+	_audio_dialog.min_size = Vector2i(480, 280)
+	add_child(_audio_dialog)
+	var layout := VBoxContainer.new()
+	layout.name = "AudioLayout"
+	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layout.offset_left = 28.0
+	layout.offset_top = 18.0
+	layout.offset_right = -28.0
+	layout.offset_bottom = -58.0
+	layout.add_theme_constant_override("separation", 14)
+	_audio_dialog.add_child(layout)
+	var title := Label.new()
+	title.text = "主音量"
+	title.add_theme_color_override("font_color", Color("bcefff"))
+	layout.add_child(title)
+	var volume := HSlider.new()
+	volume.name = "VolumeSlider"
+	volume.min_value = 0.0
+	volume.max_value = 100.0
+	volume.step = 1.0
+	volume.custom_minimum_size = Vector2(0.0, 30.0)
+	volume.value_changed.connect(_on_volume_changed)
+	layout.add_child(volume)
+	var value_label := Label.new()
+	value_label.name = "VolumeValue"
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value_label.add_theme_color_override("font_color", Color("8edfff"))
+	layout.add_child(value_label)
+	var mute := CheckBox.new()
+	mute.name = "MuteToggle"
+	mute.text = "静音"
+	mute.add_theme_color_override("font_color", Color("d9f4ff"))
+	mute.toggled.connect(_on_audio_muted)
+	layout.add_child(mute)
+	var hint := Label.new()
+	hint.text = "此设置会控制战斗音效，并自动保存到本机"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_color_override("font_color", Color("6fa9c9"))
+	layout.add_child(hint)
+
+
+func _refresh_audio_dialog() -> void:
+	if _audio_dialog == null:
+		return
+	var slider := _audio_dialog.get_node_or_null("AudioLayout/VolumeSlider") as HSlider
+	var value_label := _audio_dialog.get_node_or_null("AudioLayout/VolumeValue") as Label
+	var mute := _audio_dialog.get_node_or_null("AudioLayout/MuteToggle") as CheckBox
+	if slider != null:
+		slider.set_value_no_signal(GameState.master_volume * 100.0)
+	if value_label != null:
+		value_label.text = "%d%%" % int(round(GameState.master_volume * 100.0))
+	if mute != null:
+		mute.set_pressed_no_signal(GameState.audio_muted)
+
+
+func _on_volume_changed(value: float) -> void:
+	GameState.set_master_volume(value / 100.0)
+	var value_label := _audio_dialog.get_node_or_null("AudioLayout/VolumeValue") as Label if _audio_dialog != null else null
+	if value_label != null:
+		value_label.text = "%d%%" % int(round(value))
+
+
+func _on_audio_muted(value: bool) -> void:
+	GameState.set_audio_muted(value)
 
 
 func _create_skill_dialog() -> void:

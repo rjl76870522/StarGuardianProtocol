@@ -12,6 +12,15 @@ const PLAYABLE_SKINS := [
 	&"violet_guardian",
 ]
 const BASE_TACTICAL_SKILLS: Array[StringName] = [&"fury", &"recovery", &"bounce", &"tracking"]
+const ACHIEVEMENT_IDS: Array[StringName] = [
+	&"first_skin_change",
+	&"sector_6_reached",
+	&"sector_12_reached",
+	&"sector_18_reached",
+	&"sector_24_reached",
+	&"campaign_complete",
+	&"campaign_24_complete",
+]
 
 var last_survival_time: float = 0.0
 var last_kills: int = 0
@@ -34,7 +43,17 @@ var achievements: Dictionary = {}
 var equipped_skin: StringName = &"prism_guardian"
 var carried_health: float = -1.0
 var campaign_active: bool = false
+var highest_stage: int = 1
+var total_kills: int = 0
+var total_runs: int = 0
+var weapon_usage: Dictionary = {}
+var master_volume: float = 0.8
+var audio_muted: bool = false
 var _pending_resume_stage: int = 0
+
+
+func _ready() -> void:
+	apply_audio_settings()
 
 
 func start_campaign() -> void:
@@ -48,6 +67,7 @@ func start_campaign() -> void:
 	loadout_weapon_ids = [selected_start_weapon_id]
 	pending_weapon_id = &""
 	carried_health = -1.0
+	highest_stage = maxi(highest_stage, current_stage)
 	_autosave()
 
 
@@ -69,6 +89,7 @@ func consume_resume_stage() -> int:
 
 func advance_stage() -> void:
 	current_stage = mini(current_stage + 1, MAX_STAGE)
+	highest_stage = maxi(highest_stage, current_stage)
 	if current_stage >= 6:
 		unlock_achievement(&"sector_6_reached")
 	if current_stage >= 12:
@@ -297,6 +318,8 @@ func _autosave() -> void:
 
 func begin_run() -> void:
 	runs_started += 1
+	total_runs += 1
+	highest_stage = maxi(highest_stage, current_stage)
 	last_survival_time = 0.0
 	last_kills = 0
 
@@ -304,7 +327,56 @@ func begin_run() -> void:
 func finish_run(survival_time: float, kills: int) -> void:
 	last_survival_time = survival_time
 	last_kills = kills
+	total_kills += maxi(kills, 0)
 	scrap += maxi(1, kills / 3) + garden_level
+	_autosave()
+
+
+func record_weapon_use(weapon_id: StringName) -> void:
+	if weapon_id.is_empty():
+		return
+	weapon_usage[weapon_id] = int(weapon_usage.get(weapon_id, 0)) + 1
+
+
+func favorite_weapon_id() -> StringName:
+	var favorite := selected_start_weapon_id
+	var highest_count := -1
+	for raw_weapon_id in weapon_usage:
+		var count := int(weapon_usage[raw_weapon_id])
+		if count > highest_count:
+			highest_count = count
+			favorite = StringName(str(raw_weapon_id))
+	return favorite
+
+
+func favorite_weapon_uses() -> int:
+	return int(weapon_usage.get(favorite_weapon_id(), 0))
+
+
+func achievement_count() -> int:
+	var count := 0
+	for achievement_id in ACHIEVEMENT_IDS:
+		if has_achievement(achievement_id):
+			count += 1
+	return count
+
+
+func apply_audio_settings() -> void:
+	if AudioServer.get_bus_count() <= 0:
+		return
+	AudioServer.set_bus_mute(0, audio_muted)
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(master_volume, 0.001)))
+
+
+func set_master_volume(value: float) -> void:
+	master_volume = clampf(value, 0.0, 1.0)
+	apply_audio_settings()
+	_autosave()
+
+
+func set_audio_muted(value: bool) -> void:
+	audio_muted = value
+	apply_audio_settings()
 	_autosave()
 
 

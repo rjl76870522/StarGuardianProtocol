@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION := 12
+const SAVE_VERSION := 13
 const MAX_CAMPAIGN_STAGE := 24
 const VALID_WEAPON_IDS: Array[StringName] = [
 	&"flame_projector", &"auto_rifle", &"scatter_cannon", &"rail_lance",
@@ -38,6 +38,12 @@ func save_campaign(state: Node) -> bool:
 		"achievements": _string_key_dictionary(state.achievements),
 		"equipped_skin": str(state.equipped_skin),
 		"carried_health": float(state.carried_health),
+		"highest_stage": int(state.highest_stage),
+		"total_kills": int(state.total_kills),
+		"total_runs": int(state.total_runs),
+		"weapon_usage": _string_key_dictionary(state.weapon_usage),
+		"master_volume": float(state.master_volume),
+		"audio_muted": bool(state.audio_muted),
 		"saved_at": Time.get_datetime_string_from_system(true),
 	}
 	var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -139,6 +145,14 @@ func apply_campaign(state: Node, allow_inactive: bool = false) -> bool:
 	var saved_skin := StringName(str(data.get("equipped_skin", "prism_guardian")))
 	state.equipped_skin = saved_skin if not legacy_uniform and state.PLAYABLE_SKINS.has(saved_skin) else &"prism_guardian"
 	state.carried_health = clampf(float(data.get("carried_health", -1.0)), -1.0, 10000.0)
+	state.highest_stage = clampi(int(data.get("highest_stage", state.current_stage)), 1, MAX_CAMPAIGN_STAGE)
+	state.highest_stage = maxi(state.highest_stage, state.current_stage)
+	state.total_kills = clampi(int(data.get("total_kills", 0)), 0, 999999999)
+	state.total_runs = clampi(int(data.get("total_runs", 0)), 0, 999999999)
+	state.weapon_usage = _validated_levels(data.get("weapon_usage", {}), 999999999)
+	state.master_volume = clampf(float(data.get("master_volume", 0.8)), 0.0, 1.0)
+	state.audio_muted = bool(data.get("audio_muted", false))
+	state.apply_audio_settings()
 	state.campaign_active = bool(data.get("campaign_active", true))
 	if legacy_uniform:
 		state._autosave()

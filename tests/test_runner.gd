@@ -100,17 +100,32 @@ func _test_save_round_trip_and_corruption() -> void:
 	state.weapon_levels = {&"auto_rifle": 2, &"scatter_cannon": 1}
 	state.unlocked_weapons = {&"auto_rifle": true, &"scatter_cannon": true}
 	state.carried_health = 73.0
+	state.highest_stage = 9
+	state.total_kills = 321
+	state.total_runs = 14
+	state.weapon_usage = {&"flame_projector": 92, &"scatter_cannon": 47}
+	state.master_volume = 0.46
+	state.audio_muted = true
 	_check(manager.save_campaign(state), "campaign save is written")
 	state.current_stage = 1
 	state.campaign_seed = 1
 	state.carried_skill_levels.clear()
 	state.weapon_levels = {&"auto_rifle": 1}
 	state.unlocked_weapons = {&"auto_rifle": true}
+	state.highest_stage = 1
+	state.total_kills = 0
+	state.total_runs = 0
+	state.weapon_usage.clear()
+	state.master_volume = 0.8
+	state.audio_muted = false
 	_check(manager.apply_campaign(state), "campaign save can be restored")
 	_check(state.current_stage == 4 and state.campaign_seed == 24680, "campaign restores stage and map seed")
 	_check(state.carried_skill_levels.get(&"rapid_fire", 0) == 3, "campaign restores skill levels")
 	_check(state.weapon_levels.get(&"scatter_cannon", 0) == 1, "campaign restores weapon rewards")
 	_check(is_equal_approx(state.carried_health, 73.0), "campaign restores carried player health")
+	_check(state.highest_stage == 9 and state.total_kills == 321 and state.total_runs == 14, "campaign restores local combat statistics")
+	_check(state.favorite_weapon_id() == &"flame_projector" and state.favorite_weapon_uses() == 92, "campaign restores weapon usage statistics")
+	_check(is_equal_approx(state.master_volume, 0.46) and state.audio_muted, "campaign restores local sound settings")
 	_check(
 		state.home_skill_level(&"fury") == 1 and state.home_skill_level(&"recovery") == 1 and state.home_skill_level(&"bounce") == 1 and state.home_skill_level(&"tracking") == 1,
 		"four tactical skills begin at level one"

@@ -245,6 +245,22 @@ theme_override_styles/normal = SubResource("ButtonNormal")
 theme_override_styles/hover = SubResource("ButtonHover")
 theme_override_styles/focus = SubResource("ButtonHover")
 
+[node name="StatisticsButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "本地作战统计  ·  关卡 / 击毁 / 成就"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
+[node name="AudioButton" type="Button" parent="Layout/Panel/Buttons"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "声音设置  ·  主音量 / 静音"
+theme_override_styles/normal = SubResource("ButtonNormal")
+theme_override_styles/hover = SubResource("ButtonHover")
+theme_override_styles/focus = SubResource("ButtonHover")
+
 [node name="AchievementStatus" type="Label" parent="Layout/Panel/Buttons"]
 layout_mode = 2
 text = "成就档案  ·  已解锁 0 项"
@@ -285,5 +301,7 @@ theme_override_styles/focus = SubResource("ButtonHover")
 [connection signal="pressed" from="Layout/Panel/Buttons/SkillButton" to="." method="_on_skills_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/SkinButton" to="." method="_on_skin_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/ArchiveButton" to="." method="_on_archive_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/StatisticsButton" to="." method="_on_statistics_pressed"]
+[connection signal="pressed" from="Layout/Panel/Buttons/AudioButton" to="." method="_on_audio_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="Layout/Panel/Buttons/QuitButton" to="." method="_on_quit_pressed"]

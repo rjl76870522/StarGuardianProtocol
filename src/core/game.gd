@@ -281,6 +281,8 @@ func _on_player_hit() -> void:
 
 func _on_player_fired(recoil: float) -> void:
 	_camera_shake = maxf(_camera_shake, recoil * 0.06)
+	if player.current_weapon != null:
+		GameState.record_weapon_use(player.current_weapon.weapon_id)
 
 
 func _boss_spawn_delay() -> float:
