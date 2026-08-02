@@ -95,6 +95,7 @@ func _test_save_round_trip_and_corruption() -> void:
 	state.carried_skill_levels = {&"rapid_fire": 3, &"armor_plating": 2}
 	state.weapon_levels = {&"auto_rifle": 2, &"scatter_cannon": 1}
 	state.unlocked_weapons = {&"auto_rifle": true, &"scatter_cannon": true}
+	state.carried_health = 73.0
 	_check(manager.save_campaign(state), "campaign save is written")
 	state.current_stage = 1
 	state.campaign_seed = 1
@@ -105,6 +106,11 @@ func _test_save_round_trip_and_corruption() -> void:
 	_check(state.current_stage == 4 and state.campaign_seed == 24680, "campaign restores stage and map seed")
 	_check(state.carried_skill_levels.get(&"rapid_fire", 0) == 3, "campaign restores skill levels")
 	_check(state.weapon_levels.get(&"scatter_cannon", 0) == 1, "campaign restores weapon rewards")
+	_check(is_equal_approx(state.carried_health, 73.0), "campaign restores carried player health")
+	_check(
+		state.home_skill_level(&"fury") == 1 and state.home_skill_level(&"recovery") == 1 and state.home_skill_level(&"bounce") == 1 and state.home_skill_level(&"tracking") == 1,
+		"four tactical skills begin at level one"
+	)
 	state.current_stage = 7
 	_check(manager.save_campaign(state), "late-stage campaign save is written")
 	state.current_stage = 1
@@ -920,15 +926,20 @@ func _test_round_results() -> void:
 	root.add_child(victory_game)
 	await process_frame
 	victory_game._process(1.1)
-	_check(victory_game._round_finished, "timer expiry finishes the round")
+	_check(victory_game._round_finished and victory_game._extraction_active, "timer expiry starts controlled extraction")
 	_check(
-		victory_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "区域已肃清",
-		"timer expiry shows victory result"
+		not victory_game.result_panel.visible,
+		"timer expiry keeps the arena visible instead of opening a result panel"
 	)
+	await create_timer(1.1).timeout
 	_check(
-		victory_game.get_node("PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton").visible,
-		"victory result offers the next stage"
+		victory_game.get_tree().get_nodes_in_group("combat_interactables").size() == 1,
+		"timer expiry deploys an interactable extraction portal"
 	)
+	var portal := victory_game.get_tree().get_nodes_in_group("combat_interactables")[0]
+	portal.interact(victory_game.player)
+	await process_frame
+	_check(victory_game.weapon_reward_panel.visible, "extraction portal opens the next-stage weapon choice")
 	paused = false
 	victory_game.queue_free()
 	await process_frame
@@ -940,14 +951,10 @@ func _test_round_results() -> void:
 	root.add_child(quota_game)
 	await process_frame
 	quota_game._process(1.1)
-	_check(quota_game._round_finished, "timer expiry finishes an unmet objective")
+	_check(quota_game._round_finished and quota_game._extraction_active, "timer expiry starts extraction even before the kill quota")
 	_check(
-		quota_game.get_node("PauseLayer/ResultPanel/Panel/Content/Title").text == "区域失守",
-		"surviving without enough kills does not win"
-	)
-	_check(
-		not quota_game.get_node("PauseLayer/ResultPanel/Panel/Content/Buttons/NextButton").visible,
-		"failed objective does not offer the next stage"
+		not quota_game.result_panel.visible,
+		"an unmet kill quota no longer creates a blocking failure panel"
 	)
 	paused = false
 	quota_game.queue_free()

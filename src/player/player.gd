@@ -386,7 +386,7 @@ func _handle_active_skill_input() -> void:
 func _activate_training_skill(skill_id: StringName) -> void:
 	# The four tactical skills are part of the standard combat kit.  Base level
 	# one is available in every new run; home research raises the same skill.
-	var level := _active_skill_level(skill_id)
+	var level := active_skill_level(skill_id)
 	if level <= 0 or float(_active_skill_cooldowns.get(skill_id, 0.0)) > 0.0:
 		return
 	match skill_id:
@@ -532,9 +532,9 @@ func _weapon_by_id(weapon_id: StringName) -> WeaponData:
 func _handle_weapon_interaction() -> void:
 	if not Input.is_action_just_pressed("interact"):
 		return
-	var pickup := _nearest_weapon_pickup()
-	if pickup != null:
-		pickup.interact(self)
+	var interactable := _nearest_combat_interactable()
+	if interactable != null and interactable.has_method("interact"):
+		interactable.interact(self)
 		return
 	_drop_current_weapon()
 
@@ -553,10 +553,26 @@ func _nearest_weapon_pickup() -> Node3D:
 	return nearest
 
 
+func _nearest_combat_interactable() -> Node3D:
+	var nearest: Node3D
+	var nearest_distance := 2.7
+	# Extraction portals take precedence over dropped weapons at the same spot.
+	for group_name in [&"combat_interactables", &"weapon_pickups"]:
+		for candidate in get_tree().get_nodes_in_group(group_name):
+			if not candidate is Node3D:
+				continue
+			var target := candidate as Node3D
+			var distance := global_position.distance_to(target.global_position)
+			if distance < nearest_distance:
+				nearest = target
+				nearest_distance = distance
+	return nearest
+
+
 func _update_interaction_hint() -> void:
-	var pickup := _nearest_weapon_pickup()
-	if pickup != null and pickup.has_method("interaction_text"):
-		_set_interaction_hint(str(pickup.interaction_text(weapon_loadout.size() >= 5)))
+	var interactable := _nearest_combat_interactable()
+	if interactable != null and interactable.has_method("interaction_text"):
+		_set_interaction_hint(str(interactable.interaction_text(weapon_loadout.size() >= 5)))
 	elif weapon_loadout.size() > 1:
 		_set_interaction_hint("F  丢下当前武器")
 	else:
@@ -854,10 +870,15 @@ func _home_skill_level(skill_id: StringName) -> int:
 	return state.home_skill_level(skill_id) if state != null else 0
 
 
-func _active_skill_level(skill_id: StringName) -> int:
-	if skill_id in [&"fury", &"recovery", &"bounce", &"tracking"]:
-		return maxi(1, _home_skill_level(skill_id))
+func active_skill_level(skill_id: StringName) -> int:
 	return _home_skill_level(skill_id)
+
+
+func restore_carried_health(value: float) -> void:
+	if value <= 0.0 or is_dead:
+		return
+	health = clampf(value, 1.0, max_health)
+	health_changed.emit(health, max_health)
 
 
 func _weapon_module_level(weapon_id: StringName, module_id: StringName) -> int:

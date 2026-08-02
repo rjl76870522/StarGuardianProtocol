@@ -222,13 +222,18 @@ func hide_boss() -> void:
 
 
 func show_message(title: String, subtitle: String) -> void:
-	$CenterMessage/Content/Title.text = title
-	$CenterMessage/Content/Subtitle.text = subtitle
-	$CenterMessage.visible = true
+	# Combat notices must never cover the action. Route all transient notices to
+	# the small edge toast and keep the former center overlay disabled.
+	$CenterMessage.visible = false
+	show_salvage_hint("%s  ·  %s" % [title, subtitle.replace("\n", "  ")])
 
 
 func hide_message() -> void:
 	$CenterMessage.visible = false
+
+
+func set_active_skill_levels(fury: int, recovery: int, bounce: int, tracking: int) -> void:
+	_skill_status.text = "T 暴怒 L%d  ·  G 修复 L%d\nY 反弹 L%d  ·  H 锁定 L%d" % [fury, recovery, bounce, tracking]
 
 
 func set_interaction_hint(message: String) -> void:

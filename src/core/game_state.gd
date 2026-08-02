@@ -11,6 +11,7 @@ const PLAYABLE_SKINS := [
 	&"blue_guardian",
 	&"violet_guardian",
 ]
+const BASE_TACTICAL_SKILLS: Array[StringName] = [&"fury", &"recovery", &"bounce", &"tracking"]
 
 var last_survival_time: float = 0.0
 var last_kills: int = 0
@@ -31,6 +32,7 @@ var home_skill_levels: Dictionary = {}
 var weapon_modules: Dictionary = {}
 var achievements: Dictionary = {}
 var equipped_skin: StringName = &"prism_guardian"
+var carried_health: float = -1.0
 var _pending_resume_stage: int = 0
 
 
@@ -43,6 +45,7 @@ func start_campaign() -> void:
 	unlocked_weapons = {selected_start_weapon_id: true}
 	loadout_weapon_ids = [selected_start_weapon_id]
 	pending_weapon_id = &""
+	carried_health = -1.0
 	_autosave()
 
 
@@ -108,7 +111,15 @@ func weapon_module_level(weapon_id: StringName, module_id: StringName) -> int:
 
 
 func home_skill_level(skill_id: StringName) -> int:
-	return int(home_skill_levels.get(skill_id, 0))
+	# Every operator enters a run with the four tactical controls at level 1.
+	# Home training improves that same baseline instead of unlocking a missing key.
+	var saved_level := int(home_skill_levels.get(skill_id, 0))
+	return maxi(1, saved_level) if skill_id in BASE_TACTICAL_SKILLS else saved_level
+
+
+func set_carried_health(value: float) -> void:
+	carried_health = maxf(value, 1.0)
+	_autosave()
 
 
 func learn_next_home_skill() -> Dictionary:

@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION := 9
+const SAVE_VERSION := 10
 var save_path := "user://campaign_save.json"
 var temp_path := "user://campaign_save.tmp"
 var backup_path := "user://campaign_save.backup.json"
@@ -30,6 +30,7 @@ func save_campaign(state: Node) -> bool:
 		"selected_zone": int(state.selected_zone),
 		"achievements": _string_key_dictionary(state.achievements),
 		"equipped_skin": str(state.equipped_skin),
+		"carried_health": float(state.carried_health),
 		"saved_at": Time.get_datetime_string_from_system(true),
 	}
 	var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -117,6 +118,7 @@ func apply_campaign(state: Node) -> bool:
 	var legacy_uniform := int(data.get("version", 0)) < 9
 	var saved_skin := StringName(str(data.get("equipped_skin", "prism_guardian")))
 	state.equipped_skin = saved_skin if not legacy_uniform and state.PLAYABLE_SKINS.has(saved_skin) else &"prism_guardian"
+	state.carried_health = clampf(float(data.get("carried_health", -1.0)), -1.0, 10000.0)
 	if legacy_uniform:
 		state._autosave()
 	return true

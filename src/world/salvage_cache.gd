@@ -11,6 +11,9 @@ var _visual: Node3D
 var _core: MeshInstance3D
 var _beacon: OmniLight3D
 var _elapsed := 0.0
+var _recall_target: WastelandPlayer
+var _recall_start := Vector3.ZERO
+var _recall_elapsed := 0.0
 
 
 func _ready() -> void:
@@ -93,6 +96,15 @@ func _add_mesh(mesh: PrimitiveMesh, position_value: Vector3, scale_value: Vector
 func _process(delta: float) -> void:
 	if _collected:
 		return
+	if is_instance_valid(_recall_target):
+		_recall_elapsed += delta
+		var progress := clampf(_recall_elapsed / 0.62, 0.0, 1.0)
+		var eased := 1.0 - pow(1.0 - progress, 3.0)
+		global_position = _recall_start.lerp(_recall_target.global_position + Vector3.UP * 0.55, eased)
+		_visual.scale = Vector3.ONE * lerpf(1.0, 0.28, eased)
+		if progress >= 1.0:
+			collect(_recall_target, false)
+		return
 	_elapsed += delta
 	_visual.position.y = 0.18 + sin(_elapsed * 2.0) * 0.08
 	_visual.rotation.y += delta * 0.7
@@ -121,3 +133,14 @@ func collect(player: WastelandPlayer, restore_health: bool = true) -> bool:
 	collected.emit(scrap_amount, heal_amount if restore_health else 0.0)
 	queue_free()
 	return true
+
+
+func recall_to(player: WastelandPlayer) -> void:
+	if _collected or player == null:
+		return
+	_recall_target = player
+	_recall_start = global_position
+	_recall_elapsed = 0.0
+	monitoring = false
+	collision_layer = 0
+	collision_mask = 0

@@ -4,6 +4,7 @@ const ENEMY_SCENE := preload("res://scenes/chaser.tscn")
 const IMPACT_SCENE := preload("res://scenes/impact_flash.tscn")
 const BOSS_SCENE := preload("res://scenes/boss.tscn")
 const SALVAGE_CACHE := preload("res://src/world/salvage_cache.gd")
+const EXTRACTION_PORTAL := preload("res://src/world/extraction_portal.gd")
 const WEAPON_PICKUP := preload("res://src/world/weapon_pickup.gd")
 const END_CREDITS := preload("res://src/ui/end_credits.gd")
 const BOSS_SPAWN_DISTANCE := 5.8
@@ -61,6 +62,8 @@ var _zone_cache_interval := 6
 var _zone_cache_scrap := 2
 var _next_cache_kills := 6
 var _ending_started := false
+var _extraction_active := false
+var _extraction_portal: Node3D
 
 @onready var player: WastelandPlayer = $Player
 @onready var hud: WastelandHUD = $HUD
@@ -96,11 +99,18 @@ func _ready() -> void:
 	upgrade_panel.skill_selected.connect(_on_skill_selected)
 	weapon_reward_panel.weapon_selected.connect(_on_weapon_reward_selected)
 	route_panel.route_selected.connect(_on_route_selected)
+	player.restore_carried_health(GameState.carried_health)
 	hud.set_health(player.health, player.max_health)
 	hud.set_time(time_left)
 	hud.set_kills(kills, required_kills)
 	hud.set_stage(GameState.current_stage, $Arena.map_display_name)
 	hud.set_weapon(player.current_weapon, player.weapon_index)
+	hud.set_active_skill_levels(
+		player.active_skill_level(&"fury"),
+		player.active_skill_level(&"recovery"),
+		player.active_skill_level(&"bounce"),
+		player.active_skill_level(&"tracking")
+	)
 	_spawn_pending_weapon()
 	for skill in SKILL_CATALOG:
 		var carried_level := player.skill_system.get_level(skill.skill_id)
@@ -140,10 +150,7 @@ func _process(delta: float) -> void:
 	if round_duration - time_left >= _boss_spawn_delay():
 		_ensure_boss_present()
 	if time_left <= 0.0:
-		if kills >= required_kills and (not _boss_spawned or _boss_defeated):
-			_finish_round(true)
-		else:
-			_finish_round(false, "区域失守")
+		_begin_extraction()
 	_update_camera_shake(delta)
 
 
@@ -447,6 +454,85 @@ func _finish_round(victory: bool, failure_title: String = "作战单元已损毁
 		$PauseLayer/ResultPanel/Panel/Content/Buttons/RestartButton.grab_focus()
 
 
+func _begin_extraction() -> void:
+	if _extraction_active or _round_finished:
+		return
+	# Time expiry is a controlled withdrawal, not an invisible auto-transition.
+	# The player remains in the arena and must enter the deployed portal.
+	_extraction_active = true
+	_round_finished = true
+	_spawn_cooldown = 9999.0
+	hud.clear_upgrade_ready()
+	hud.show_salvage_hint("作战时间结束  ·  正在清除威胁并回收资源舱")
+	_force_clear_enemies_for_extraction()
+	get_tree().create_timer(0.24).timeout.connect(_recall_stage_loot)
+	get_tree().create_timer(1.0).timeout.connect(_spawn_extraction_portal)
+
+
+func _force_clear_enemies_for_extraction() -> void:
+	var cache_count := 0
+	for candidate in get_tree().get_nodes_in_group("enemies"):
+		if not candidate is Node3D or not is_instance_valid(candidate) or not candidate.is_inside_tree():
+			continue
+		if candidate.is_queued_for_deletion():
+			continue
+		var enemy_node := candidate as Node3D
+		if cache_count < 18:
+			_spawn_extraction_cache(enemy_node.global_position)
+			cache_count += 1
+		if candidate.has_method("take_damage"):
+			candidate.take_damage(999999.0)
+
+
+func _spawn_extraction_cache(origin: Vector3) -> void:
+	var cache := SALVAGE_CACHE.new() as SalvageCache
+	cache.scrap_amount = 1
+	cache.heal_amount = 0.0
+	cache.armor_charge = 0.0
+	add_child(cache)
+	cache.global_position = origin + Vector3(_rng.randf_range(-0.45, 0.45), 0.0, _rng.randf_range(-0.45, 0.45))
+	cache.collected.connect(_on_salvage_cache_collected)
+
+
+func _recall_stage_loot() -> void:
+	if not is_inside_tree() or not is_instance_valid(player):
+		return
+	var recalled := 0
+	for candidate in get_tree().get_nodes_in_group("salvage_caches"):
+		if candidate is SalvageCache:
+			(candidate as SalvageCache).recall_to(player)
+			recalled += 1
+	if recalled > 0:
+		hud.show_salvage_hint("%d 个资源舱正在自动回收" % recalled)
+
+
+func _spawn_extraction_portal() -> void:
+	if not is_inside_tree() or not _extraction_active or is_instance_valid(_extraction_portal):
+		return
+	_extraction_portal = EXTRACTION_PORTAL.new() as Node3D
+	var forward := -player.global_transform.basis.z
+	var spawn_position := player.global_position + forward.normalized() * 3.0
+	spawn_position.y = 0.0
+	add_child(_extraction_portal)
+	_extraction_portal.global_position = spawn_position
+	_extraction_portal.entered.connect(_on_extraction_portal_entered)
+	hud.show_salvage_hint("撤离门已部署  ·  靠近后按 F 进入下一关")
+
+
+func _on_extraction_portal_entered(_operator: WastelandPlayer) -> void:
+	if not _extraction_active:
+		return
+	_extraction_active = false
+	GameState.set_carried_health(player.health)
+	GameState.finish_run(round_duration, kills)
+	if GameState.current_stage >= GameState.MAX_STAGE:
+		_show_campaign_ending()
+		return
+	_paused = true
+	get_tree().paused = true
+	_next_stage()
+
+
 func _show_campaign_ending() -> void:
 	if _ending_started:
 		return
@@ -598,8 +684,8 @@ func _spawn_salvage_cache(origin: Vector3) -> void:
 	cache.scrap_amount = _zone_cache_scrap
 	cache.heal_amount = 18.0 if GameState.selected_zone == 3 else 13.0
 	cache.armor_charge = 8.0 if _rng.randf() < 0.18 else 0.0
-	cache.global_position = origin + Vector3(_rng.randf_range(-0.7, 0.7), 0.0, _rng.randf_range(-0.7, 0.7))
 	add_child(cache)
+	cache.global_position = origin + Vector3(_rng.randf_range(-0.7, 0.7), 0.0, _rng.randf_range(-0.7, 0.7))
 	cache.collected.connect(_on_salvage_cache_collected)
 	hud.show_salvage_hint("回收箱已投放")
 
