@@ -49,6 +49,7 @@ func _run() -> void:
 	await _test_boss_phases_and_debug()
 	await _test_stage_one_boss_spawn_and_hud()
 	await _test_all_stage_player_and_boss_spawns()
+	await _test_player_cover_contact_does_not_respawn()
 	await _test_all_stage_enemy_spawn_safety()
 	await _test_fire_rate_limit()
 	await _test_penetration()
@@ -745,6 +746,40 @@ func _test_all_stage_player_and_boss_spawns() -> void:
 			_check(game.get_node("HUD/Margin/BossBar").visible, "stage %d boss health bar is visible" % stage)
 		game.queue_free()
 		await process_frame
+	state.start_campaign()
+
+
+func _test_player_cover_contact_does_not_respawn() -> void:
+	var state := root.get_node("GameState")
+	state.start_campaign()
+	state.current_stage = 1
+	var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	game.initial_spawn_interval = 99.0
+	root.add_child(game)
+	await process_frame
+	await physics_frame
+	var arena := game.get_node("Arena")
+	var cover: StaticBody3D = null
+	for child in arena.get_children():
+		if child is StaticBody3D and String(child.name).begins_with("Obstacle"):
+			cover = child as StaticBody3D
+			break
+	_check(cover != null, "combat arena creates an internal cover block")
+	if cover != null:
+		var collision := cover.get_node("CollisionShape3D") as CollisionShape3D
+		var shape := collision.shape as BoxShape3D
+		var side := cover.global_transform.basis.x.normalized()
+		var contact_position := cover.global_position + side * (shape.size.x * 0.5 + 0.48)
+		contact_position.y = game.player.global_position.y
+		_check(not arena.is_clear_for_actor(contact_position, 0.72), "near-cover position is inside the spawn safety buffer")
+		game.player.global_position = contact_position
+		game._restore_player_combat_presence()
+		_check(
+			game.player.global_position.distance_to(contact_position) < 0.02,
+			"touching cover never sends the player back to the stage spawn"
+		)
+	game.queue_free()
+	await process_frame
 	state.start_campaign()
 
 

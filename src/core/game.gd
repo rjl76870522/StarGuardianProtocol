@@ -326,9 +326,15 @@ func _restore_player_combat_presence() -> void:
 	if not is_instance_valid(player) or player.is_dead:
 		return
 	player.ensure_combat_presence()
-	player.global_position = $Arena.confine_to_combat_area(player.global_position, 0.7)
-	if not $Arena.is_clear_for_actor(player.global_position, 0.72):
-		_place_player_for_stage()
+	# Cover is a normal physical blocker.  is_clear_for_actor() includes a
+	# generous spawn buffer, so using it here made an ordinary touch against
+	# cover look like a terrain failure and teleported the player to spawn.
+	# CharacterBody3D collision handles cover; this recovery path only keeps a
+	# player who actually leaves the arena inside its outer boundary.
+	var confined: Vector3 = $Arena.confine_to_combat_area(player.global_position, 0.7)
+	if confined.distance_squared_to(player.global_position) > 0.0001:
+		player.global_position = confined
+		player.velocity = Vector3.ZERO
 
 
 func _place_player_for_stage() -> void:
