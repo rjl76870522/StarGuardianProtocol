@@ -32,6 +32,7 @@ func _run() -> void:
 	save_manager.delete_campaign()
 	root.get_node("GameState").start_campaign()
 	_test_save_round_trip_and_corruption()
+	await _test_continue_loads_saved_stage()
 	_test_damage_rules()
 	_test_combat_data_resources()
 	_test_critical_hits()
@@ -104,6 +105,11 @@ func _test_save_round_trip_and_corruption() -> void:
 	_check(state.current_stage == 4 and state.campaign_seed == 24680, "campaign restores stage and map seed")
 	_check(state.carried_skill_levels.get(&"rapid_fire", 0) == 3, "campaign restores skill levels")
 	_check(state.weapon_levels.get(&"scatter_cannon", 0) == 1, "campaign restores weapon rewards")
+	state.current_stage = 7
+	_check(manager.save_campaign(state), "late-stage campaign save is written")
+	state.current_stage = 1
+	_check(state.continue_campaign(), "continue campaign restores a saved run")
+	_check(state.consume_resume_stage() == 7, "continue campaign locks the restored stage for scene loading")
 
 	var file := FileAccess.open(manager.save_path, FileAccess.WRITE)
 	file.store_string("{broken json")
@@ -117,6 +123,27 @@ func _test_save_round_trip_and_corruption() -> void:
 	file.store_string(JSON.stringify({"version": 1, "stage": 3, "skills": {}, "weapons": {}}))
 	file.close()
 	_check(manager.load_campaign().is_empty(), "campaign saves from the previous version are discarded")
+	state.start_campaign()
+
+
+func _test_continue_loads_saved_stage() -> void:
+	var manager := root.get_node("SaveManager")
+	var state := root.get_node("GameState")
+	state.start_campaign()
+	state.current_stage = 7
+	state.selected_zone = 6
+	_check(manager.save_campaign(state), "stage seven resume save is written")
+	state.current_stage = 1
+	_check(state.continue_campaign(), "stage seven resume save is applied")
+	var game := (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	game.initial_spawn_interval = 99.0
+	root.add_child(game)
+	await process_frame
+	await process_frame
+	_check(state.current_stage == 7, "continued battle scene keeps the saved stage")
+	_check(game.get_node("HUD/Margin/TopBar/StagePanel/Stage").text.begins_with("第 7 关"), "continued HUD displays the saved stage")
+	game.queue_free()
+	await process_frame
 	state.start_campaign()
 
 

@@ -74,6 +74,9 @@ var _ending_started := false
 
 
 func _ready() -> void:
+	var resumed_stage := GameState.consume_resume_stage()
+	if resumed_stage > 0:
+		GameState.current_stage = clampi(resumed_stage, 1, GameState.MAX_STAGE)
 	GameState.begin_run()
 	_apply_stage_difficulty()
 	_apply_zone_contract()

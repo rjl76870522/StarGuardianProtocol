@@ -31,10 +31,12 @@ var home_skill_levels: Dictionary = {}
 var weapon_modules: Dictionary = {}
 var achievements: Dictionary = {}
 var equipped_skin: StringName = &"prism_guardian"
+var _pending_resume_stage: int = 0
 
 
 func start_campaign() -> void:
 	current_stage = 1
+	_pending_resume_stage = 0
 	carried_skill_levels.clear()
 	campaign_seed = int(Time.get_unix_time_from_system()) ^ Time.get_ticks_msec()
 	weapon_levels = {selected_start_weapon_id: 1}
@@ -46,7 +48,18 @@ func start_campaign() -> void:
 
 func continue_campaign() -> bool:
 	var manager := get_node_or_null("/root/SaveManager")
-	return manager != null and manager.apply_campaign(self)
+	if manager == null or not manager.apply_campaign(self):
+		return false
+	# Hold the restored stage until the battle scene is ready. This protects a
+	# continue action from any new-campaign initialization during scene loading.
+	_pending_resume_stage = current_stage
+	return true
+
+
+func consume_resume_stage() -> int:
+	var restored_stage := _pending_resume_stage
+	_pending_resume_stage = 0
+	return restored_stage
 
 
 func advance_stage() -> void:
