@@ -41,6 +41,14 @@ development builds.
 Victory requires both surviving the full minute and destroying at least eight
 hostiles. Avoiding combat until the timer expires results in `SECTOR OVERRUN`.
 
+## Platform support
+
+- Windows and Linux: release builds are available for desktop play.
+- Android: the `Android` preset exports a 64-bit ARM debug APK for phone and
+  tablet testing. Touch controls are enabled only on mobile exports.
+- iPhone and iPad: use a Mac with Godot and Xcode to export and sign the iOS
+  project. See [mobile build notes](docs/MOBILE_BUILD.md).
+
 ## Requirements
 
 - Godot 4.6.3 stable
@@ -68,6 +76,12 @@ godot4 --headless --path . --export-release Windows
 Outputs are written to `builds/linux/` and `builds/windows/`. Exported builds
 are intentionally ignored by Git and must be regenerated locally. Keep each
 platform's executable and matching `.pck` file together when distributing.
+
+Android test export:
+
+```bash
+godot4 --headless --path . --export-debug Android builds/android/StarGuardianProtocol.apk
+```
 
 ## Windows distribution
 

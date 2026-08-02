@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource path="res://src/core/game.gd" type="Script" id="1"]
 [ext_resource path="res://src/world/arena.gd" type="Script" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource path="res://scenes/boss_debug_panel.tscn" type="PackedScene" id="6"]
 [ext_resource path="res://scenes/weapon_reward_panel.tscn" type="PackedScene" id="7"]
 [ext_resource path="res://scenes/route_panel.tscn" type="PackedScene" id="8"]
+[ext_resource path="res://src/ui/mobile_controls.gd" type="Script" id="9"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -84,6 +85,10 @@ script = ExtResource("2")
 [node name="WeaponRewardPanel" parent="." instance=ExtResource("7")]
 
 [node name="RoutePanel" parent="." instance=ExtResource("8")]
+
+[node name="MobileControls" type="CanvasLayer" parent="."]
+layer = 12
+script = ExtResource("9")
 
 [node name="PauseLayer" type="CanvasLayer" parent="."]
 layer = 20
